@@ -326,3 +326,4 @@ Live price verify nahi hue — ye sirf andaz hain, faisla owner ka:
 | `PRACTICES.md` | Official-guidance notes — Step 2 me official docs se verify ho chuke hain |
 | `META_ACCESS.md` | Meta access/setup ka verified guide (Step 2) |
 | `SETUP_GUIDE.md` | Owner ke liye step-by-step setup guide (Step 2) |
+| `STEP3_5_PREP.md` | Steps 3–5 ki taiyari: read-only connect checklist, PAUSED draft templates, optimisation runbook |

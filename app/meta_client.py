@@ -12,7 +12,7 @@ Rules honoured here (brief Part 2/3):
 - Token read ONLY from the META_ACCESS_TOKEN environment variable. It is
   never stored in the DB, settings, logs or code.
 - Rate-limit handling: exponential backoff on HTTP 429 and Meta rate-limit
-  error codes (17, 32, 613, 80004); request IDs are captured and returned
+  error codes (17, 32, 613, 80000, 80004); request IDs are captured and returned
   so the caller can store them in the audit log.
 - Idempotency: a local key->object map means a retried approved draft never
   creates a duplicate object.
@@ -47,7 +47,7 @@ API_VERSION_LABEL = ("v27.0 (current Marketing API version, released "
                      "live account)")
 GRAPH_BASE = "https://graph.facebook.com"
 
-RATE_LIMIT_CODES = {17, 32, 613, 80004}
+RATE_LIMIT_CODES = {17, 32, 613, 80000, 80004}
 
 
 class MetaError(Exception):
