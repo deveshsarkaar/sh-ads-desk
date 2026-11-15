@@ -1,0 +1,173 @@
+# PRODUCT_ELIGIBILITY.yaml — SH Ads Desk compliance gate (Step 1, MOCK build)
+# Rule (brief Part 1, rule 5): an ad may be prepared for a product ONLY if
+# resale_permission_confirmed is true for that product. Default is false for
+# every product. Supplier / proof / date stay EMPTY until the owner verifies
+# them from the supplier's own terms — nothing here is invented.
+# Products below are the Software Hub (softwarehub.tech) catalog as known on
+# 2026-11-15: 31 individual tools + 2 collections currently shown on the site.
+products:
+  - product: "Brain.fm"
+    supplier: ""
+    resale_permission_confirmed: false
+    proof_note: ""
+    terms_checked_date: ""
+  - product: "Customer.io Essentials"
+    supplier: ""
+    resale_permission_confirmed: false
+    proof_note: ""
+    terms_checked_date: ""
+  - product: "Fin AI Agent + Fin Advanced (5 seats)"
+    supplier: ""
+    resale_permission_confirmed: false
+    proof_note: ""
+    terms_checked_date: ""
+  - product: "Framer Pro"
+    supplier: ""
+    resale_permission_confirmed: false
+    proof_note: ""
+    terms_checked_date: ""
+  - product: "Granola Business (10 seats)"
+    supplier: ""
+    resale_permission_confirmed: false
+    proof_note: ""
+    terms_checked_date: ""
+  - product: "Jam Team (10 seats)"
+    supplier: ""
+    resale_permission_confirmed: false
+    proof_note: ""
+    terms_checked_date: ""
+  - product: "Linear Business (5 seats)"
+    supplier: ""
+    resale_permission_confirmed: false
+    proof_note: ""
+    terms_checked_date: ""
+  - product: "Magic Patterns Starter"
+    supplier: ""
+    resale_permission_confirmed: false
+    proof_note: ""
+    terms_checked_date: ""
+  - product: "Manus Pro Yearly"
+    supplier: ""
+    resale_permission_confirmed: false
+    proof_note: ""
+    terms_checked_date: ""
+  - product: "Mobbin Team (10 seats)"
+    supplier: ""
+    resale_permission_confirmed: false
+    proof_note: ""
+    terms_checked_date: ""
+  - product: "Notion Business"
+    supplier: ""
+    resale_permission_confirmed: false
+    proof_note: ""
+    terms_checked_date: ""
+  - product: "PostHog Scale"
+    supplier: ""
+    resale_permission_confirmed: false
+    proof_note: ""
+    terms_checked_date: ""
+  - product: "Railway Hobby"
+    supplier: ""
+    resale_permission_confirmed: false
+    proof_note: ""
+    terms_checked_date: ""
+  - product: "Readwise + Reader"
+    supplier: ""
+    resale_permission_confirmed: false
+    proof_note: ""
+    terms_checked_date: ""
+  - product: "Resend Transactional Pro"
+    supplier: ""
+    resale_permission_confirmed: false
+    proof_note: ""
+    terms_checked_date: ""
+  - product: "Supercut Pro (10 seats)"
+    supplier: ""
+    resale_permission_confirmed: false
+    proof_note: ""
+    terms_checked_date: ""
+  - product: "Waking Up"
+    supplier: ""
+    resale_permission_confirmed: false
+    proof_note: ""
+    terms_checked_date: ""
+  - product: "Warp Build"
+    supplier: ""
+    resale_permission_confirmed: false
+    proof_note: ""
+    terms_checked_date: ""
+  - product: "Wispr Flow Pro"
+    supplier: ""
+    resale_permission_confirmed: false
+    proof_note: ""
+    terms_checked_date: ""
+  - product: "ElevenLabs Creator"
+    supplier: ""
+    resale_permission_confirmed: false
+    proof_note: ""
+    terms_checked_date: ""
+  - product: "Gamma Pro"
+    supplier: ""
+    resale_permission_confirmed: false
+    proof_note: ""
+    terms_checked_date: ""
+  - product: "Google AI Pro"
+    supplier: ""
+    resale_permission_confirmed: false
+    proof_note: ""
+    terms_checked_date: ""
+  - product: "Higgsfield Pro"
+    supplier: ""
+    resale_permission_confirmed: false
+    proof_note: ""
+    terms_checked_date: ""
+  - product: "Lovable Pro"
+    supplier: ""
+    resale_permission_confirmed: false
+    proof_note: ""
+    terms_checked_date: ""
+  - product: "Mercury Personal"
+    supplier: ""
+    resale_permission_confirmed: false
+    proof_note: ""
+    terms_checked_date: ""
+  - product: "n8n Cloud Starter"
+    supplier: ""
+    resale_permission_confirmed: false
+    proof_note: ""
+    terms_checked_date: ""
+  - product: "Pangram Professional"
+    supplier: ""
+    resale_permission_confirmed: false
+    proof_note: ""
+    terms_checked_date: ""
+  - product: "Replit Core"
+    supplier: ""
+    resale_permission_confirmed: false
+    proof_note: ""
+    terms_checked_date: ""
+  - product: "Runway Pro"
+    supplier: ""
+    resale_permission_confirmed: false
+    proof_note: ""
+    terms_checked_date: ""
+  - product: "Stripe Atlas"
+    supplier: ""
+    resale_permission_confirmed: false
+    proof_note: ""
+    terms_checked_date: ""
+  - product: "Supabase Pro"
+    supplier: ""
+    resale_permission_confirmed: false
+    proof_note: ""
+    terms_checked_date: ""
+  - product: "Launch Collection (19 tools)"
+    supplier: ""
+    resale_permission_confirmed: false
+    proof_note: ""
+    terms_checked_date: ""
+  - product: "Pro Studio Collection (32 tools)"
+    supplier: ""
+    resale_permission_confirmed: false
+    proof_note: ""
+    terms_checked_date: ""

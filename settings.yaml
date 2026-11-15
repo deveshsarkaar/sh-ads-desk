@@ -1,0 +1,20 @@
+# SH Ads Desk settings — Step 1 (MOCK). Mirror of settings.json (the code reads settings.json).
+# All values editable; defaults empty/zero per brief. Nothing is hardcoded in code.
+DRY_RUN: true
+AUTOMATION_MODE: "PROPOSE"
+TOTAL_DAILY_BUDGET_CAP: 0
+PER_CAMPAIGN_CAP: 0
+LIFETIME_CAP: 0
+TARGET_COST_PER_QUALIFIED_LEAD: 0
+MIN_SPEND: 0
+MIN_EVENTS: 0
+EVALUATION_WINDOW_DAYS: 0
+CONVERSION_LAG_WINDOW_DAYS: 0
+MAX_BUDGET_CHANGE_PCT: 0
+MIN_DAYS_BETWEEN_CHANGES: 0
+LANGUAGES: ["Hinglish", "English"]
+DESTINATION_URL: ""
+DESTINATION_READY: false
+ACCOUNT_CURRENCY: ""
+ACCOUNT_TIMEZONE: ""
+ATTRIBUTION_WINDOW: ""

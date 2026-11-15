@@ -1,0 +1,7 @@
+# SH Ads Desk has NO third-party runtime dependencies.
+# It runs on the Python 3.11+ standard library only (http.server, sqlite3,
+# urllib). This file exists so hosting platforms that look for it succeed.
+#
+# Optional, not required:
+# PyYAML>=6.0   # only speeds up PRODUCT_ELIGIBILITY.yaml parsing; a stdlib
+#               # fallback parser is built in and fully tested.

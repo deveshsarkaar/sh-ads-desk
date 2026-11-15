@@ -1,0 +1,12 @@
+.env
+data/*.db
+data/settings.json
+data/secrets.env
+data/provider_config.json
+data/generated/*
+data/uploads/*
+!data/.gitkeep
+__pycache__/
+*.pyc
+.pytest_cache/
+state.db
