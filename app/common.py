@@ -197,6 +197,45 @@ CREATE TABLE IF NOT EXISTS errors (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     source TEXT, message TEXT, created_at TEXT
 );
+CREATE TABLE IF NOT EXISTS profiles (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    slug TEXT UNIQUE, name TEXT, industry TEXT, industry_preset TEXT,
+    description TEXT, website TEXT, target_type TEXT, target_text TEXT,
+    geography TEXT, languages TEXT, currency TEXT, sales_model TEXT,
+    permission_label TEXT, settings_overrides TEXT DEFAULT '{}',
+    created_at TEXT
+);
+CREATE TABLE IF NOT EXISTS offerings (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    profile_id INTEGER, name TEXT, type TEXT DEFAULT 'product',
+    category TEXT, price TEXT, supplier TEXT,
+    permission_confirmed INTEGER DEFAULT 0,
+    proof_note TEXT, terms_checked_date TEXT, destination_override TEXT,
+    created_at TEXT
+);
+CREATE TABLE IF NOT EXISTS competitors (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    profile_id INTEGER, name TEXT, handle TEXT, url TEXT, website TEXT,
+    niche TEXT, kind TEXT, source TEXT, notes TEXT, created_at TEXT
+);
+CREATE TABLE IF NOT EXISTS loop_runs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    profile_id INTEGER, stage TEXT, detail TEXT, created_at TEXT
+);
+CREATE TABLE IF NOT EXISTS top_creatives (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    profile_id INTEGER, theme TEXT, hook TEXT, format TEXT, cta_style TEXT,
+    source TEXT, source_date TEXT, window_days INTEGER DEFAULT 7,
+    score_note TEXT, created_at TEXT
+);
+CREATE TABLE IF NOT EXISTS strategy_entries (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    entry_json TEXT, created_at TEXT
+);
+CREATE TABLE IF NOT EXISTS guardrail_entries (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    entry_json TEXT, created_at TEXT
+);
 """
 
 
@@ -213,11 +252,24 @@ _ASSET_EXTRA_COLUMNS = (
 )
 
 
+# Columns added when business profiles arrived (industry-agnostic build).
+# profile_id scopes rows to one business profile so catalogs, insights,
+# proposals and reports never leak across profiles. 0 = legacy/unscoped.
+_PROFILE_SCOPED_TABLES = ("proposals", "insight_rows", "creatives",
+                          "lead_log", "reports", "role_runs")
+
+
 def _migrate(conn):
     existing = {r[1] for r in conn.execute("PRAGMA table_info(assets)").fetchall()}
     for name, decl in _ASSET_EXTRA_COLUMNS:
         if name not in existing:
             conn.execute("ALTER TABLE assets ADD COLUMN %s %s" % (name, decl))
+    for table in _PROFILE_SCOPED_TABLES:
+        cols = {r[1] for r in conn.execute(
+            "PRAGMA table_info(%s)" % table).fetchall()}
+        if cols and "profile_id" not in cols:
+            conn.execute("ALTER TABLE %s ADD COLUMN profile_id INTEGER DEFAULT 0"
+                         % table)
     conn.commit()
 
 

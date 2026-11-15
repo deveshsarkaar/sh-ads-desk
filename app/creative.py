@@ -62,22 +62,28 @@ class ManualUploadAdapter(CreativeProviderAdapter):
         }
 
 
-def generate_creative_set(product, segment="students", settings=None):
+def generate_creative_set(product, segment="students", settings=None,
+                          eligibility=None, extra_patterns=None, profile=None):
     """Run Roles 6-9 for one product and gate the copy through Role 10.
     Returns a dict of TEXT artefacts + the policy result. If the eligibility
     gate fails, copy is still shown as a draft preview but is marked BLOCKED
-    and can never enter the approval queue."""
-    angles = roles.role_06_angle_generator(segment)["output"]["angles"]
+    and can never enter the approval queue. eligibility/extra_patterns let
+    a business profile's own catalog + industry compliance pack drive the
+    gate; defaults keep the legacy YAML behaviour."""
+    angles = roles.role_06_angle_generator(segment, profile=profile)["output"]["angles"]
     angle = angles[0]
-    copy = roles.role_07_copywriter(angle)["output"]
-    brief = roles.role_08_visual_poster_brief(angle)["output"]
+    copy = roles.role_07_copywriter(angle, profile=profile)["output"]
+    brief = roles.role_08_visual_poster_brief(angle, profile=profile)["output"]
     script = roles.role_09_reel_script(angle)["output"]
     text = copy["hinglish"]["headline"] + " " + copy["hinglish"]["text"]
-    policy = policy_checker.check_creative(product, text, settings=settings)
+    policy = policy_checker.check_creative(product, text, settings=settings,
+                                           eligibility=eligibility,
+                                           extra_patterns=extra_patterns)
     return {
         "product": product, "segment": segment, "angle": angle,
         "copy": copy, "poster_brief": brief, "reel_script": script,
         "policy": policy, "source": "templates",
+        "business": (profile or {}).get("name"),
         "label": "TEXT drafts (SCRIPT/BRIEF) — not generated image/video assets",
     }
 
@@ -88,29 +94,36 @@ def generate_creative_set(product, segment="students", settings=None):
 # connected, so the UI can show "API not connected" and nothing breaks.
 # ---------------------------------------------------------------------------
 COPY_PROMPT = (
-    "Write one short Meta ad for the product '{product}' (Software Hub) for "
+    "Write one short Meta ad for the product '{product}' ({business}) for "
     "the audience segment '{segment}'. {instruction}"
     "Rules: no lifetime/guaranteed/official-reseller claims, no percentage-off "
-    "or earnings claims, no fake urgency. Reply with ONLY a JSON object: "
+    "or earnings claims, no fake urgency, no claims implying a personal "
+    "attribute of the viewer. Reply with ONLY a JSON object: "
     "{{\"hinglish\": {{\"headline\": \"...\", \"text\": \"...\", \"cta\": \"Learn More\"}}, "
     "\"english\": {{\"headline\": \"...\", \"text\": \"...\", \"cta\": \"Learn More\"}}}}"
 )
 
 
 def generate_copy_with_api(product, segment="students", settings=None,
-                           instruction="", http=None, data_dir_override=None):
+                           instruction="", http=None, data_dir_override=None,
+                           eligibility=None, extra_patterns=None, profile=None):
     """Copy via the owner's Text provider when connected; otherwise fall
     back to the template creative set, clearly labelled. Either way the
     copy passes the same Role 10 policy check before it is returned."""
     if not providers.is_configured("text", data_dir_override):
-        result = generate_creative_set(product, segment, settings=settings)
+        result = generate_creative_set(product, segment, settings=settings,
+                                       eligibility=eligibility,
+                                       extra_patterns=extra_patterns,
+                                       profile=profile)
         result["source"] = "templates"
         result["label"] = ("API not connected — template drafts use hue "
                            "(API Providers page se Text API connect karo)")
         return result
     adapter = providers.text_adapter(http=http, data_dir_override=data_dir_override)
-    prompt = COPY_PROMPT.format(product=product, segment=segment,
-                                instruction=(instruction + " ") if instruction else "")
+    prompt = COPY_PROMPT.format(
+        product=product, segment=segment,
+        business=(profile or {}).get("name") or "Software Hub",
+        instruction=(instruction + " ") if instruction else "")
     out = adapter.generate(prompt)
     raw = out["text"]
     parsed = None
@@ -127,7 +140,9 @@ def generate_copy_with_api(product, segment="students", settings=None,
     }
     text = ((copy.get("hinglish") or {}).get("headline", "") + " "
             + (copy.get("hinglish") or {}).get("text", "")).strip() or raw
-    policy = policy_checker.check_creative(product, text, settings=settings)
+    policy = policy_checker.check_creative(product, text, settings=settings,
+                                           eligibility=eligibility,
+                                           extra_patterns=extra_patterns)
     return {
         "product": product, "segment": segment, "angle": instruction or "API copy",
         "copy": copy, "poster_brief": None, "reel_script": None,

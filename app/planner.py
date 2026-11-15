@@ -16,12 +16,12 @@ ANGLE_CODES = {"students": "TOOLKIT", "freelancers": "WORKFLOW",
 
 
 def plan_structure(product, segment="students", audience_type="customers",
-                   fmt="REEL", version=1, daily_budget=""):
+                   fmt="REEL", version=1, daily_budget="", profile=None):
     stamp = date.today().strftime("%Y%m%d")
     code = ANGLE_CODES.get(segment, "GENERAL")
     aud = segment[:3].upper()
     campaign_name = "%s_%s_%s_%s_V%d" % (aud, code, fmt, stamp, version)
-    angles = roles.role_06_angle_generator(segment)["output"]["angles"]
+    angles = roles.role_06_angle_generator(segment, profile=profile)["output"]["angles"]
     ads = []
     for i, angle in enumerate(angles[:5], start=1):
         ads.append({
@@ -32,6 +32,8 @@ def plan_structure(product, segment="students", audience_type="customers",
         })
     return {
         "product": product,
+        "business": (profile or {}).get("name"),
+        "industry": (profile or {}).get("industry"),
         "audience_type": audience_type,  # 'customers' or 'resellers' — never mixed
         "campaign_name": campaign_name,
         "campaign": {

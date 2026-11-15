@@ -90,6 +90,10 @@ def analyse(ads, settings):
         per_ad[ad_id] = {
             "spend": spend, "enquiries": enquiries, "qualified_leads": qualified,
             "cost_per_qualified_lead": cpq, "cost_per_enquiry_provisional": cpe,
+            "clicks": int(ad.get("clicks") or 0),
+            "ctr_start": ad.get("ctr_start"), "ctr_end": ad.get("ctr_end"),
+            "ctr_trend": ("falling" if float(ad.get("ctr_end") or 0)
+                          < float(ad.get("ctr_start") or 0) else "stable/up"),
             "verdict": "not enough data",
         }
 
@@ -202,6 +206,23 @@ def analyse(ads, settings):
             continue
 
         per_ad[ad_id]["verdict"] = "keep running — no proposal"
+
+    # Guardrails gate (owner directive): the optimiser may NEVER propose
+    # an action a BLOCK guardrail forbids. Proposals are re-checked
+    # against the same registry the pre-flight uses; blocked ones are
+    # dropped with a note, never silently.
+    from . import guardrails as guardrails_mod
+    kept = []
+    for p in proposals:
+        row = next((a for a in ads if a.get("ad_id") == p.get("ad_id")), None)
+        verdict = guardrails_mod.check_proposal(p, row, settings)
+        if verdict["blocked"]:
+            notes.append("Guardrail ne proposal roka (%s / %s): %s"
+                         % (p.get("type"), p.get("ad_id"),
+                            "; ".join(verdict["reasons"])))
+        else:
+            kept.append(p)
+    proposals = kept
 
     return {
         "label": "MOCK analysis (PROPOSE mode)",

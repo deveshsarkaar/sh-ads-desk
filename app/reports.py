@@ -16,8 +16,12 @@ def _rank(rows):
     return ordered[:3], list(reversed(ordered[-3:])) if len(ordered) > 3 else list(reversed(ordered))
 
 
-def daily_report(rows, proposals_pending, settings, language="Hinglish", source="MOCK"):
-    base = roles.role_20_reporter(rows, proposals_pending, language)["output"]["summary"]
+def daily_report(rows, proposals_pending, settings, language="Hinglish", source="MOCK",
+                 profile=None):
+    base = roles.role_20_reporter(
+        rows, proposals_pending, language,
+        business_name=(profile or {}).get("name"),
+        industry=(profile or {}).get("industry"))["output"]["summary"]
     top, bottom = _rank(rows)
     quality = (
         "Data quality: source=%s; currency=%s; timezone=%s; attribution window=%s. "
@@ -36,7 +40,8 @@ def daily_report(rows, proposals_pending, settings, language="Hinglish", source=
     return "\n".join(lines)
 
 
-def weekly_report(rows, proposals_pending, settings, language="Hinglish", source="MOCK"):
+def weekly_report(rows, proposals_pending, settings, language="Hinglish", source="MOCK",
+                  profile=None):
     analyst = roles.role_18_creative_analyst(rows)["output"]["by_angle"]
     winner = None
     for angle, v in analyst.items():
@@ -44,7 +49,7 @@ def weekly_report(rows, proposals_pending, settings, language="Hinglish", source
             if winner is None or v["cost_per_qualified_lead"] < analyst[winner]["cost_per_qualified_lead"]:
                 winner = angle
     lines = [
-        daily_report(rows, proposals_pending, settings, language, source),
+        daily_report(rows, proposals_pending, settings, language, source, profile=profile),
         "Weekly: winning angle (by cost per qualified lead, never CPC/CTR alone): %s"
         % (winner or "not enough data"),
         "Test next: one new angle against the winner, one variable changed, "

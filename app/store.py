@@ -12,32 +12,53 @@ LEAD_STATUSES = ("enquiry", "real_conversation", "reseller_application",
                  "order", "junk")
 
 
-def seed_insights(dataset="one_big_winner", conn=None):
+def _resolve_profile_id(conn, profile_id):
+    """profile_id=None means 'the active business profile' (seeded on
+    first use). An explicit id (including 0 = legacy/unscoped) is used
+    as given, so old unscoped rows keep working."""
+    if profile_id is not None:
+        return profile_id
+    from . import profiles
+    profile = profiles.get_active_profile(conn)
+    return profile["id"] if profile else 0
+
+
+def seed_insights(dataset="one_big_winner", conn=None, profile_id=None):
     conn = conn or get_db()
-    existing = conn.execute("SELECT COUNT(*) AS n FROM insight_rows").fetchone()["n"]
+    pid = _resolve_profile_id(conn, profile_id)
+    existing = conn.execute(
+        "SELECT COUNT(*) AS n FROM insight_rows WHERE profile_id = ?",
+        (pid,)).fetchone()["n"]
     if existing:
         return existing
     for row in mock_insights.get_dataset(dataset):
         conn.execute(
-            "INSERT INTO insight_rows (dataset, row_json, created_at) VALUES (?, ?, ?)",
-            (dataset, json.dumps(row), _now()))
+            "INSERT INTO insight_rows (dataset, row_json, created_at, profile_id) "
+            "VALUES (?, ?, ?, ?)",
+            (dataset, json.dumps(row), _now(), pid))
     conn.commit()
-    audit(conn, "insights_seeded", "MOCK dataset '%s' loaded for demo views" % dataset)
+    audit(conn, "insights_seeded",
+          "MOCK dataset '%s' loaded for profile %s" % (dataset, pid))
     return len(mock_insights.get_dataset(dataset))
 
 
-def load_insight_rows(conn=None):
+def load_insight_rows(conn=None, profile_id=None):
     conn = conn or get_db()
-    rows = conn.execute("SELECT row_json FROM insight_rows ORDER BY id").fetchall()
+    pid = _resolve_profile_id(conn, profile_id)
+    rows = conn.execute(
+        "SELECT row_json FROM insight_rows WHERE profile_id IN (?, 0) ORDER BY id",
+        (pid,)).fetchall()
     return [json.loads(r["row_json"]) for r in rows]
 
 
-def replace_insights(dataset, conn=None):
+def replace_insights(dataset, conn=None, profile_id=None):
     conn = conn or get_db()
-    conn.execute("DELETE FROM insight_rows")
+    pid = _resolve_profile_id(conn, profile_id)
+    conn.execute("DELETE FROM insight_rows WHERE profile_id = ?", (pid,))
     conn.commit()
-    n = seed_insights(dataset, conn)
-    audit(conn, "insights_dataset_switched", "MOCK dataset '%s' (%d rows)" % (dataset, n))
+    n = seed_insights(dataset, conn, profile_id=pid)
+    audit(conn, "insights_dataset_switched",
+          "MOCK dataset '%s' (%d rows) for profile %s" % (dataset, n, pid))
     return n
 
 
@@ -62,21 +83,26 @@ def lead_summary(conn=None):
     return out
 
 
-def save_creative(product, segment, kind, content, policy, conn=None):
+def save_creative(product, segment, kind, content, policy, conn=None, profile_id=None):
     conn = conn or get_db()
+    pid = _resolve_profile_id(conn, profile_id)
     cur = conn.execute(
         "INSERT INTO creatives (product, segment, kind, content, policy_allowed, "
-        "policy_reasons, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+        "policy_reasons, created_at, profile_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
         (product, segment, kind, json.dumps(content, ensure_ascii=False, default=str),
          1 if policy.get("allowed") else 0,
-         json.dumps(policy.get("reasons", [])), _now()))
+         json.dumps(policy.get("reasons", [])), _now(), pid))
     conn.commit()
     return cur.lastrowid
 
 
-def list_creatives(conn=None):
+def list_creatives(conn=None, profile_id=None):
     conn = conn or get_db()
-    return conn.execute("SELECT * FROM creatives ORDER BY id DESC LIMIT 50").fetchall()
+    if profile_id is None:
+        return conn.execute("SELECT * FROM creatives ORDER BY id DESC LIMIT 50").fetchall()
+    return conn.execute(
+        "SELECT * FROM creatives WHERE profile_id IN (?, 0) ORDER BY id DESC LIMIT 50",
+        (profile_id,)).fetchall()
 
 
 def register_asset(filename, kind, source="manual upload (owner)", provider=None,
@@ -144,11 +170,13 @@ def update_video_job(job_id, updates, conn=None):
     conn.commit()
 
 
-def save_report(kind, language, body, conn=None):
+def save_report(kind, language, body, conn=None, profile_id=None):
     conn = conn or get_db()
+    pid = _resolve_profile_id(conn, profile_id)
     cur = conn.execute(
-        "INSERT INTO reports (kind, language, body, created_at) VALUES (?, ?, ?, ?)",
-        (kind, language, body, _now()))
+        "INSERT INTO reports (kind, language, body, created_at, profile_id) "
+        "VALUES (?, ?, ?, ?, ?)",
+        (kind, language, body, _now(), pid))
     conn.commit()
     return cur.lastrowid
 

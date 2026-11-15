@@ -47,8 +47,28 @@ def execute_approved_item(item_id, settings, eligibility=None, conn=None, queue=
     if kind == "CAMPAIGN_DRAFT":
         product = payload.get("product", "")
         text = payload.get("creative_text", "")
+        extra_patterns = None
+        profile = None
+        if payload.get("profile_id"):
+            from . import profiles as profiles_mod
+            profile = profiles_mod.get_profile(payload["profile_id"], conn)
+            if eligibility is None and profile is not None:
+                eligibility = profiles_mod.offerings_as_eligibility(
+                    profile["id"], conn)
+            if profile is not None:
+                extra_patterns = profiles_mod.compliance_patterns_for(profile)
+                settings = profiles_mod.effective_settings(settings, profile)
+                override = None
+                for entry in (eligibility or []):
+                    if str(entry.get("product", "")).lower() == product.lower():
+                        override = entry.get("destination_override")
+                if override:
+                    settings = dict(settings)
+                    settings["DESTINATION_URL"] = override
+                    settings["DESTINATION_READY"] = True
         gate = policy_checker.check_creative(product, text, settings=settings,
-                                             eligibility=eligibility)
+                                             eligibility=eligibility,
+                                             extra_patterns=extra_patterns)
         if not gate["allowed"]:
             audit(conn, "execution_blocked_by_gate", "item=%s reasons=%s"
                   % (item_id, "; ".join(gate["reasons"])))

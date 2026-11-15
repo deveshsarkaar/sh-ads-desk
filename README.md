@@ -1,13 +1,128 @@
 # SH Ads Desk — Full Build (self-hostable)
 
-Meta (Facebook/Instagram) ads system for **Software Hub** (softwarehub.tech):
-research, creative, campaign planning, approval-gated Meta writes, reports
-aur optimisation proposals — customers (students, freelancers, creators) aur
-resellers (bot owners, agencies) ke liye.
+Meta (Facebook/Instagram) ads system — **Software Hub ke liye dedicated,
+lekin kisi bhi industry ke liye kaam karta hai**: research, creative,
+campaign planning, approval-gated Meta writes, reports aur optimisation
+proposals. Software Hub (softwarehub.tech) pehla/default profile hai —
+customers (students, freelancers, creators) aur resellers (bot owners,
+agencies) ke liye.
 
 Ye Step 1 ke verified local build ka full, host-hone-layak version hai.
 Hosting ke steps: **HOSTING.md**. Kuch bhi is package me Lucifer bot, kisi
 VPS, ya softwarehub.tech ke code/database/payments ko nahi chhoota.
+
+## Works for any industry — Business Profiles
+
+Desk ek business par bandha nahi hai. **Business Profiles** page par
+jitne chaaho profile banao — har profile ka apna: business name,
+industry (preset ya free text), description, website/destination,
+target customers (B2B/B2C/both), geography, languages, currency, sales
+model (checkout / lead gen / WhatsApp / calls / footfall), **apna
+offerings catalog** aur **apni settings overrides** (caps, destination,
+automation mode — global settings par jeette hain). Header ke switcher
+se active profile badalta hai; har page, report aur loop active profile
+par chalta hai, data profiles ke beech leak nahi hota.
+
+11 industry presets (`app/industries.py`): Software & Digital Products,
+Grocery & Food, E-commerce, Manufacturing & B2B, Social Media &
+Marketing Services, Education & Courses, Real Estate, Local Services,
+Health & Wellness, Finance & Insurance, Generic/Other. Har preset seed
+karta hai: research checklist, audience hints, 3–5 angle templates,
+funnel/KPI defaults (**settings ke roop me — logic me hardcoded kabhi
+nahi**), lead-quality stages, aur ek **compliance add-on pack** (jaise
+health: cure/before-after claims; finance: guaranteed returns;
+education: guaranteed placement/income; grocery: false health/organic
+claims; real estate: guaranteed appreciation — Meta ke universal
+banned claims core checker me rehte hain). Presets editable starting
+points hain — **legal advice nahi**.
+
+Catalog generic hai: name, type (product/service), category, price,
+supplier/source note, **permission flag** (default false; generic
+wording "eligibility permission confirmed" — software preset sakht
+"resale permission" wording rakhta hai), proof note, terms date,
+destination override. Gate ki strength har industry ke liye ek jitni
+hai: unconfirmed offering = ad nahi banega, fails closed.
+
+Profile #1 "Software Hub" `PRODUCT_ELIGIBILITY.yaml` (31 tools + 2
+collections, saare flags false) se **lossless migration** karke seed
+hua hai — Profiles page par migration proof live dikhta hai
+(33 = 33, names match, saare unconfirmed).
+
+## Growth Loop
+
+Owner ka operating loop, first-class feature (`app/growth_loop.py`,
+**Growth Loop** page + `python -m app.jobs loop`):
+
+1. **Competitor discovery** — har profile ki apni owner-editable
+   competitor list (Software Hub ke liye Damini Tripathi/Marketian
+   seed sahit).
+2. **Competitor best-ads research** — sirf public Meta Ad Library,
+   har finding par source + date. Live pull abhi wired nahi hai, isliye
+   stage honest **research-task entries** banata hai — **koi metric
+   kabhi invent nahi hota**.
+3. **Top-creative inspiration** — window configurable 7/10 din
+   (`TOP_CREATIVE_WINDOW_DAYS`); output = inspiration brief (theme,
+   hook, format, CTA style). **Inspiration only** — kisi aur ka ad
+   verbatim copy karna ya assets reuse karna mana hai.
+4. **Creative production** — brief se templates + API Providers ke
+   through; gates (eligibility/policy/destination) bilkul waise hi.
+5. **Optimisation plan** — PRACTICES.md ke hisaab se proposals.
+6. **Go-live** — maujooda approval-gated execute hi; saath me
+   `AUTOMATION_MODE=AUTO_WITHIN_RULES` support: sirf tab jab owner ne
+   written rules + caps settings me approve kiye hon
+   (`AUTO_RULES_APPROVED` + `AUTO_RULES_TEXT`). Shipped default
+   **PROPOSE** hi hai; safety stop ke baad auto-resume kabhi nahi.
+7. **Monitoring** — per-creative winners vs losers (weak CTA = falling
+   CTR + high spend + low responses) → loser-pause / winner-scale
+   proposals, `MAX_BUDGET_CHANGE_PCT` + caps ke andar.
+8. **Refresh** — winner par bhi fatigue/decay dikhe to fresh
+   inspiration brief — loop wapas stage 3 se.
+
+## Guardrails — CPC/CPL killer mistakes, system-enforced
+
+`app/guardrails.py` + `app/guardrail_catalogue.py`: data-driven
+registry (har entry: mistake, CPC/CPL mechanism, automatic check,
+BLOCK/WARN severity, controlling setting key). Har draft/plan approval
+queue se **pehle** pre-flight se guzarta hai — BLOCK fail = entry
+refuse (kaaran dikhta hai), WARN = warnings item ke saath attach.
+Optimiser bhi wahi registry consult karta hai — BLOCK wali action
+kabhi propose nahi hoti. Catalogue winner-patterns research ke 26
+mistakes (D1–D26) + 8-item pre-flight checklist se seeded hai;
+thresholds saare **owner settings** hain (khaali/0 = inactive) —
+research ke numbers sirf Settings me labelled reference hain,
+defaults kabhi nahi. Guardrails page par har guardrail, uski setting
+aur on/off toggle dikhta hai. (Guardrails galtiyaan rok sakte hain —
+CPC/CPL ki guarantee koi system nahi de sakta; auction/market bhi
+matter karta hai.)
+
+## Knowledge, Policies aur Strategy Library
+
+- **Meta Knowledge register** (Knowledge page): 2026 ke Meta
+  features/changes — har entry par official source URL + date read +
+  VERIFIED/UNVERIFIED flag. Jo entries is environment me official page
+  fetch na hone (403) par secondary sources se verify hain, wo
+  **UNVERIFIED-until-rechecked** hi rehti hain. Weekly job register
+  review karta hai; strategy changes sirf proposals hote hain.
+- **Policies register** (`app/policies_register.py`): Meta Advertising
+  Policies ka digest — 10 sections (prohibited/restricted content,
+  personal attributes — **dono official lists ka UNION enforce hota
+  hai**, Special Ad Categories, review process, Account Quality,
+  AI-content labelling, 2026 Ad Terms, India layer). Flags bilkul
+  waise hi preserve hain jaise research me mile: "OFFICIAL (via
+  secondary — flagged)" flagged hi rehte hain; **2026 Ad Terms
+  DISPUTED hai** (ek tracker: update 5 Nov 2026 ko bina nayi date ke
+  pause). Legal advice nahi.
+- **Strategy Library** (`app/strategy_library.py`): Damini Tripathi /
+  Marketian ki 35 strategies (S1–S35, practitioner-labelled, policy
+  screening ke baad; jo tactic policy se takrayi wo DO-NOT-APPLY —
+  jaise S20 ki inflated-anchor "reverse discount" display), 21
+  practitioner playbook entries (P1–P21, contradictions flagged),
+  4 book-derived (B1–B4), 14 winner habits (W1–W14) + 9 viral
+  creative patterns (V1–V9, PRACTITIONER/CASE), aur 9 DO-NOT-APPLY
+  entries (D1–D9). **Kisi ki bhi unverified performance claims
+  (ROAS/CTR numbers) benchmarks ya defaults ke roop me kahin seed
+  nahi hain.** Library data-driven hai — nayi entries bina code
+  change ke DB/file se jud sakti hain.
 
 ## Chalana (local / koi bhi Python host)
 
@@ -27,7 +142,7 @@ Docker: `docker compose up -d --build` (Dockerfile + compose package me hai).
   smoke tests (saare 14 pages + planner→approve→execute gate flow), aur
   **API Providers module** (preset pre-fill, key-only save → working adapter,
   secret storage rules, text/image/video adapters — sab stubbed HTTP par,
-  koi network nahi). Kul **58 tests passed** — dekho `TEST_RESULTS.md`.
+  koi network nahi). Kul **78 tests passed** — dekho `TEST_RESULTS.md`.
 - **MOCK:** default mode. Mock Meta client, MOCK insights datasets (thin
   data, one big winner, all losers, cheap-junk, lagged, spend breach,
   fatigue), demo numbers har page par labelled.
@@ -36,20 +151,23 @@ Docker: `docker compose up -d --build` (Dockerfile + compose package me hai).
   **API Providers ke adapters bhi UNTESTED hain** — kisi real OpenAI/Claude/
   Higgsfield/Kling account par kabhi call nahi hua (is build ke paas koi
   asal key nahi thi); sirf stubbed HTTP par request shaping verify hua hai.
-  API version pin `v25.0` bhi **UNVERIFIED** hai (is build environment me
-  official changelog live fetch nahi ho paya; secondary sources ne Nov 2026
-  me v26/v27 current aur v25.0 ko 23 Feb 2027 tak available bataya tha) —
-  live use se pehle official changelog par confirm karo:
+  API version pin ab **`v27.0`** hai (Step 2 me verify: v27.0 released
+  2026-11-04; v25.0 23 Feb 2027 tak available rehta — is environment me
+  official changelog page 403 deta hai, isliye pin corroborated sources
+  par based hai aur Knowledge register me UNVERIFIED-until-rechecked
+  flagged hai) — live use se pehle official changelog par confirm karo:
   https://developers.facebook.com/docs/marketing-api/changelog
 
 ## Hard rules — code me bandhe hue
 
 - Default: `DRY_RUN=true`, `AUTOMATION_MODE=PROPOSE`, saare budget/threshold
   settings **khaali/zero** (koi benchmark default nahi).
-- **Eligibility gate (fails closed):** `PRODUCT_ELIGIBILITY.yaml` me har
-  product `resale_permission_confirmed: false` hai; proof note +
-  terms-checked date ke bina web UI confirm hi nahi karti. False = us
-  product ka ad ban hi nahi sakta.
+- **Eligibility gate (fails closed):** har profile ke DB catalog me har
+  offering ka permission flag default `false` hai (Software Hub ka
+  catalog `PRODUCT_ELIGIBILITY.yaml` se lossless migrate hua — YAML
+  source ke roop me repo me rehta hai); proof note + terms-checked
+  date ke bina web UI confirm hi nahi karti. False = us offering ka
+  ad ban hi nahi sakta — software ho ya grocery, gate ek jitna sakht.
 - **Destination gate:** `DESTINATION_URL` khaali + `DESTINATION_READY=false`
   default — system khud destination nahi chunta.
 - **Har Meta write ke liye owner approval:** PAUSED draft banana bhi write
@@ -75,7 +193,7 @@ Docker: `docker compose up -d --build` (Dockerfile + compose package me hai).
 - **Provider calls kabhi Meta write nahi karte:** generation sirf padhna/
   banana hai; Meta execution ka rasta (`app/execute.py`) providers ko
   import hi nahi karta.
-- **Scheduler, always-on agent nahi:** `python -m app.jobs collect|optimise|daily|weekly`
+- **Scheduler, always-on agent nahi:** `python -m app.jobs collect|optimise|daily|weekly|loop`
   cron se chalao (HOSTING.md me crontab diya hai).
 
 ## Pages (web UI)
@@ -90,8 +208,17 @@ APIs connect karo — neeche wala section) · Planner
 (AUD_ANGLE_FORMAT_DATE_VERSION, customer/reseller alag) · Approval Queue
 (Approve/Edit/Reject/Execute — approve se pehle dikhta hai exactly kya hoga) ·
 Budget (caps vs reported spend + reporting-delay note) · Leads (counts only) ·
-Reports (daily/weekly, Hinglish) · Trends (official sources, URL+date,
-UNVERIFIED items labelled) · Errors & Audit (redacted).
+Reports (daily/weekly, Hinglish) · **Business Profiles** (profiles +
+switcher + migration proof) · **Growth Loop** (stage status, inspiration
+brief, competitors, top creatives) · **Guardrails** (registry + toggles +
+pre-flight checklist) · **Knowledge** (purana Trends page — Meta Knowledge
+register + Policies register + trend watch, URL+date, UNVERIFIED items
+labelled) · Errors & Audit (redacted).
+
+UI saaf aur simple rakha gaya hai (owner directive): clean cards, ek
+screen par ek saaf primary action, lambi details `<details>` sections ke
+peeche, mobile-friendly. Settings ke advanced/guardrail fields
+"Advanced" section me collapsed hain.
 
 ## API Providers — apni generation APIs connect karna
 
@@ -163,27 +290,39 @@ Live price verify nahi hue — ye sirf andaz hain, faisla owner ka:
    alag approval hai** — aur pehle campaigns par Meta ke native limits
    (account spend limit) lagao.
 4. **Step 5 (optimisation/automation):** proposals pehle se aa rahe hain;
-   `AUTO_WITHIN_RULES` tabhi jab owner exact rules + caps likh kar
-   approve kare. Is build me auto-apply ka koi path hai hi nahi.
+   Growth Loop me `AUTO_WITHIN_RULES` ka path hai — sirf tab jab owner
+   exact rules + caps settings me likh kar approve kare
+   (`AUTO_RULES_APPROVED` + `AUTO_RULES_TEXT`); default PROPOSE hi hai,
+   aur safety stop ke baad auto-resume kabhi nahi hota. Real Meta
+   account par ye path abhi UNTESTED hai.
 
 ## File map
 
 | Path | Kya hai |
 |---|---|
-| `run.py`, `app/web.py` | Web app (stdlib http.server) — saare pages |
-| `app/jobs.py` | Cron CLI: collect / optimise / daily / weekly |
-| `app/meta_client.py` | Asli Meta adapter — **UNTESTED**, env token, backoff, idempotency, PAUSED-only writes |
+| `run.py`, `app/web.py` | Web app (stdlib http.server) — saare pages, clean/minimal UI |
+| `app/jobs.py` | Cron CLI: collect / optimise / daily / weekly / loop |
+| `app/meta_client.py` | Asli Meta adapter — **UNTESTED**, env token, backoff, idempotency, PAUSED-only writes, API pin v27.0 |
 | `app/mock_meta.py`, `app/mock_insights.py` | MOCK client + MOCK edge-case datasets (default) |
-| `app/policy_checker.py` | Eligibility + banned claims + destination gates (fails closed) |
-| `app/optimiser.py` | Role 19 — proposals only, z-test confidence, "not enough data", budget-owner check |
-| `app/roles.py` | 20 logical roles, alag auditable outputs |
-| `app/creative.py`, `app/planner.py`, `app/reports.py`, `app/trends.py` | Creative studio, structure planner, daily/weekly reports, trend watch data |
+| `app/policy_checker.py` | Eligibility + banned claims + personal-attributes (union) + destination gates (fails closed) |
+| `app/optimiser.py` | Role 19 — proposals only, z-test confidence, "not enough data", budget-owner check, guardrail-screened |
+| `app/roles.py` | 20 logical roles, alag auditable outputs (profile-parameterized) |
+| `app/creative.py`, `app/planner.py`, `app/reports.py`, `app/trends.py` | Creative studio, structure planner, daily/weekly reports, trend watch + Meta Knowledge register |
+| `app/profiles.py` | Business Profiles — CRUD, active switch, per-profile catalog/competitors, settings overrides, Software Hub lossless migration + proof |
+| `app/industries.py` | 11 industry presets — research checklist, audience hints, angle templates, funnel/KPI defaults, compliance packs |
+| `app/growth_loop.py` | Growth Loop — 8 stages, inspiration briefs, AUTO_WITHIN_RULES go-live, monitoring/refresh |
+| `app/guardrails.py`, `app/guardrail_catalogue.py` | Guardrail registry + pre-flight; catalogue D1–D26 (winner-patterns research §D) seeded |
+| `app/strategy_library.py` | Strategy Library — Damini S1–S35 (screened), practitioner P1–P21, books B1–B4, winner habits W1–W14, viral patterns V1–V9, DO-NOT-APPLY D1–D9 + S20-DNA |
+| `app/policies_register.py` | Policies register — Meta policies digest (10 sections, flags preserved, PR9 DISPUTED) + personal-attributes union |
+| `app/competitor_seeds.py` | Competitor seed data (Damini Tripathi / Marketian) |
 | `app/providers.py` | API Providers — presets (pre-filled base URL/model), secrets.env handling, generic HTTP client, Text/Image/Video adapters, test-connection — **UNTESTED** on real providers, stub-verified |
 | `app/execute.py` | Approval → write ka ekmatra rasta (gates + DRY_RUN + kill switch) |
 | `app/approval_queue.py`, `app/rollback.py` | Queue + kill switch; rollback (fresh read + approval) |
 | `app/auth.py` | Single-owner login (PBKDF2 hash, /setup ya env hash) |
 | `app/common.py`, `app/store.py` | Settings/eligibility IO, SQLite, redaction, lead/creative/report storage |
-| `settings.json`, `PRODUCT_ELIGIBILITY.yaml` | Saari settings (defaults khaali/zero); eligibility (sab false) |
-| `tests/` | 58 tests (Step 1 ke 18 + full-build ke 13 + API Providers ke 27) |
+| `settings.json`, `PRODUCT_ELIGIBILITY.yaml` | Saari settings (defaults khaali/zero); Software Hub eligibility ka migration source (sab false) |
+| `tests/` | 78 tests (Step 1 ke 18 + full-build ke 13 + API Providers ke 27 + industries/profiles/loop/guardrails ke 20) |
 | `Dockerfile`, `docker-compose.yml`, `HOSTING.md`, `.env.example` | Deploy pack |
-| `PRACTICES.md` | Official-guidance notes — kai points UNVERIFIED, Step 2 me verify honge |
+| `PRACTICES.md` | Official-guidance notes — Step 2 me official docs se verify ho chuke hain |
+| `META_ACCESS.md` | Meta access/setup ka verified guide (Step 2) |
+| `SETUP_GUIDE.md` | Owner ke liye step-by-step setup guide (Step 2) |

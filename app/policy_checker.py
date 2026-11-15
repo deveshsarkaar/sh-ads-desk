@@ -51,37 +51,97 @@ BANNED_CLAIMS = [
 
 _COMPILED = [(re.compile(p, re.IGNORECASE), cat, reason) for p, cat, reason in BANNED_CLAIMS]
 
+# Personal-attributes rule (Policies Register PR4): ads must not assert
+# OR imply the viewer has a personal attribute — questions count. The
+# checker enforces the UNION of Meta's Transparency Center list and
+# Help Center list (the two official lists differ; see
+# app/policies_register.py PERSONAL_ATTRIBUTES_UNION). Describe the
+# product, never diagnose the viewer. Meta's own pair: "New diabetes
+# treatment available" = allowed; "Do you have diabetes?" = NOT allowed.
+PERSONAL_ATTRIBUTE_PATTERNS = [
+    (r"\bdo you have (diabetes|cancer|depression|anxiety|pcod|pcos|thyroid|a loan|debt|obesity|high bp)\b",
+     "personal_attribute", "Copy viewer ki health/financial condition imply karti hai ('Do you have ...?') — personal attributes rule violation (PR4)"),
+    (r"\bare you (a |an )?(diabetic|cancer patient|single (mom|mother|dad|father)|bankrupt|pregnant|depressed|overweight)\b",
+     "personal_attribute", "Copy viewer ko ek personal attribute se label karti hai — personal attributes rule violation (PR4)"),
+    (r"\bare you (still )?(struggling|suffering|worried|tired) (with|about) your (weight|health|debt|finances|hair)\b",
+     "personal_attribute", "Copy viewer ki condition par sawal/assertion karti hai — personal attributes rule violation (PR4)"),
+    (r"\bjust turned \d{2}\b",
+     "personal_attribute", "Exact age imply karna ('just turned 62' — Meta ki apni example) personal attributes violation hai (PR4)"),
+    (r"\bfor (diabetics|patients|sufferers) like you\b",
+     "personal_attribute", "'... like you' phrasing viewer ki condition imply karti hai — personal attributes rule violation (PR4)"),
+    (r"\b(if you are|if you're) (a|an) (diabetic|patient|single|pregnant|bankrupt)\b",
+     "personal_attribute", "Conditional attribute callout bhi viewer ki trait imply karta hai — personal attributes rule violation (PR4)"),
+    (r"\bcomment (yes|below|your answer)\b.*\b(if|to)\b",
+     "engagement_bait", "Engagement bait ('comment YES if...') Meta ke low-quality standards ke against hai"),
+    (r"\btag (a|your) friend\b",
+     "engagement_bait", "Engagement bait ('tag a friend') banned hai"),
+    (r"\b(share|like) (this|it|if) .{0,30}\b(win|free|prize)\b",
+     "engagement_bait", "Share/like-to-win mechanics engagement bait hai — banned"),
+]
 
-def check_claims(text):
-    """Scan ad text for banned claims. Returns dict(allowed, reasons)."""
+_COMPILED += [(re.compile(p, re.IGNORECASE), cat, reason)
+              for p, cat, reason in PERSONAL_ATTRIBUTE_PATTERNS]
+
+
+def check_claims(text, extra_patterns=None):
+    """Scan ad text for banned claims: the universal core list PLUS an
+    optional industry add-on pack (dicts with pattern/category/reason,
+    from app/industries.py). Returns dict(allowed, reasons)."""
     reasons = []
     body = text or ""
     for pat, _cat, reason in _COMPILED:
         if pat.search(body):
             reasons.append(reason)
+    for extra in (extra_patterns or []):
+        try:
+            if re.search(extra.get("pattern", ""), body, re.IGNORECASE):
+                reasons.append(extra.get("reason", "Industry compliance pack hit"))
+        except re.error:
+            reasons.append("Industry compliance pack pattern is invalid — fails closed")
     return {"allowed": len(reasons) == 0, "reasons": reasons}
 
 
+def _entry_name(item):
+    return str(item.get("product") or item.get("name") or "")
+
+
+def _entry_confirmed(item):
+    """An entry is confirmed only when its permission flag is literally
+    true. Generic catalog entries carry permission_confirmed; legacy
+    YAML entries carry resale_permission_confirmed."""
+    if "resale_permission_confirmed" in item:
+        return item.get("resale_permission_confirmed") is True
+    return item.get("permission_confirmed") is True
+
+
 def check_product(product, eligibility=None):
-    """Eligibility gate. Fails closed. Returns dict(allowed, reasons)."""
+    """Eligibility gate. Fails closed. Returns dict(allowed, reasons).
+    Works for the legacy PRODUCT_ELIGIBILITY.yaml list and for any
+    business profile's generic offerings catalog (same gate strength)."""
     if eligibility is None:
         eligibility = load_eligibility()
     reasons = []
     entry = None
     for item in eligibility:
-        if str(item.get("product", "")).strip().lower() == str(product).strip().lower():
+        if _entry_name(item).strip().lower() == str(product).strip().lower():
             entry = item
             break
     if entry is None:
         reasons.append(
-            "Product '%s' is NOT listed in PRODUCT_ELIGIBILITY.yaml — fails closed, no ad allowed." % product
+            "Product '%s' is NOT listed in the eligibility catalog — fails closed, no ad allowed." % product
         )
         return {"allowed": False, "reasons": reasons}
-    if entry.get("resale_permission_confirmed") is not True:
-        reasons.append(
-            "resale_permission_confirmed is not true for '%s' — no ad allowed until the owner "
-            "verifies resale permission and records proof + terms-checked date." % product
-        )
+    if not _entry_confirmed(entry):
+        if "resale_permission_confirmed" in entry:
+            reasons.append(
+                "resale_permission_confirmed is not true for '%s' — no ad allowed until the owner "
+                "verifies resale permission and records proof + terms-checked date." % product
+            )
+        else:
+            reasons.append(
+                "eligibility permission confirmed is not true for '%s' — no ad allowed until the owner "
+                "verifies eligibility permission and records proof + terms-checked date." % product
+            )
     return {"allowed": len(reasons) == 0, "reasons": reasons}
 
 
@@ -98,11 +158,12 @@ def check_destination(settings=None):
     return {"allowed": len(reasons) == 0, "reasons": reasons}
 
 
-def check_creative(product, text, settings=None, eligibility=None):
-    """Full gate for one creative: eligibility + banned claims + destination.
-    All three must pass. Returns dict(allowed, reasons)."""
+def check_creative(product, text, settings=None, eligibility=None, extra_patterns=None):
+    """Full gate for one creative: eligibility + banned claims (core +
+    industry add-on pack) + destination. All must pass. Fails closed.
+    Returns dict(allowed, reasons)."""
     reasons = []
     reasons += check_product(product, eligibility)["reasons"]
-    reasons += check_claims(text)["reasons"]
+    reasons += check_claims(text, extra_patterns=extra_patterns)["reasons"]
     reasons += check_destination(settings)["reasons"]
     return {"allowed": len(reasons) == 0, "reasons": reasons}

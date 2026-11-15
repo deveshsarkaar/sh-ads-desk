@@ -29,16 +29,22 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-# Pinned Marketing API version.
-# UNVERIFIED against Meta's official changelog in this build environment
-# (only secondary sources were reachable: they indicated v26.0/v27.0 as
-# current in Nov 2026 and v25.0 available until 23 Feb 2027). v25.0 is pinned
-# as a still-supported conservative choice — the owner MUST confirm the
-# current version at https://developers.facebook.com/docs/marketing-api/changelog
-# before any live use, and change this one constant if needed.
-API_VERSION = "v25.0"
-API_VERSION_LABEL = ("v25.0 (UNVERIFIED — confirm the current version on the "
-                     "official Marketing API changelog before live use)")
+# Pinned Marketing API version — updated in Step 2 (2026-11-16).
+# Current version is v27.0: Meta's official Authorization doc
+# (https://developers.facebook.com/documentation/ads-commerce/marketing-api/get-started/authorization,
+# loaded and read 2026-11-16) uses v27.0 in its own OAuth example, and
+# Meta's official Marketing API changelog lists v27.0 as released
+# 2026-11-04, with v25.0 available only until 2027-02-23. The changelog
+# page itself returns HTTP 403 to this build environment, so the release /
+# expiry dates are corroborated from the official changelog via multiple
+# independent readings — full method note in PRACTICES.md. Caution: v27.0
+# turns on new defaults for some newly created objects (see PRACTICES.md),
+# which is one more reason Step 3 (read-only compare) precedes any write.
+API_VERSION = "v27.0"
+API_VERSION_LABEL = ("v27.0 (current Marketing API version, released "
+                     "2026-11-04 — Step 2 verified 2026-11-16, see "
+                     "PRACTICES.md; this adapter is still UNTESTED on a "
+                     "live account)")
 GRAPH_BASE = "https://graph.facebook.com"
 
 RATE_LIMIT_CODES = {17, 32, 613, 80004}

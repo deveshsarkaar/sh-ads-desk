@@ -96,13 +96,16 @@ def _meta_client(stub):
 
 class TestMetaClientShaping(unittest.TestCase):
     def test_insights_request_shape(self):
+        from app.meta_client import API_VERSION
         stub = StubHTTP()
         client = _meta_client(stub)
         rows = client.fetch_insights()
         self.assertEqual(len(rows), 1)
         method, url, params = stub.calls[0]
         self.assertEqual(method, "GET")
-        self.assertIn("/v25.0/act_12345/insights", url)
+        # Follows the pinned version constant (Step 2: v27.0) instead of a
+        # hardcoded string, so a future version bump does not break this.
+        self.assertIn("/%s/act_12345/insights" % API_VERSION, url)
         self.assertEqual(params["level"], "ad")
         self.assertIn("req_insights_1", client.request_ids)
 

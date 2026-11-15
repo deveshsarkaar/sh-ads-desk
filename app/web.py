@@ -20,9 +20,13 @@ from http import cookies as http_cookies
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 from . import auth, creative as creative_mod, optimiser as optimiser_mod
+from . import guardrails as guardrails_mod
+from . import growth_loop as loop_mod
+from . import industries as industries_mod
 from . import planner as planner_mod, policy_checker, providers
+from . import profiles as profiles_mod
 from . import reports as reports_mod
-from . import roles, store, trends as trends_mod
+from . import roles, store, strategy_library, trends as trends_mod
 from .approval_queue import ApprovalQueue
 from .common import (audit, get_db, load_eligibility, load_settings,
                      log_error, redact, save_eligibility, save_settings)
@@ -30,63 +34,83 @@ from .execute import execute_approved_item
 from .meta_client import API_VERSION_LABEL
 
 CSS = """
-:root{--ink:#17202b;--mut:#5b6b7f;--line:#dbe2ec;--bg:#f4f6fa;--card:#fff;
---brand:#1f4fd8;--brand2:#173ea8;--ok:#0d7a4a;--bad:#b3261e;--warn:#9a6a00;
---warnbg:#fff6dd;--okbg:#e7f6ee;--badbg:#fdecea;--radius:12px}
-*{box-sizing:border-box}body{margin:0;font-family:'Segoe UI',system-ui,-apple-system,Roboto,Arial,sans-serif;
-background:var(--bg);color:var(--ink);font-size:15px;line-height:1.55}
+/* Clean, minimal shell (owner UI directive 2026-11-16): whitespace first,
+   one clear action per screen, detail behind <details> — no text walls. */
+:root{--ink:#1b2430;--mut:#6b7a8d;--line:#e6ebf2;--bg:#f7f9fc;--card:#fff;
+--brand:#2563eb;--brand2:#1d4ed8;--ok:#0d7a4a;--bad:#b3261e;--warn:#9a6a00;
+--warnbg:#fff8e1;--okbg:#e7f6ee;--badbg:#fdecea;--radius:16px}
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;
+background:var(--bg);color:var(--ink);font-size:15px;line-height:1.6}
 a{color:var(--brand);text-decoration:none}a:hover{text-decoration:underline}
-header.top{background:#101c30;color:#fff;padding:0 18px;display:flex;align-items:center;
-gap:14px;flex-wrap:wrap;position:sticky;top:0;z-index:5}
-header.top .brand{font-weight:700;font-size:18px;padding:12px 0}
-header.top .tag{font-size:11px;background:#274264;border-radius:20px;padding:3px 10px}
+header.top{background:#fff;color:var(--ink);padding:0 20px;display:flex;align-items:center;
+gap:12px;flex-wrap:wrap;position:sticky;top:0;z-index:5;border-bottom:1px solid var(--line)}
+header.top .brand{font-weight:800;font-size:19px;padding:14px 0;letter-spacing:-.2px}
+header.top .tag{font-size:11.5px;background:#eef2f9;color:var(--mut);border-radius:20px;padding:3px 11px}
 header.top form{margin-left:auto}
-nav.main{background:#fff;border-bottom:1px solid var(--line);padding:8px 14px;
-display:flex;gap:6px;flex-wrap:wrap;position:sticky;top:49px;z-index:4}
-nav.main a{padding:6px 11px;border-radius:8px;color:var(--ink);font-size:14px}
-nav.main a:hover{background:var(--bg);text-decoration:none}
-nav.main a.on{background:var(--brand);color:#fff}
-main{max-width:1060px;margin:0 auto;padding:20px 16px 60px}
+nav.main{background:#fff;border-bottom:1px solid var(--line);padding:10px 16px;
+display:flex;gap:4px;flex-wrap:wrap;position:sticky;top:57px;z-index:4}
+nav.main a{padding:7px 13px;border-radius:20px;color:var(--mut);font-size:14px;font-weight:500}
+nav.main a:hover{background:var(--bg);text-decoration:none;color:var(--ink)}
+nav.main a.on{background:var(--ink);color:#fff}
+main{max-width:1020px;margin:0 auto;padding:28px 18px 70px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
-padding:18px 20px;margin:0 0 16px;box-shadow:0 1px 2px rgba(16,28,48,.04)}
-h1{font-size:24px;margin:4px 0 6px}h2{font-size:18px;margin:2px 0 10px}
-h3{font-size:15px;margin:14px 0 6px}.mut{color:var(--mut)}.small{font-size:13px}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px}
-.kpi{font-size:26px;font-weight:700}
-.pill{display:inline-block;border-radius:20px;padding:2px 10px;font-size:12px;font-weight:600}
+padding:22px 24px;margin:0 0 18px;box-shadow:0 1px 3px rgba(16,28,48,.03)}
+h1{font-size:26px;margin:2px 0 8px;letter-spacing:-.3px;font-weight:800}
+h2{font-size:17px;margin:2px 0 12px;font-weight:700}
+h3{font-size:15px;margin:16px 0 6px}.mut{color:var(--mut)}.small{font-size:13px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px}
+.kpi{font-size:28px;font-weight:800;letter-spacing:-.5px}
+.pill{display:inline-block;border-radius:20px;padding:2px 11px;font-size:12px;font-weight:600;white-space:nowrap}
 .pill.ok{background:var(--okbg);color:var(--ok)}.pill.bad{background:var(--badbg);color:var(--bad)}
 .pill.warn{background:var(--warnbg);color:var(--warn)}.pill.info{background:#e8effe;color:var(--brand2)}
-.banner{border-radius:var(--radius);padding:12px 16px;margin:0 0 16px;font-size:14px}
+.pill.dim{background:#eef2f9;color:var(--mut)}
+.banner{border-radius:var(--radius);padding:13px 17px;margin:0 0 18px;font-size:14px}
 .banner.warn{background:var(--warnbg);border:1px solid #ecd28a}
 .banner.bad{background:var(--badbg);border:1px solid #f0b6b1}
 .banner.ok{background:var(--okbg);border:1px solid #a9dcc2}
-table{width:100%;border-collapse:collapse;font-size:14px}
-th,td{border-bottom:1px solid var(--line);padding:8px 8px;text-align:left;vertical-align:top}
-th{color:var(--mut);font-weight:600}
-input,select,textarea{width:100%;padding:9px 11px;border:1px solid var(--line);
-border-radius:8px;font:inherit;background:#fff;margin:4px 0 10px}
-label{font-weight:600;font-size:14px}
-button,.btn{display:inline-block;background:var(--brand);color:#fff;border:0;border-radius:8px;
-padding:9px 16px;font:inherit;font-weight:600;cursor:pointer}
+.twrap{overflow-x:auto}table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{border-bottom:1px solid var(--line);padding:9px 8px;text-align:left;vertical-align:top}
+tr:last-child td{border-bottom:0}
+th{color:var(--mut);font-weight:600;font-size:12.5px;text-transform:uppercase;letter-spacing:.4px}
+input,select,textarea{width:100%;padding:10px 12px;border:1px solid var(--line);
+border-radius:10px;font:inherit;background:#fff;margin:4px 0 12px}
+input:focus,select:focus,textarea:focus{outline:2px solid #c7d7fb;border-color:var(--brand)}
+label{font-weight:600;font-size:13.5px}
+button,.btn{display:inline-block;background:var(--brand);color:#fff;border:0;border-radius:10px;
+padding:10px 18px;font:inherit;font-weight:600;cursor:pointer}
 button:hover,.btn:hover{background:var(--brand2);text-decoration:none}
-button.secondary,.btn.secondary{background:#e8edf5;color:var(--ink)}
+button.secondary,.btn.secondary{background:#eef2f9;color:var(--ink)}
 button.danger{background:var(--bad)}button:disabled{opacity:.5;cursor:not-allowed}
 .inline{display:inline}.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-pre{background:#0f1a2c;color:#d7e3f5;border-radius:10px;padding:12px;overflow:auto;
-font-size:13px;white-space:pre-wrap;word-break:break-word}
-.flash{border-radius:10px;padding:10px 14px;margin:0 0 14px;background:#e8effe;border:1px solid #b9ccfb}
-.check li{margin:3px 0}.footer{color:var(--mut);font-size:12.5px;text-align:center;padding:18px}
-@media(max-width:640px){main{padding:14px 10px 50px}h1{font-size:21px}
-header.top .tag{display:none}table{font-size:13px}}
+.row>div{flex:1;min-width:150px}
+pre{background:#0f1a2c;color:#d7e3f5;border-radius:12px;padding:13px;overflow:auto;
+font-size:12.5px;white-space:pre-wrap;word-break:break-word;max-height:260px}
+.flash{border-radius:12px;padding:11px 15px;margin:0 0 16px;background:#e8effe;border:1px solid #b9ccfb}
+.check li{margin:3px 0}.footer{color:var(--mut);font-size:12.5px;text-align:center;padding:20px}
+details{border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin:0 0 14px;background:#fcfdff}
+details summary{cursor:pointer;font-weight:600;font-size:14px;color:var(--mut)}
+details[open ] summary{margin-bottom:8px;color:var(--ink)}
+.stages{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 2px}
+.stage{display:flex;align-items:center;gap:7px;background:#f2f5fa;border-radius:20px;
+padding:6px 13px;font-size:13px;font-weight:500}
+.stage .dot{width:8px;height:8px;border-radius:50%;background:#c3cedd}
+.stage.done .dot{background:var(--ok)}.stage.now{background:#e8effe;color:var(--brand2)}
+.stage.now .dot{background:var(--brand)}
+.bigbtn{font-size:16px;padding:13px 26px;border-radius:12px}
+@media(max-width:640px){main{padding:18px 12px 56px}h1{font-size:22px}
+header.top .tag{display:none}table{font-size:13px}.card{padding:17px 16px}
+nav.main{top:53px}}
 """
 
 NAV = [
-    ("/", "Today"), ("/connect", "Connect"), ("/roles", "Roles"),
-    ("/settings", "Settings"), ("/eligibility", "Eligibility"),
+    ("/", "Today"), ("/profiles", "Profiles"), ("/loop", "Growth Loop"),
+    ("/connect", "Connect"), ("/roles", "Roles"),
+    ("/settings", "Settings"), ("/guardrails", "Guardrails"),
+    ("/eligibility", "Eligibility"),
     ("/creative", "Creative Studio"), ("/providers", "API Providers"),
     ("/planner", "Planner"),
     ("/approvals", "Approvals"), ("/budget", "Budget"), ("/leads", "Leads"),
-    ("/reports", "Reports"), ("/trends", "Trends"), ("/audit", "Errors & Audit"),
+    ("/reports", "Reports"), ("/trends", "Knowledge"), ("/audit", "Errors & Audit"),
 ]
 
 ROLE_NAMES = [
@@ -130,6 +154,32 @@ SETTING_FIELDS = [
     ("DESTINATION_READY", "checkbox", "Tick karne ka matlab: destination page ready hai aur traffic wahan ja sakta hai."),
     ("DRY_RUN", "checkbox", "ON (default) = koi asli write nahi, sab MOCK par simulate hoga — LIVE mode me bhi."),
     ("AUTOMATION_MODE", "select", "OFF = sirf reports. PROPOSE (default) = har cheez approval ke baad. AUTO_WITHIN_RULES = sirf tab jab owner ne exact rules likh kar approve kiye hon (Step 5)."),
+    ("AUTO_RULES_APPROVED", "checkbox", "AUTO_WITHIN_RULES ke liye: owner ne neeche wale written rules padh kar approve kiye hain. Bina iske AUTO mode bhi PROPOSE jaisa hi chalega."),
+    ("AUTO_RULES_TEXT", "text", "AUTO_WITHIN_RULES ke written rules (owner ki apni shabdon me — kaunsi actions caps ke andar auto ho sakti hain)."),
+    ("TOP_CREATIVE_WINDOW_DAYS", "number", "Growth Loop ka top-creative window: 7 ya 10 din. 0/khaali = 7."),
+    ("GUARDRAIL_LEARNING_MIN_DAYS", "number", "Guardrail: itne din se naye live object par edit/change BLOCK. 0 = inactive."),
+    ("GUARDRAIL_LEARNING_MIN_CONVERSIONS", "number", "Guardrail: itne conversions se pehle judge/edit BLOCK. 0 = inactive."),
+    ("GUARDRAIL_MAX_AD_SETS_PER_CAMPAIGN", "number", "Guardrail: ek campaign me isse zyada ad sets = fragmentation BLOCK. 0 = inactive."),
+    ("GUARDRAIL_MIN_AD_SET_BUDGET", "number", "Guardrail: per-ad-set budget isse kam ho to WARN. 0 = inactive."),
+    ("GUARDRAIL_MIN_CREATIVES_PER_ADSET", "number", "Guardrail: ad set me isse kam creatives ho to WARN. 0 = inactive."),
+    ("GUARDRAILS_DISABLED", "text", "OFF kiye hue guardrail ids (comma se) — Guardrails page se toggle karna behtar hai."),
+    ("LEARNING_EVENT_THRESHOLD", "number", "Guardrail D4/D1: ek ad set ko verdict se pehle hafte me kam se kam itne optimisation events. 0 = inactive. (Research reference sirf: ~50 — guidance, default nahi.)"),
+    ("MIN_EVALUATION_DAYS", "number", "Guardrail D2: verdict se pehle kam se kam itne din ka data. 0 = inactive. (Research reference sirf: ~7 din.)"),
+    ("FREQUENCY_CAP_PROSPECTING", "number", "Guardrail D7: prospecting frequency isse upar = WARN. 0 = inactive. (Research reference sirf: ~3.)"),
+    ("FREQUENCY_CAP_RETARGETING", "number", "Guardrail D7: retargeting frequency cap. 0 = inactive."),
+    ("FATIGUE_CTR_DROP_PCT", "number", "Guardrail D7: CTR drop % jiske baad fatigue mana jaye (monitor note). 0 = inactive."),
+    ("CREATIVES_PER_AD_SET_MIN", "number", "Guardrail D8: ad set me kam se kam itne creatives. 0 = inactive. (Research reference sirf: 3–5.)"),
+    ("CREATIVES_PER_AD_SET_MAX", "number", "Guardrail D8: ad set me zyada se zyada itne creatives. 0 = inactive. (Research reference sirf: 3–5.)"),
+    ("HOOK_RATE_FLOOR_PCT", "number", "Guardrail D9: video hook rate isse neeche = WARN. 0 = inactive. (Research reference sirf: 20–30% practitioner ranges.)"),
+    ("HOOK_MIN_IMPRESSIONS", "number", "Guardrail D9: hook rate tabhi judge ho jab itne impressions ho chuke hon. 0 = inactive."),
+    ("AUDIENCE_SIZE_FLOOR", "number", "Guardrail D6: audience size isse chhota = WARN. 0 = inactive."),
+    ("AUDIENCE_OVERLAP_MAX_PCT", "number", "Guardrail D5: ad sets ke beech overlap % isse zyada = WARN. 0 = inactive."),
+    ("LANDING_PAGE_MAX_LOAD_SEC", "number", "Guardrail D11: landing page mobile load seconds isse zyada = WARN. 0 = inactive."),
+    ("COMMENT_MODERATION_SLA_HOURS", "number", "Guardrail D12: negative comment itne ghante se zyada unaddressed = WARN. 0 = inactive."),
+    ("REJECTION_COUNT_LIMIT", "number", "Guardrail D16: rolling window me itne se zyada rejections = launch freeze BLOCK. 0 = inactive."),
+    ("EMQ_MIN", "number", "Guardrail D14: Event Match Quality isse kam = WARN. 0 = inactive. (Research reference sirf: ~8 practitioner figure.)"),
+    ("PAUSE_RELEARN_DAYS", "number", "Guardrail D25: itne din paused ad set ke resume par re-learning WARN. 0 = inactive. (Research reference sirf: 7 din.)"),
+    ("REVIEW_CADENCE_DAYS", "number", "Guardrail D23: itne din se review na ho to self-watch WARN. 0 = inactive."),
 ]
 
 
@@ -137,7 +187,7 @@ def esc(x):
     return html.escape(str(x if x is not None else ""))
 
 
-def page(title, active, body, flash=None, conn=None):
+def page(title, active, body, flash=None, conn=None, ctx=None):
     nav = "".join('<a href="%s" class="%s">%s</a>' % (href, "on" if href == active else "", label)
                   for href, label in NAV)
     kill = ""
@@ -150,15 +200,29 @@ def page(title, active, body, flash=None, conn=None):
                     'Ye apne aap kabhi resume nahi hoga — Settings me jaakar owner '
                     'khud band karega.</div>')
     flash_html = '<div class="flash">%s</div>' % esc(flash) if flash else ""
+    biz_tag = "Business · Meta Ads"
+    switcher = ""
+    if ctx is not None and ctx.get("profile"):
+        profile = ctx["profile"]
+        biz_tag = "%s · %s" % (profile["name"], profile.get("industry") or "")
+        options = "".join(
+            '<option value="%d" %s>%s</option>'
+            % (p["id"], "selected" if p["id"] == profile["id"] else "", esc(p["name"]))
+            for p in profiles_mod.list_profiles(conn))
+        switcher = ('<form method="post" action="/profiles/switch" class="inline">%s'
+                    '<select name="profile_id" onchange="this.form.submit()" '
+                    'style="width:auto;margin:0;padding:5px 8px">%s</select></form>'
+                    % (ctx["csrf_field"], options))
     return """<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>%s · SH Ads Desk</title><style>%s</style></head><body>
 <header class="top"><span class="brand">SH Ads Desk</span>
-<span class="tag">Software Hub · Meta Ads</span><span class="tag">DRY_RUN + PROPOSE default</span>
+<span class="tag">%s</span><span class="tag">DRY_RUN + PROPOSE default</span>%s
 <form method="post" action="/logout" class="inline"><button class="secondary" type="submit">Logout</button></form></header>
 <nav class="main">%s</nav><main>%s%s%s</main>
-<div class="footer">SH Ads Desk · Step 1 logic VERIFIED (local tests) · Live Meta path UNTESTED · API %s · Provider API keys sirf server ki data/secrets.env me rehti hain — app unhe kabhi dikhata ya log nahi karta</div>
-</body></html>""" % (esc(title), CSS, nav, kill, flash_html, body, esc(API_VERSION_LABEL))
+<div class="footer">SH Ads Desk · kisi bhi industry ke liye · Step 1 logic VERIFIED (local tests) · Live Meta path UNTESTED · API %s · Provider API keys sirf server ki data/secrets.env me rehti hain — app unhe kabhi dikhata ya log nahi karta</div>
+</body></html>""" % (esc(title), CSS, esc(biz_tag), switcher, nav, kill,
+                     flash_html, body, esc(API_VERSION_LABEL))
 
 
 def simple_page(title, body):
@@ -184,41 +248,78 @@ def mode_banner(settings):
 # ---------------------------------------------------------------- pages (GET)
 def pg_today(ctx):
     conn, settings = ctx["conn"], ctx["settings"]
-    store.seed_insights(conn=conn)
-    rows = store.load_insight_rows(conn)
+    profile = ctx["profile"]
+    pid = profile["id"] if profile else 0
+    store.seed_insights(conn=conn, profile_id=pid)
+    rows = store.load_insight_rows(conn, profile_id=pid)
     queue = ctx["queue"]
-    pending = queue.list_pending()
+    pending = queue.list_pending(profile_id=pid)
     spend = sum(float(r.get("spend") or 0) for r in rows)
     enq = sum(int(r.get("enquiries") or 0) for r in rows)
     qual = sum(int(r.get("qualified_leads") or 0) for r in rows)
     leads = store.lead_summary(conn)
+    biz = esc(profile["name"]) if profile else "Software Hub"
+    ind = esc(profile.get("industry") or "") if profile else ""
+    status = loop_mod.loop_status(conn, pid)
+    ran_keys = {s["key"] for s in status["stages"] if s["last_run"]}
+    chips = ""
+    for key, label in loop_mod.STAGES:
+        short = label.split("·", 1)[-1].strip()
+        cls = "done" if key in ran_keys else ("now" if key == status["current_stage"] else "")
+        pill = ('<span class="pill ok">done</span>' if key in ran_keys
+                else '<span class="pill info">next</span>' if key == status["current_stage"]
+                else '<span class="pill dim">queued</span>')
+        chips += '<span class="stage %s"><span class="dot"></span>%s %s</span>' % (
+            cls, esc(short), pill)
+    kill_pill = ('<span class="pill bad">BLOCKED — kill switch ON</span>'
+                 if queue.kill_switch_active()
+                 else '<span class="pill ok">system clear</span>')
+    mode = os.environ.get("META_MODE", "MOCK").upper()
     body = """
-<h1>Today</h1><p class="mut">Software Hub ke Meta ads ka control desk. Default mode:
-<strong>DRY_RUN + PROPOSE</strong> — kuch bhi aapke approval ke bina nahi hota.</p>
+<h1>%s</h1><p class="mut">%s · DRY_RUN + PROPOSE — approval ke bina kuch nahi hota. %s</p>
 %s
 <div class="grid">
- <div class="card"><div class="mut small">Reported spend (MOCK data)</div><div class="kpi">%s</div>
- <div class="small mut">Currency setting: %s · Reporting lag ho sakta hai</div></div>
- <div class="card"><div class="mut small">Enquiries</div><div class="kpi">%d</div>
- <div class="small mut">Qualified leads: %d · Junk: %d</div></div>
+ <div class="card"><div class="mut small">Spend (MOCK)</div><div class="kpi">%s</div>
+ <div class="small mut">Currency: %s</div></div>
+ <div class="card"><div class="mut small">Qualified leads</div><div class="kpi">%d</div>
+ <div class="small mut">Enquiries %d · Junk %d</div></div>
  <div class="card"><div class="mut small">Approvals pending</div><div class="kpi">%d</div>
- <div class="small mut"><a href="/approvals">Approval queue kholo</a> — har item pehle dikhega, phir action hoga</div></div>
- <div class="card"><div class="mut small">Lead log (counts only)</div><div class="kpi">%d</div>
- <div class="small mut">Orders: %d · Reseller applications: %d</div></div>
+ <div class="small mut"><a href="/approvals">Queue kholo →</a></div></div>
+ <div class="card"><div class="mut small">Mode</div><div class="kpi">%s</div>
+ <div class="small mut">Live Meta path UNTESTED</div></div>
 </div>
-<div class="card"><h2>Shuruaat yahan se</h2><ol class="check">
-<li><a href="/connect">Connect wizard</a> — Meta connection me kya ready hai, kya baki hai</li>
-<li><a href="/eligibility">Eligibility</a> — jab tak kisi product ki resale permission proof ke saath confirm nahi, uska ad ban hi nahi sakta (gate fails closed)</li>
-<li><a href="/creative">Creative Studio</a> — angles, copy, poster brief, reel script banao aur policy check karo</li>
-<li><a href="/providers">API Providers</a> — apni generation APIs (OpenAI/Claude/Higgsfield/Kling) connect karo; phir Creative Studio se asal copy, poster, carousel aur reel banege</li>
-<li><a href="/planner">Planner</a> — campaign structure ka plan banao aur approval ke liye bhejo</li>
-<li><a href="/reports">Reports</a> — daily/weekly report (Hinglish option ke saath)</li></ol>
-<p class="small mut">Neeche ke numbers MOCK demo dataset ke hain — asli numbers Step 3 (read-only API) ke baad aayenge.</p></div>
-""" % (mode_banner(settings), esc(spend), esc(settings.get("ACCOUNT_CURRENCY") or "unset"),
-       enq, qual, int(leads.get("junk", 0)), len(pending),
+<div class="card"><h2>Growth Loop</h2>
+<div class="stages">%s</div>
+<p style="margin-top:14px"><a class="btn bigbtn" href="/loop">Loop chalao →</a>
+&nbsp; %s</p></div>
+<div class="card"><h2>Departments</h2>
+<div class="grid">
+ <div><strong>Research</strong><div class="small mut">Competitors, angles, trends<br>
+ <a href="/roles">Roles</a> · <a href="/trends">Knowledge</a></div></div>
+ <div><strong>Creative</strong><div class="small mut">Copy, posters, reels, API generation<br>
+ <a href="/creative">Creative Studio</a> · <a href="/providers">API Providers</a></div></div>
+ <div><strong>Launch</strong><div class="small mut">Plan → guardrail pre-flight → approval<br>
+ <a href="/planner">Planner</a> · <a href="/approvals">Approvals</a></div></div>
+ <div><strong>Safety</strong><div class="small mut">Gates, policy, CPC/CPL guardrails<br>
+ <a href="/eligibility">Eligibility</a> · <a href="/guardrails">Guardrails</a></div></div>
+</div></div>
+<details><summary>Kaise kaam karta hai — saari details</summary>
+<p class="small">Ye desk <strong>kisi bhi industry</strong> ke liye hai — upar ke
+switcher se business badlo; har profile (<a href="/profiles">Business Profiles</a>)
+ka catalog, competitors, settings aur data alag rehta hai. Eligibility gate fails
+closed: jab tak kisi offering ki permission proof ke saath confirm nahi, uska ad
+ban hi nahi sakta. Lead log counts: kul %d · orders %d · reseller applications %d.
+Neeche ke numbers MOCK demo dataset ke hain — asli numbers Step 3 (read-only API)
+ke baad aayenge. Meta connection ki sthiti: <a href="/connect">Connect wizard</a> ·
+<a href="/reports">Reports</a> · <a href="/budget">Budget</a> · <a href="/leads">Leads</a></p>
+</details>
+""" % (biz, ind, kill_pill, mode_banner(settings), esc(spend),
+       esc(settings.get("ACCOUNT_CURRENCY") or "unset"),
+       qual, enq, int(leads.get("junk", 0)), len(pending), esc(mode),
+       chips, kill_pill,
        sum(leads.values()), int(leads.get("order", 0)),
        int(leads.get("reseller_application", 0)))
-    return page("Today", "/", body, ctx["flash"], conn)
+    return page("Today", "/", body, ctx["flash"], conn, ctx)
 
 
 def pg_connect(ctx):
@@ -243,20 +344,30 @@ def pg_connect(ctx):
 Token sirf server ke environment (.env) me rehta hai, app ke andar type nahi hota.</p>
 %s
 <div class="card"><h2>Status</h2><table><tr><th>Cheez</th><th>Status</th><th>Note</th></tr>%s</table></div>
-<div class="card"><h2>Owner ke manual steps (Meta ki screens par)</h2><ol class="check">
+<div class="card"><h2>Owner ke manual steps (Meta ki screens par)</h2>
+<p class="small mut">Pura screen-by-screen guide package me hai: <strong>SETUP_GUIDE.md</strong> —
+wahi follow karo. Neeche sirf summary hai. <strong>Note:</strong> agar Meta login hi
+blocked hai (suspended account), pehle Meta ka appeal/recovery wala rasta hai —
+naya account ya Page banakar ban ko dodge karna bilkul nahi (policy ke khilaf hai).</p>
+<ol class="check">
 <li>Facebook Page banao (agar nahi hai) — facebook.com/pages/create</li>
 <li>business.facebook.com par Business portfolio banao aur Page + Ad account jodo</li>
 <li>Ad account me payment method Meta ki billing screen me add karo (app kabhi card nahi mangta)</li>
-<li>developers.facebook.com par app banao → Marketing API use case chuno</li>
+<li>developers.facebook.com par app banao → pehle sirf <strong>"Measure ad performance data"</strong> use case (read-only); "Create &amp; manage ads" Step 4 ki approval ke baad</li>
 <li>Permissions: pehle sirf read-only (ads_read) — write (ads_management) Step 4 ki approval ke baad hi</li>
 <li>Token generate karke apne server ke .env me META_ACCESS_TOKEN rakho; ad account id META_AD_ACCOUNT_ID me</li>
 <li>META_MODE ko tab tak MOCK rakho jab tak Step 3 (read-only compare) pass na ho</li></ol>
-<p class="small mut">Kaunsi permission/access-tier lagegi ye objective par nirbhar hai —
-official doc: developers.facebook.com/documentation/ads-commerce/marketing-api/get-started/authorization
-(ye page is build me live fetch NAHI hua — UNVERIFIED, Step 2 me owner ke saath padha jayega.)
+<p class="small mut"><strong>Step 2 me verify hua (2026-11-16, official Authorization page padh kar):</strong>
+apne <em>khud ke</em> ad account ke liye <code>ads_read</code>/<code>ads_management</code> ka
+<strong>standard access kaafi hai</strong> — advanced access / App Review sirf tab chahiye jab
+app <em>dusre logo ke</em> accounts manage kare. Access tiers ke naye naam (May 2026 se):
+<strong>Limited</strong> (default, development ke liye, heavily rate-limited) aur
+<strong>Full</strong> (App Review + pichhle 15 din me 500+ successful calls + error rate 15%% se kam).
+Poori details URL + date ke saath package ki <strong>META_ACCESS.md</strong> aur
+<strong>PRACTICES.md</strong> me hain.
 API version pin: %s</p></div>
 """ % (mode_banner(ctx["settings"]), rows_html, esc(API_VERSION_LABEL))
-    return page("Connect", "/connect", body, ctx["flash"], conn)
+    return page("Connect", "/connect", body, ctx["flash"], conn, ctx)
 
 
 def pg_roles(ctx):
@@ -293,13 +404,29 @@ pages (Creative/Approvals/Optimiser) se chalte hain. Kuch bhi Meta par write nah
 <button type="submit">Roles ek baar chalao (MOCK)</button></form>
 %s
 """ % (ctx["csrf_field"], "".join(cards))
-    return page("Roles", "/roles", body, ctx["flash"], conn)
+    return page("Roles", "/roles", body, ctx["flash"], conn, ctx)
+
+
+ADVANCED_SETTING_KEYS = {
+    "GUARDRAIL_LEARNING_MIN_DAYS", "GUARDRAIL_LEARNING_MIN_CONVERSIONS",
+    "GUARDRAIL_MAX_AD_SETS_PER_CAMPAIGN", "GUARDRAIL_MIN_AD_SET_BUDGET",
+    "GUARDRAIL_MIN_CREATIVES_PER_ADSET", "GUARDRAILS_DISABLED",
+    "LEARNING_EVENT_THRESHOLD", "MIN_EVALUATION_DAYS",
+    "FREQUENCY_CAP_PROSPECTING", "FREQUENCY_CAP_RETARGETING",
+    "FATIGUE_CTR_DROP_PCT", "CREATIVES_PER_AD_SET_MIN",
+    "CREATIVES_PER_AD_SET_MAX", "HOOK_RATE_FLOOR_PCT", "HOOK_MIN_IMPRESSIONS",
+    "AUDIENCE_SIZE_FLOOR", "AUDIENCE_OVERLAP_MAX_PCT",
+    "LANDING_PAGE_MAX_LOAD_SEC", "COMMENT_MODERATION_SLA_HOURS",
+    "REJECTION_COUNT_LIMIT", "EMQ_MIN", "PAUSE_RELEARN_DAYS",
+    "REVIEW_CADENCE_DAYS", "CONVERSION_LAG_WINDOW_DAYS", "LIFETIME_CAP",
+    "AUTO_RULES_APPROVED", "AUTO_RULES_TEXT",
+}
 
 
 def pg_settings(ctx):
     conn = ctx["conn"]
-    settings = ctx["settings"]
-    fields = []
+    settings = load_settings()  # global file; profile overrides win at read time
+    core_fields, advanced_fields = [], []
     for key, kind, helptext in SETTING_FIELDS:
         val = settings.get(key)
         if kind == "checkbox":
@@ -312,13 +439,19 @@ def pg_settings(ctx):
             input_html = '<select name="%s">%s</select>' % (key, opts)
         else:
             input_html = '<input name="%s" value="%s">' % (key, esc(val if val is not None else ""))
-        fields.append('<label>%s</label>%s<p class="small mut" style="margin-top:-6px">%s</p>'
-                      % (key, input_html, esc(helptext)))
+        html = ('<label>%s</label>%s<p class="small mut" style="margin-top:-6px">%s</p>'
+                % (key, input_html, esc(helptext)))
+        (advanced_fields if key in ADVANCED_SETTING_KEYS else core_fields).append(html)
+    fields = core_fields + [
+        '<details><summary>Advanced — guardrail thresholds aur AUTO rules '
+        '(%d fields)</summary>%s</details>' % (len(advanced_fields),
+                                               "".join(advanced_fields))]
     kill_on = ctx["queue"].kill_switch_active()
     body = """
 <h1>Settings</h1>
-<p class="mut">Saari values yahin se badalti hain — code me kuch hardcoded nahi hai.
-Defaults khaali/zero hain; koi benchmark number default nahi rakha gaya hai.</p>
+<p class="mut">Global settings — defaults khaali/zero, kuch hardcoded nahi.
+Per-business overrides <a href="/profiles">Profiles</a> par; guardrail toggles
+<a href="/guardrails">Guardrails</a> par.</p>
 <div class="card"><form method="post" action="/settings">%s%s
 <p class="small">Save dabane se settings is server ki local settings file me save hongi
 (audit log me entry ke saath). Isse koi Meta write nahi hota.</p>
@@ -335,64 +468,102 @@ band bhi owner khud karega.</p>
        '<span class="pill bad">ON — sab ruka hua hai</span>' if kill_on else '<span class="pill ok">OFF</span>',
        ctx["csrf_field"], "off" if kill_on else "on",
        "Kill switch band karo (owner action)" if kill_on else "KILL SWITCH ON karo — sab roko")
-    return page("Settings", "/settings", body, ctx["flash"], conn)
+    return page("Settings", "/settings", body, ctx["flash"], conn, ctx)
 
 
 def pg_eligibility(ctx):
     conn, settings = ctx["conn"], ctx["settings"]
-    products = load_eligibility()
+    profile = ctx["profile"]
+    pid = profile["id"] if profile else 0
+    offerings = profiles_mod.list_offerings(pid, conn)
+    perm_label = esc(profile.get("permission_label") or "eligibility permission confirmed") \
+        if profile else "eligibility permission confirmed"
+    preset = industries_mod.get_preset(profile.get("industry_preset")) if profile else {}
     rows_html = []
-    for p in products:
-        confirmed = p.get("resale_permission_confirmed") is True
+    for o in offerings:
+        confirmed = o["permission_confirmed"]
         pill = ('<span class="pill ok">CONFIRMED</span>' if confirmed
                 else '<span class="pill bad">NOT CONFIRMED — ad nahi ban sakta</span>')
         rows_html.append(
-            "<tr><td><strong>%s</strong></td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>"
-            % (esc(p.get("product")), esc(p.get("supplier") or "—"), pill,
-               esc(p.get("proof_note") or "—"), esc(p.get("terms_checked_date") or "—")))
-    options = "".join('<option>%s</option>' % esc(p.get("product")) for p in products)
+            "<tr><td><strong>%s</strong></td><td>%s</td><td>%s</td><td>%s</td>"
+            "<td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>"
+            % (esc(o["name"]), esc(o["type"]), esc(o["category"] or "—"),
+               esc(o["price"] or "—"), esc(o["supplier"] or "—"), pill,
+               esc(o["proof_note"] or "—"), esc(o["terms_checked_date"] or "—")))
+    options = "".join('<option value="%d">%s</option>' % (o["id"], esc(o["name"]))
+                      for o in offerings)
     dest = policy_checker.check_destination(settings)
+    pack = profiles_mod.compliance_patterns_for(profile)
+    pack_html = "".join(
+        "<li><code>%s</code> — %s</li>" % (esc(p["pattern"]), esc(p["reason"]))
+        for p in pack) or "<li class='mut'>Is preset ka koi add-on pack nahi hai — sirf core Meta rules lagte hain.</li>"
     body = """
-<h1>Product Eligibility &amp; Destination Gate</h1>
-<p class="mut">Rule: jab tak kisi product ki <strong>resale permission proof note +
-terms-checked date</strong> ke saath confirm nahi hoti, us product ka ad system
-banane hi nahi dega (fails closed). Kuch bhi invent nahi kiya gaya hai — saari
-entries abhi unconfirmed hain.</p>
-<div class="card"><h2>Products (%d)</h2>
-<table><tr><th>Product</th><th>Supplier</th><th>Resale permission</th><th>Proof note</th><th>Terms checked</th></tr>%s</table></div>
+<h1>Eligibility &amp; Destination Gate — %s</h1>
+<p class="mut">Rule: jab tak kisi offering ki <strong>%s, proof note +
+terms-checked date</strong> ke saath confirm nahi hoti, us offering ka ad system
+banane hi nahi dega (fails closed — har industry ke liye ek jaisi sakhti).
+%s</p>
+<div class="card"><h2>Offerings catalog (%d) — %s</h2>
+<table><tr><th>Offering</th><th>Type</th><th>Category</th><th>Price</th><th>Supplier/Source</th><th>Permission</th><th>Proof note</th><th>Terms checked</th></tr>%s</table></div>
+<div class="card"><h2>Offering add karo</h2>
+<form method="post" action="/eligibility/add">%s
+<label>Naam</label><input name="name" required>
+<div class="row"><div style="flex:1"><label>Type</label><select name="type"><option>product</option><option>service</option></select></div>
+<div style="flex:1"><label>Category</label><input name="category"></div>
+<div style="flex:1"><label>Price (optional)</label><input name="price"></div></div>
+<label>Supplier / source note</label><input name="supplier">
+<label>Destination override (optional — is offering ka apna landing URL)</label><input name="destination_override">
+<p class="small">Add dabane se offering UNCONFIRMED bankar judegi — ad tabhi
+banega jab neeche se permission confirm hogi.</p>
+<button type="submit">Offering add karo</button></form></div>
 <div class="card"><h2>Permission confirm karo (owner only)</h2>
 <form method="post" action="/eligibility/confirm">%s
-<label>Product</label><select name="product">%s</select>
+<label>Offering</label><select name="offering_id">%s</select>
 <label>Supplier</label><input name="supplier" placeholder="Supplier ka naam (jaisa proof me hai)">
 <label>Proof note</label><input name="proof_note" placeholder="Proof kahan hai — file/agreement ka sandarbh" required>
 <label>Terms checked date</label><input name="terms_checked_date" type="date" required>
-<p class="small">Confirm dabane se sirf is product ki entry PRODUCT_ELIGIBILITY.yaml me
-update hogi. Proof note ya date khaali ho to confirm <strong>refuse</strong> ho jayega.
+<p class="small">Confirm dabane se sirf is offering ki catalog entry update hogi.
+Proof note ya date khaali ho to confirm <strong>refuse</strong> ho jayega.
 Isse koi ad create nahi hota — ye sirf gate kholta hai.</p>
 <button type="submit">Permission confirm karo</button></form>
 <form method="post" action="/eligibility/unconfirm" style="margin-top:10px">%s
-<label>Permission wapas lo — Product</label><select name="product">%s</select>
-<p class="small">Unconfirm dabane se us product ke ads phir se block ho jayenge.</p>
-<button class="secondary" type="submit">Unconfirm karo</button></form></div>
+<label>Permission wapas lo — Offering</label><select name="offering_id">%s</select>
+<p class="small">Unconfirm dabane se us offering ke ads phir se block ho jayenge.</p>
+<button class="secondary" type="submit">Unconfirm karo</button></form>
+<form method="post" action="/eligibility/delete" style="margin-top:10px">%s
+<label>Offering hatao — Offering</label><select name="offering_id">%s</select>
+<label><input type="checkbox" name="confirm_delete" style="width:auto"> Haan, pakka hatao</label>
+<button class="danger" type="submit">Delete karo</button></form></div>
+<div class="card"><h2>Industry compliance add-on pack — %s</h2>
+<p class="small mut">Ye patterns Meta ke universal core rules ke UPAR lagte hain
+(policy checker dono chalata hai). Preset ek editable starting point hai —
+ye legal advice nahi hai.</p>
+<ul class="check">%s</ul></div>
 <div class="card"><h2>Destination gate</h2>
 <p>Abhi ki sthiti: %s</p>
-<p class="small mut">DESTINATION_URL aur DESTINATION_READY Settings page se set hote hain —
-system khud koi destination nahi chunta, aur Lucifer bot par traffic tab tak nahi
-jayega jab tak owner na kahe.</p></div>
-""" % (len(products), "".join(rows_html), ctx["csrf_field"], options,
+<p class="small mut">DESTINATION_URL aur DESTINATION_READY Settings/Profile overrides
+se set hote hain — system khud koi destination nahi chunta, aur Lucifer bot par
+traffic tab tak nahi jayega jab tak owner na kahe. Kisi offering ka apna
+destination override ho to usi offering ke drafts par wahi lagega.</p></div>
+""" % (esc(profile["name"]) if profile else "—", perm_label,
+       esc(preset.get("permission_note", "")),
+       len(offerings), esc(profile["name"]) if profile else "—",
+       "".join(rows_html) or '<tr><td colspan="8" class="mut">Catalog khaali hai — pehla offering add karo</td></tr>',
+       ctx["csrf_field"], ctx["csrf_field"], options, ctx["csrf_field"], options,
        ctx["csrf_field"], options,
+       esc(profile.get("industry") or "") if profile else "", pack_html,
        '<span class="pill ok">KHULA hai</span>' if dest["allowed"]
        else '<span class="pill bad">BAND hai</span> — ' + esc("; ".join(dest["reasons"])))
-    return page("Eligibility", "/eligibility", body, ctx["flash"], conn)
+    return page("Eligibility", "/eligibility", body, ctx["flash"], conn, ctx)
 
 
 def pg_creative(ctx):
     conn = ctx["conn"]
-    products = load_eligibility()
+    products = ctx["eligibility"]
     options = "".join('<option>%s</option>' % esc(p.get("product")) for p in products)
     segments = "".join('<option>%s</option>' % s for s in
                        ("students", "freelancers", "creators", "bot owners", "agencies"))
-    saved = store.list_creatives(conn)
+    saved = store.list_creatives(conn, profile_id=ctx["profile"]["id"] if ctx["profile"] else None)
     saved_html = ""
     for c in saved:
         pill = ('<span class="pill ok">Policy PASS</span>' if c["policy_allowed"]
@@ -523,7 +694,7 @@ Ek bhi item untick ho to refuse ho jayega.</p>
        api_section,
        ctx["csrf_field"], asset_html or '<tr><td colspan="4" class="mut">Koi asset register nahi hai</td></tr>',
        ctx["csrf_field"])
-    return page("Creative Studio", "/creative", body, ctx["flash"], conn)
+    return page("Creative Studio", "/creative", body, ctx["flash"], conn, ctx)
 
 
 PROVIDER_FIELD_LABELS = {
@@ -694,11 +865,11 @@ hamesha jeet-ti hai: <code>SH_ADS_TEXT_API_KEY</code>, <code>SH_ADS_IMAGE_API_KE
 <code>SH_ADS_VIDEO_API_KEY</code>. <code>data/secrets.env</code> ka backup surakshit
 jagah rakho — use kabhi git/commit/chat me mat daalo.</p></div>
 """ % cards
-    return page("API Providers", "/providers", body, ctx["flash"], ctx["conn"])
+    return page("API Providers", "/providers", body, ctx["flash"], ctx["conn"], ctx)
 
 
 def pg_planner(ctx):
-    products = load_eligibility()
+    products = ctx["eligibility"]
     options = "".join('<option>%s</option>' % esc(p.get("product")) for p in products)
     body = """
 <h1>Campaign Planner</h1>
@@ -721,15 +892,17 @@ bankar neeche dikhega aur ek CAMPAIGN_DRAFT approval queue me chala jayega. Plan
 copy policy check se guzregi — gate band ho to draft BLOCKED rahega aur execute nahi hoga.</p>
 <button type="submit">Plan banao + approval ke liye bhejo</button></form></div>
 """ % (ctx["csrf_field"], options)
-    return page("Planner", "/planner", body, ctx["flash"], ctx["conn"])
+    return page("Planner", "/planner", body, ctx["flash"], ctx["conn"], ctx)
 
 
 def pg_approvals(ctx):
     conn = ctx["conn"]
     queue = ctx["queue"]
-    pending = queue.list_pending()
+    pid = ctx["profile"]["id"] if ctx["profile"] else None
+    pending = queue.list_pending(profile_id=pid)
     all_items = ctx["conn"].execute(
-        "SELECT * FROM proposals ORDER BY id DESC LIMIT 50").fetchall()
+        "SELECT * FROM proposals WHERE profile_id IN (?, 0) "
+        "ORDER BY id DESC LIMIT 50", (pid or 0,)).fetchall()
     cards = []
     for item in pending:
         payload = item["payload"]
@@ -771,13 +944,14 @@ isi queue ki approval lagti hai (brief rule 3).</p>
 badhega; CAMPAIGN_DRAFT ke liye saare gates (eligibility, claims, destination) phir se
 check honge — fail ho to blocked. Result meta_writes + audit log me jayega.</p></div>
 """ % ("".join(cards) or '<div class="card">Koi pending item nahi hai.</div>', history)
-    return page("Approvals", "/approvals", body, ctx["flash"], conn)
+    return page("Approvals", "/approvals", body, ctx["flash"], conn, ctx)
 
 
 def pg_budget(ctx):
     conn, settings = ctx["conn"], ctx["settings"]
-    store.seed_insights(conn=conn)
-    rows = store.load_insight_rows(conn)
+    pid = ctx["profile"]["id"] if ctx["profile"] else None
+    store.seed_insights(profile_id=pid, conn=conn)
+    rows = store.load_insight_rows(conn, profile_id=pid)
     total = sum(float(r.get("spend") or 0) for r in rows)
     cap = float(settings.get("TOTAL_DAILY_BUDGET_CAP") or 0)
     per_rows = "".join(
@@ -825,7 +999,7 @@ safety stop + kill switch engage ho jayega.</p>
        esc(settings.get("PER_CAMPAIGN_CAP") or "unset"),
        esc(settings.get("LIFETIME_CAP") or "unset"), per_rows,
        ctx["csrf_field"], ctx["csrf_field"])
-    return page("Budget", "/budget", body, ctx["flash"], conn)
+    return page("Budget", "/budget", body, ctx["flash"], conn, ctx)
 
 
 def pg_leads(ctx):
@@ -856,7 +1030,7 @@ Koi personal data mat likho — ad_ref me sirf ad ki pehchan rakho.</p>
 """ % ("".join('<div class="card"><div class="mut small">%s</div><div class="kpi">%d</div></div>'
                % (esc(k), v) for k, v in summary.items()),
        ctx["csrf_field"], hist or '<tr><td colspan="4" class="mut">Abhi koi entry nahi</td></tr>')
-    return page("Leads", "/leads", body, ctx["flash"], conn)
+    return page("Leads", "/leads", body, ctx["flash"], conn, ctx)
 
 
 def pg_reports(ctx):
@@ -886,10 +1060,11 @@ Numbers abhi MOCK dataset ke hain.</p>
 """ % (ctx["csrf_field"], ctx["csrf_field"],
        ('<div class="card"><h2>Latest report</h2><pre>%s</pre></div>' % esc(latest)) if latest else "",
        hist or '<tr><td colspan="4" class="mut">Abhi koi report save nahi hai</td></tr>')
-    return page("Reports", "/reports", body, ctx["flash"], conn)
+    return page("Reports", "/reports", body, ctx["flash"], conn, ctx)
 
 
 def pg_trends(ctx):
+    from . import policies_register
     items = ""
     for t in trends_mod.TREND_ITEMS:
         pill = ('<span class="pill ok">VERIFIED</span>' if t["verified"]
@@ -897,20 +1072,55 @@ def pg_trends(ctx):
         items += ('<tr><td><a href="%s" target="_blank" rel="noopener">%s</a></td>'
                   '<td>%s</td><td>%s</td><td class="small">%s</td></tr>'
                   % (esc(t["url"]), esc(t["title"]), esc(t["date"]), pill, esc(t["note"])))
+    review = trends_mod.knowledge_review()
+    reg = ""
+    for k in trends_mod.KNOWLEDGE_REGISTER:
+        pill = ('<span class="pill ok">VERIFIED</span>' if k["verified"]
+                else '<span class="pill warn">UNVERIFIED</span>')
+        reg += ('<tr><td>%s</td><td>%s<div class="small mut">%s</div></td>'
+                '<td class="small"><a href="%s" target="_blank" rel="noopener">source</a></td>'
+                '<td>%s</td><td>%s</td><td class="small">%s</td></tr>'
+                % (esc(k["id"]), esc(k["title"]), esc(k["area"]), esc(k["url"]),
+                   esc(k["date_read"]), pill, esc(k["note"])))
+    pol = ""
+    for p in policies_register.POLICIES:
+        status = p["status"]
+        pill_cls = "bad" if status == "CONTESTED" else ("ok" if status == "OFFICIAL" else "warn")
+        pol += ('<tr><td>%s</td><td>%s<div class="small mut">%s</div></td>'
+                '<td>%s</td><td><span class="pill %s">%s</span></td>'
+                '<td class="small"><a href="%s" target="_blank" rel="noopener">source</a>'
+                ' · checked %s</td></tr>'
+                % (esc(p["id"]), esc(p["title"]), esc(p["rule"][:400]),
+                   esc(p["category"]), pill_cls, esc(status),
+                   esc(p["source_url"]), esc(p["date_checked"])))
+    pol_status = policies_register.register_status()
     body = """
-<h1>Trend Watch — sirf official sources</h1>
-<p class="mut">Har item ke saath URL aur date hai. Jo item is build me live fetch nahi
-hua wo <strong>UNVERIFIED</strong> hai — pehle official page par khud check karo, phir
-hi koi faisla. Koi trend strategy ko apne aap nahi badalta; badlav hamesha owner ke
-faisle se hoga.</p>
-<div class="card"><table><tr><th>Item</th><th>Date</th><th>Status</th><th>Note</th></tr>%s</table></div>
+<h1>Knowledge — Meta register, Policies register, Trend watch</h1>
+<p class="mut">Har entry ke saath source URL aur date hai. UNVERIFIED matlab is
+environment me official page khud fetch nahi ho paya (403) — secondary sources
+ne Meta ko verbatim quote kiya hai; normal browser se re-verify kiye bina
+externally quote mat karo. Register kabhi strategy apne aap nahi badalta —
+badlav hamesha proposal + owner ke faisle se.</p>
+<div class="card"><h2>Meta Knowledge register — 2026 features/changes</h2>
+<p class="small mut">%s</p>
+<table><tr><th>ID</th><th>Feature / change</th><th>Source</th><th>Read</th><th>Status</th><th>Note</th></tr>%s</table></div>
+<div class="card"><h2>Policies register — Meta Advertising Policies digest</h2>
+<p class="small mut">%s Personal attributes rule dono official lists ka UNION
+enforce karti hai (Transparency Center + Help Center lists match nahi karte).
+2026 Ad Terms (PR9) DISPUTED hai — ek tracker kehta hai update 5 Nov 2026 ko
+bina nayi date ke pause hua. Ye digest legal advice nahi hai.</p>
+<table><tr><th>ID</th><th>Rule</th><th>Category</th><th>Status</th><th>Source</th></tr>%s</table></div>
+<div class="card"><h2>Trend watch — official sources</h2>
+<table><tr><th>Item</th><th>Date</th><th>Status</th><th>Note</th></tr>%s</table></div>
 <div class="card"><h2>PRACTICES note</h2>
 <p class="small">Objectives, structure, targeting/broad, placements, learning phase,
 budget badlav aur attribution par official guidance PRACTICES.md me hai (repo ke
-saath) — uske kai points abhi UNVERIFIED hain aur Step 2 me official docs ke saath
-verify honge. Tab tak koi bhi number default ke roop me use nahi hota.</p></div>
-""" % items
-    return page("Trends", "/trends", body, ctx["flash"], ctx["conn"])
+saath) — Step 2 me official docs se verify ho chuka hai; API %s par pinned hai.
+Phir bhi koi bhi number default ke roop me use nahi hota — thresholds owner
+settings hain.</p></div>
+""" % (esc(review["note"]), reg, esc(pol_status["note"]), pol, items,
+       esc(API_VERSION_LABEL))
+    return page("Knowledge", "/trends", body, ctx["flash"], ctx["conn"], ctx)
 
 
 def pg_audit(ctx):
@@ -943,7 +1153,7 @@ dikha kar aur owner ki alag approval lekar hi hota hai — CLI/library
 """ % (w_html or '<tr><td colspan="4" class="mut">Abhi koi write nahi hua</td></tr>',
        e_html or '<tr><td colspan="3" class="mut">Koi error record nahi hai</td></tr>',
        a_html)
-    return page("Errors & Audit", "/audit", body, ctx["flash"], conn)
+    return page("Errors & Audit", "/audit", body, ctx["flash"], conn, ctx)
 
 
 # ---------------------------------------------------------------- POST actions
@@ -979,7 +1189,10 @@ def post_setup(ctx, form):
 
 
 def post_settings(ctx, form):
-    settings = dict(ctx["settings"])
+    # Settings page edits the GLOBAL settings file. Per-profile overrides
+    # live on the profile (Profiles page) and win at read time — they are
+    # never baked into the global file by a save here.
+    settings = load_settings()
     for key, kind, _h in SETTING_FIELDS:
         if kind == "checkbox":
             settings[key] = key in form
@@ -1013,41 +1226,75 @@ def post_killswitch(ctx, form):
     return "Kill switch OFF — owner ne khud release kiya. AUTOMATION_MODE pehle jaisa hi rahega jo settings me hai."
 
 
+def _offering_name(ctx, offering_id):
+    for o in profiles_mod.list_offerings(ctx["profile"]["id"], ctx["conn"]):
+        if o["id"] == offering_id:
+            return o["name"]
+    return "#%s" % offering_id
+
+
 def post_eligibility_confirm(ctx, form):
-    product = form.get("product", "")
+    if not ctx["profile"]:
+        return "Refused: koi active profile nahi hai."
+    offering_id = int(form.get("offering_id", "0") or 0)
     proof = (form.get("proof_note") or "").strip()
     tdate = (form.get("terms_checked_date") or "").strip()
     if not proof or not tdate:
         return "Refused: proof note aur terms-checked date dono zaroori hain — bina inke confirm nahi hoga."
-    products = load_eligibility()
-    for p in products:
-        if p.get("product") == product:
-            p["supplier"] = (form.get("supplier") or "").strip()
-            p["proof_note"] = proof
-            p["terms_checked_date"] = tdate
-            p["resale_permission_confirmed"] = True
-    save_eligibility(products)
-    audit(ctx["conn"], "eligibility_confirmed", "product=%s (proof recorded)" % product)
-    return "%s ki resale permission confirm ho gayi (proof + date ke saath)." % product
+    profiles_mod.update_offering(offering_id, {
+        "supplier": (form.get("supplier") or "").strip(),
+        "proof_note": proof, "terms_checked_date": tdate,
+        "permission_confirmed": True}, ctx["conn"])
+    audit(ctx["conn"], "eligibility_confirmed",
+          "offering_id=%s profile=%s (proof recorded)"
+          % (offering_id, ctx["profile"]["slug"]))
+    return "%s ki permission confirm ho gayi (proof + date ke saath)." % _offering_name(ctx, offering_id)
 
 
 def post_eligibility_unconfirm(ctx, form):
-    product = form.get("product", "")
-    products = load_eligibility()
-    for p in products:
-        if p.get("product") == product:
-            p["resale_permission_confirmed"] = False
-    save_eligibility(products)
-    audit(ctx["conn"], "eligibility_unconfirmed", "product=%s" % product)
-    return "%s unconfirm ho gaya — uske ads phir se blocked hain." % product
+    offering_id = int(form.get("offering_id", "0") or 0)
+    profiles_mod.update_offering(offering_id, {"permission_confirmed": False},
+                                 ctx["conn"])
+    audit(ctx["conn"], "eligibility_unconfirmed", "offering_id=%s" % offering_id)
+    return "%s unconfirm ho gaya — uske ads phir se blocked hain." % _offering_name(ctx, offering_id)
+
+
+def post_eligibility_add(ctx, form):
+    if not ctx["profile"]:
+        return "Refused: koi active profile nahi hai."
+    try:
+        oid = profiles_mod.add_offering(ctx["profile"]["id"], {
+            "name": form.get("name", ""), "type": form.get("type", "product"),
+            "category": form.get("category", ""), "price": form.get("price", ""),
+            "supplier": form.get("supplier", ""),
+            "destination_override": form.get("destination_override", ""),
+        }, ctx["conn"])
+    except ValueError as e:
+        return "Refused: %s" % e
+    audit(ctx["conn"], "offering_added", "offering_id=%s profile=%s"
+          % (oid, ctx["profile"]["slug"]))
+    return "Offering add ho gaya (UNCONFIRMED — pehle permission confirm karo)."
+
+
+def post_eligibility_delete(ctx, form):
+    if not form.get("confirm_delete"):
+        return "Refused: delete ke liye confirm checkbox tick karo."
+    offering_id = int(form.get("offering_id", "0") or 0)
+    name = _offering_name(ctx, offering_id)
+    profiles_mod.delete_offering(offering_id, ctx["conn"])
+    audit(ctx["conn"], "offering_deleted", "offering_id=%s" % offering_id)
+    return "%s catalog se hat gaya." % name
 
 
 def post_creative_generate(ctx, form):
     conn = ctx["conn"]
     result = creative_mod.generate_creative_set(
-        form.get("product", ""), form.get("segment", "students"), settings=ctx["settings"])
+        form.get("product", ""), form.get("segment", "students"),
+        settings=ctx["settings"], eligibility=ctx["eligibility"],
+        extra_patterns=ctx["extra_patterns"], profile=ctx["profile"])
     cid = store.save_creative(result["product"], result["segment"], "creative_set",
-                              result, result["policy"], conn)
+                              result, result["policy"], conn,
+                              profile_id=ctx["profile"]["id"] if ctx["profile"] else 0)
     from .common import log_role_run
     log_role_run(conn, "06_angle_generator", "done", {"angles_for": result["segment"]})
     log_role_run(conn, "07_copywriter", "done", result["copy"])
@@ -1174,13 +1421,16 @@ def post_api_copy(ctx, form):
     try:
         result = creative_mod.generate_copy_with_api(
             form.get("product", ""), form.get("segment", "students"),
-            settings=ctx["settings"], instruction=form.get("instruction", ""))
+            settings=ctx["settings"], instruction=form.get("instruction", ""),
+            eligibility=ctx["eligibility"],
+            extra_patterns=ctx["extra_patterns"], profile=ctx["profile"])
     except providers.ProviderError as e:
         log_error(conn, "providers:text", str(e))
         return "Text API error: %s" % e
     kind = "api_copy" if result.get("source") == "api" else "creative_set"
     cid = store.save_creative(result["product"], result["segment"], kind,
-                              result, result["policy"], conn)
+                              result, result["policy"], conn,
+                              profile_id=ctx["profile"]["id"] if ctx["profile"] else 0)
     audit(conn, "creative_generated",
           "id=%s source=%s provider=%s model=%s request=%s cost=%s"
           % (cid, result.get("source"), result.get("provider", "-"),
@@ -1311,13 +1561,21 @@ def post_planner_plan(ctx, form):
     conn = ctx["conn"]
     product = form.get("product", "")
     segment = form.get("segment", "students")
+    profile = ctx["profile"]
+    pid = profile["id"] if profile else 0
     plan = planner_mod.plan_structure(
         product, segment, form.get("audience_type", "customers"),
-        form.get("format", "REEL"), 1, form.get("daily_budget", ""))
-    creative = creative_mod.generate_creative_set(product, segment, settings=ctx["settings"])
+        form.get("format", "REEL"), 1, form.get("daily_budget", ""),
+        profile=profile)
+    creative = creative_mod.generate_creative_set(
+        product, segment, settings=ctx["settings"],
+        eligibility=ctx["eligibility"], extra_patterns=ctx["extra_patterns"],
+        profile=profile)
     draft = {
         "kind": "CAMPAIGN_DRAFT",
         "product": product,
+        "profile_id": pid,
+        "business": profile["name"] if profile else "",
         "campaign_name": plan["campaign_name"],
         "adset_name": plan["ad_sets"][0]["name"],
         "ad_name": plan["ad_sets"][0]["ads"][0]["ad_name"],
@@ -1330,12 +1588,48 @@ def post_planner_plan(ctx, form):
                        "hoga jab activation ki ALAG approval milegi (is build me "
                        "activation ka koi automatic path nahi hai).",
     }
-    item_id = ctx["queue"].add_item("CAMPAIGN_DRAFT", draft)
+    # Guardrail pre-flight: BLOCK = queue me entry NAHI; WARN = warnings
+    # draft ke saath attach hokar jaate hain (draft par visible).
+    offering = next((o for o in profiles_mod.list_offerings(pid, conn)
+                     if o["name"] == product), None) if pid else None
+    dest_url = (offering or {}).get("destination_override") \
+        or ctx["settings"].get("DESTINATION_URL", "")
+    preflight = guardrails_mod.run_preflight({
+        "kind": "draft", "product": product,
+        "text": draft["creative_text"],
+        "settings": ctx["settings"], "eligibility": ctx["eligibility"],
+        "extra_patterns": ctx["extra_patterns"], "plan": plan,
+        "daily_budget": form.get("daily_budget", ""),
+        "format": form.get("format", "REEL"),
+        "profile": profile,
+        "objective": plan.get("objective", ""),
+        "destination_url": dest_url,
+        "destination_ready": bool(dest_url) and (
+            bool((offering or {}).get("destination_override"))
+            or ctx["settings"].get("DESTINATION_READY") is True),
+        "kill_switch": ctx["queue"].kill_switch_active(),
+    }, conn=conn)
+    if not preflight["allowed"]:
+        reasons = "; ".join(b["reason"] for b in preflight["blocks"])
+        from .common import log_role_run
+        log_role_run(conn, "guardrail_preflight", "blocked", preflight)
+        return ("⛔ Guardrail pre-flight ne draft ROK diya — approval "
+                "queue me NAHI gaya. Karan: %s" % reasons)
+    if preflight["warnings"]:
+        draft["guardrail_warnings"] = [
+            {"id": w["id"], "name": w["name"], "reason": w["reason"]}
+            for w in preflight["warnings"]]
+    item_id = ctx["queue"].add_item("CAMPAIGN_DRAFT", draft, profile_id=pid)
     from .common import log_role_run
     log_role_run(conn, "11_structure_planner", "done", plan)
+    warn_note = ""
+    if preflight["warnings"]:
+        warn_note = " Guardrail warnings attach hain: %s" % "; ".join(
+            w["name"] for w in preflight["warnings"])
     return ("Plan ban gaya aur CAMPAIGN_DRAFT #%d approval queue me gaya. "
-            "Policy preview: %s" % (item_id, "PASS" if creative["policy"]["allowed"]
-                                    else "BLOCKED — " + "; ".join(creative["policy"]["reasons"])))
+            "Policy preview: %s.%s" % (item_id, "PASS" if creative["policy"]["allowed"]
+                                    else "BLOCKED — " + "; ".join(creative["policy"]["reasons"]),
+                                    warn_note))
 
 
 def post_approval_action(ctx, form, action):
@@ -1396,23 +1690,27 @@ def post_roles_run(ctx, form):
     conn = ctx["conn"]
     from .common import log_role_run
     settings = ctx["settings"]
-    rows = store.load_insight_rows(conn) or store.seed_insights(conn=conn) \
-        and store.load_insight_rows(conn)
+    profile = ctx["profile"]
+    pid = profile["id"] if profile else None
+    rows = store.load_insight_rows(conn, profile_id=pid) \
+        or store.seed_insights(profile_id=pid, conn=conn) \
+        and store.load_insight_rows(conn, profile_id=pid)
     ran = []
 
     def run(result):
         log_role_run(conn, result["role"], "done", result["output"])
         ran.append(result["role"])
 
-    run(roles.role_01_audience_research())
-    run(roles.role_02_competitor_watch())
+    run(roles.role_01_audience_research(profile=profile))
+    run(roles.role_02_competitor_watch(
+        profile["slug"] if profile else "software-hub", conn=conn, profile_id=pid))
     run(roles.role_03_trend_analysis())
-    run(roles.role_04_funnel_strategy())
+    run(roles.role_04_funnel_strategy(profile=profile))
     run(roles.role_05_budget_planning(settings))
-    angles = roles.role_06_angle_generator("students")["output"]["angles"]
-    run(roles.role_06_angle_generator("students"))
-    run(roles.role_07_copywriter(angles[0]))
-    run(roles.role_08_visual_poster_brief(angles[0]))
+    angles = roles.role_06_angle_generator("students", profile=profile)["output"]["angles"]
+    run(roles.role_06_angle_generator("students", profile=profile))
+    run(roles.role_07_copywriter(angles[0], profile=profile))
+    run(roles.role_08_visual_poster_brief(angles[0], profile=profile))
     run(roles.role_09_reel_script(angles[0]))
     run(roles.role_11_structure_planner())
     run(roles.role_12_targeting_planner())
@@ -1420,9 +1718,382 @@ def post_roles_run(ctx, form):
     run(roles.role_16_data_collector())
     run(roles.role_17_lead_quality_tracker(rows))
     run(roles.role_18_creative_analyst(rows))
-    run(roles.role_20_reporter(rows, [], (settings.get("LANGUAGES") or ["Hinglish"])[0]))
+    run(roles.role_20_reporter(rows, [], (settings.get("LANGUAGES") or ["Hinglish"])[0],
+                               business_name=profile["name"] if profile else None,
+                               industry=profile["industry"] if profile else None))
     audit(conn, "roles_manual_run", "roles=%s" % ",".join(ran))
     return "%d roles MOCK data par chal gaye — outputs role_runs me logged hain." % len(ran)
+
+
+# ------------------------------------------------------- Business Profiles
+_PROFILE_FIELDS = ("name", "industry", "description", "website",
+                   "target_type", "target_text", "geography", "languages",
+                   "currency", "sales_model")
+_OVERRIDE_FIELDS = ("TOTAL_DAILY_BUDGET_CAP", "PER_CAMPAIGN_CAP",
+                    "TARGET_COST_PER_QUALIFIED_LEAD", "MAX_BUDGET_CHANGE_PCT",
+                    "DESTINATION_URL", "TOP_CREATIVE_WINDOW_DAYS")
+
+
+def pg_profiles(ctx):
+    conn = ctx["conn"]
+    profiles = profiles_mod.list_profiles(conn)
+    active = ctx["profile"]
+    rows = ""
+    for p in profiles:
+        n_off = len(profiles_mod.list_offerings(p["id"], conn))
+        is_active = active and p["id"] == active["id"]
+        rows += ("<tr><td>%s <strong>%s</strong></td><td>%s</td><td>%s</td>"
+                 "<td>%s</td><td>%d</td><td class='small'>"
+                 "<form method='post' action='/profiles/switch' class='inline'>%s"
+                 "<input type='hidden' name='profile_id' value='%d'>"
+                 "<button class='secondary' type='submit'>Active karo</button></form> "
+                 "<form method='post' action='/profiles/duplicate' class='inline'>%s"
+                 "<input type='hidden' name='profile_id' value='%d'>"
+                 "<button class='secondary' type='submit'>Duplicate</button></form> "
+                 "<form method='post' action='/profiles/delete' class='inline'>%s"
+                 "<input type='hidden' name='profile_id' value='%d'>"
+                 "<label class='small'><input type='checkbox' name='confirm_delete' value='yes'> confirm</label> "
+                 "<button class='danger' type='submit'>Delete</button></form>"
+                 "</td></tr>"
+                 % ("★" if is_active else "", esc(p["name"]), esc(p["industry"]),
+                    esc(industries_mod.get_preset(p["industry_preset"])["label"]),
+                    esc(p["sales_model"]), n_off,
+                    ctx["csrf_field"], p["id"], ctx["csrf_field"], p["id"],
+                    ctx["csrf_field"], p["id"]))
+    preset_options = "".join(
+        "<option value='%s'>%s</option>" % (k, esc(industries_mod.get_preset(k)["label"]))
+        for k in industries_mod.PRESET_ORDER)
+    model_options = "".join("<option>%s</option>" % m for m in industries_mod.SALES_MODELS)
+    target_options = "".join("<option>%s</option>" % t for t in industries_mod.TARGET_TYPES)
+    proof = ""
+    sh = next((p for p in profiles if p["slug"] == "software-hub"), None)
+    if sh:
+        mp = profiles_mod.migration_proof(conn, sh["id"])
+        proof = ("<div class='card'><h2>Software Hub migration proof</h2>"
+                 "<p class='small'>PRODUCT_ELIGIBILITY.yaml se DB catalog: "
+                 "source %d · stored %d · names match: %s · saare flags "
+                 "unconfirmed: %s · <strong>lossless: %s</strong>%s</p></div>"
+                 % (mp["source_count"], mp["stored_count"], mp["names_match"],
+                    mp["all_unconfirmed"], mp["lossless"],
+                    (" · mismatches: " + esc("; ".join(mp["mismatches"]))) if mp["mismatches"] else ""))
+    edit = ""
+    if active:
+        ov = active.get("settings_overrides") or {}
+        ov_inputs = "".join(
+            "<label>%s (profile override)</label><input name='ov_%s' value='%s'>"
+            % (k, k, esc(ov.get(k, ""))) for k in _OVERRIDE_FIELDS)
+        edit = """<div class="card"><h2>Active profile edit karo — %s</h2>
+<form method="post" action="/profiles/update">%s
+<input type="hidden" name="profile_id" value="%d">
+<label>Business name</label><input name="name" value="%s">
+<label>Industry (text)</label><input name="industry" value="%s">
+<label>Description</label><textarea name="description" rows="2">%s</textarea>
+<label>Website / destination</label><input name="website" value="%s">
+<label>Target type</label><select name="target_type">%s</select>
+<label>Target customers (text)</label><input name="target_text" value="%s">
+<label>Geography</label><input name="geography" value="%s">
+<label>Languages</label><input name="languages" value="%s">
+<label>Currency</label><input name="currency" value="%s">
+<label>Sales model</label><select name="sales_model">%s</select>
+%s
+<label><input type="checkbox" name="ov_DESTINATION_READY" value="1" %s> DESTINATION_READY (override) — landing page live aur ready hai</label>
+<label>Automation mode (override)</label><select name="ov_AUTOMATION_MODE">
+<option value="">(global setting use karo)</option>
+<option %s>PROPOSE</option><option %s>AUTO_WITHIN_RULES</option></select>
+<p class="small mut">Override khaali chhodo to global setting lagegi. Per-profile
+catalog Eligibility page par, compliance pack wahi dikhta hai.</p>
+<button type="submit">Profile save karo</button></form></div>""" % (
+            esc(active["name"]), ctx["csrf_field"], active["id"],
+            esc(active["name"]), esc(active["industry"]),
+            esc(active["description"]), esc(active["website"]),
+            "".join("<option %s>%s</option>" % ("selected" if t == active["target_type"] else "", t)
+                    for t in industries_mod.TARGET_TYPES),
+            esc(active["target_text"]), esc(active["geography"]),
+            esc(active["languages"]), esc(active["currency"]),
+            "".join("<option %s>%s</option>" % ("selected" if m == active["sales_model"] else "", m)
+                    for m in industries_mod.SALES_MODELS),
+            ov_inputs,
+            "checked" if ov.get("DESTINATION_READY") is True else "",
+            "selected" if ov.get("AUTOMATION_MODE") == "PROPOSE" else "",
+            "selected" if ov.get("AUTOMATION_MODE") == "AUTO_WITHIN_RULES" else "")
+    body = """<h1>Business Profiles</h1>
+<p class="mut">Har business ka apna profile — apna catalog, competitors aur
+settings. Header se bhi switch hota hai. Presets editable starting points
+hain, legal advice nahi.</p>
+<div class="card"><table><tr><th></th><th>Business</th><th>Industry</th><th>Preset</th>
+<th>Sales model</th><th>Offerings</th><th>Actions</th></tr>%s</table></div>
+%s
+<div class="card"><h2>Naya profile banao</h2>
+<form method="post" action="/profiles/create">%s
+<label>Business name</label><input name="name" required>
+<label>Industry preset (funnel/KPI defaults + compliance pack seed hoga)</label>
+<select name="industry_preset">%s</select>
+<label>Industry (free text — preset label se alag chaahe to)</label><input name="industry">
+<label>Description</label><textarea name="description" rows="2"></textarea>
+<label>Website / destination URL</label><input name="website" placeholder="https://">
+<label>Target type</label><select name="target_type">%s</select>
+<label>Target customers (text)</label><input name="target_text">
+<label>Geography</label><input name="geography">
+<label>Languages</label><input name="languages">
+<label>Currency</label><input name="currency" placeholder="INR">
+<label>Sales model</label><select name="sales_model">%s</select>
+<button type="submit">Profile banao</button></form></div>
+%s""" % (rows, proof, ctx["csrf_field"], preset_options, target_options,
+         model_options, edit)
+    return page("Profiles", "/profiles", body, ctx["flash"], conn, ctx)
+
+
+def post_profiles_switch(ctx, form):
+    profile = profiles_mod.set_active_profile(int(form.get("profile_id") or 0),
+                                              ctx["conn"])
+    return "Active profile ab: %s (%s)" % (profile["name"], profile["industry"])
+
+
+def post_profiles_create(ctx, form):
+    data = {k: form.get(k, "") for k in _PROFILE_FIELDS}
+    data["industry_preset"] = form.get("industry_preset", "generic")
+    profile = profiles_mod.create_profile(data, ctx["conn"])
+    return ("Profile '%s' ban gaya (preset: %s). Catalog Eligibility page "
+            "par add karo — naya offering hamesha UNCONFIRMED rehta hai."
+            % (profile["name"], profile["industry_preset"]))
+
+
+def post_profiles_update(ctx, form):
+    conn = ctx["conn"]
+    pid = int(form.get("profile_id") or 0)
+    data = {k: form.get(k, "") for k in _PROFILE_FIELDS if k in form}
+    overrides = {}
+    for key in _OVERRIDE_FIELDS:
+        val = (form.get("ov_" + key) or "").strip()
+        if val:
+            try:
+                overrides[key] = float(val) if val.replace(".", "", 1).isdigit() else val
+            except ValueError:
+                overrides[key] = val
+    overrides["DESTINATION_READY"] = form.get("ov_DESTINATION_READY") == "1"
+    mode = form.get("ov_AUTOMATION_MODE") or ""
+    if mode:
+        overrides["AUTOMATION_MODE"] = mode
+    data["settings_overrides"] = overrides
+    profile = profiles_mod.update_profile(pid, data, conn)
+    return "Profile '%s' update ho gaya (overrides sirf is profile par lagte hain)." % profile["name"]
+
+
+def post_profiles_duplicate(ctx, form):
+    clone = profiles_mod.duplicate_profile(int(form.get("profile_id") or 0),
+                                           ctx["conn"])
+    return "Duplicate profile ban gaya: %s (catalog + competitors copy hue)." % clone["name"]
+
+
+def post_profiles_delete(ctx, form):
+    if form.get("confirm_delete") != "yes":
+        return "Delete NAHI hua — confirm checkbox tick karna zaroori hai."
+    profiles_mod.delete_profile(int(form.get("profile_id") or 0), ctx["conn"])
+    return "Profile delete ho gaya. Uske catalog/competitor rows bhi gaye."
+
+
+# ------------------------------------------------------------ Growth Loop
+def pg_loop(ctx):
+    conn = ctx["conn"]
+    profile = ctx["profile"]
+    pid = profile["id"] if profile else 0
+    status = loop_mod.loop_status(conn, pid)
+    stage_rows = ""
+    for s in status["stages"]:
+        stage_rows += ("<tr><td>%s</td><td>%s</td><td>%s</td>"
+                       "<td class='small'>%s</td></tr>"
+                       % (esc(s["label"]),
+                          "✅ chala" if s["last_run"] else "⏳ pending",
+                          esc(s["last_run"] or "—"), esc(s["detail"] or "")))
+    hist = "".join("<tr><td>%s</td><td>%s</td><td class='small'>%s</td></tr>"
+                   % (esc(h["at"]), esc(h["stage"]), esc(h["detail"]))
+                   for h in status["history"][:15])
+    window = 10 if str(ctx["settings"].get("TOP_CREATIVE_WINDOW_DAYS")) == "10" else 7
+    brief = loop_mod.inspiration_brief(pid, window, conn=conn, profile=profile)
+    if brief:
+        brief_html = ("<p><strong>Theme:</strong> %s<br><strong>Hook:</strong> %s<br>"
+                      "<strong>Format:</strong> %s<br><strong>CTA style:</strong> %s<br>"
+                      "<span class='small mut'>Source: %s · %s · %s</span></p>"
+                      "<div class='banner warn'>%s</div>"
+                      % (esc(brief["theme"]), esc(brief["hook"]), esc(brief["format"]),
+                         esc(brief["cta_style"]), esc(brief["source"]),
+                         esc(brief["source_date"]), esc(brief["score_note"]),
+                         esc(brief["rule"])))
+    else:
+        brief_html = ("<p class='mut'>Abhi koi inspiration source nahi — neeche "
+                      "top-creative record add karo, ya pehle mock insights aane do.</p>")
+    comps = profiles_mod.list_competitors(pid, conn) if pid else []
+    comp_rows = "".join(
+        "<tr><td>%s</td><td>%s</td><td>%s</td><td class='small'>%s</td>"
+        "<td><form method='post' action='/loop/competitor_delete' class='inline'>%s"
+        "<input type='hidden' name='competitor_id' value='%d'>"
+        "<button class='danger' type='submit'>Delete</button></form></td></tr>"
+        % (esc(c["name"]), esc(c["handle"]), esc(c["niche"]), esc(c["source"]),
+           ctx["csrf_field"], c["id"]) for c in comps)
+    tops = loop_mod.list_top_creatives(pid, conn=conn)
+    top_rows = "".join(
+        "<tr><td>%s</td><td>%s</td><td>%s</td><td>%s din</td><td class='small'>%s · %s</td></tr>"
+        % (esc(t["theme"]), esc(t["hook"]), esc(t["format"]), t["window_days"],
+           esc(t["source"]), esc(t["source_date"])) for t in tops)
+    strat = strategy_library
+    body = """<h1>Growth Loop — %s</h1>
+<details><summary>Loop kaise chalta hai</summary>
+<p class="small">Competitor discovery → unki best ads ki research → pichhle
+7/10 din ke top creatives se inspiration → naye creatives → optimise →
+approval-gated live → winners scale / losers pause → fatigue par fresh brief.
+Scheduler: <code>python -m app.jobs loop</code>. Research stage sirf public
+Meta Ad Library par based task entries banata hai — live pull abhi wired nahi,
+koi metric invent nahi hota.</p></details>
+<div class="card"><h2>Loop stages — current stage: %s</h2>
+<table><tr><th>Stage</th><th>Status</th><th>Last run</th><th>Detail</th></tr>%s</table>
+<form method="post" action="/loop/run">%s
+<button type="submit">Ek full cycle chalao (mock data)</button></form></div>
+<div class="card"><h2>Inspiration brief (window: %d din)</h2>%s</div>
+<div class="card"><h2>Competitors (%s ke)</h2>
+<table><tr><th>Name</th><th>Handle</th><th>Niche</th><th>Source</th><th></th></tr>%s</table>
+<form method="post" action="/loop/competitor_add">%s
+<div class="row"><div><label>Name</label><input name="name" required></div>
+<div><label>Handle</label><input name="handle"></div>
+<div><label>URL</label><input name="url"></div>
+<div><label>Niche</label><input name="niche"></div></div>
+<button type="submit">Competitor add karo</button></form></div>
+<div class="card"><h2>Top creatives (pichhle 7/10 din — research se)</h2>
+<table><tr><th>Theme</th><th>Hook</th><th>Format</th><th>Window</th><th>Source</th></tr>%s</table>
+<form method="post" action="/loop/topcreative_add">%s
+<div class="row"><div><label>Theme</label><input name="theme" required></div>
+<div><label>Hook</label><input name="hook"></div>
+<div><label>Format</label><input name="format"></div>
+<div><label>CTA style</label><input name="cta_style"></div></div>
+<div class="row"><div><label>Source (Ad Library URL/note)</label><input name="source"></div>
+<div><label>Source date</label><input name="source_date" placeholder="YYYY-MM-DD"></div>
+<div><label>Window (din)</label><select name="window_days"><option>7</option><option>10</option></select></div>
+<div><label>Score note</label><input name="score_note"></div></div>
+<button type="submit">Top creative record karo</button></form>
+<p class="small mut">Ye sirf inspiration hai — kisi aur ka ad verbatim copy karna ya
+uske assets reuse karna mana hai.</p></div>
+<div class="card"><h2>Loop history</h2>
+<table><tr><th>Kab</th><th>Stage</th><th>Detail</th></tr>%s</table>
+<p class="small mut">Strategy Library: %d active entries · %d DO-NOT-APPLY ·
+format taxonomy %d formats (Damini S22). Knowledge register Trends page par hai.</p></div>
+""" % (esc(profile["name"] if profile else "—"),
+       esc(status["current_stage"]), stage_rows, ctx["csrf_field"],
+       window, brief_html,
+       esc(profile["name"] if profile else "—"), comp_rows, ctx["csrf_field"],
+       top_rows, ctx["csrf_field"], hist,
+       len(strat.active_entries()), len(strat.do_not_apply_entries()),
+       len(strat.FORMAT_TAXONOMY))
+    return page("Growth Loop", "/loop", body, ctx["flash"], conn, ctx)
+
+
+def post_loop_run(ctx, form):
+    summary = loop_mod.run_cycle(conn=ctx["conn"], settings=ctx["settings"],
+                                 profile=ctx["profile"], queue=ctx["queue"])
+    if not summary.get("ok", True):
+        return "Loop cycle BLOCKED: %s" % summary.get("blocked", "")
+    refresh = (summary.get("stages") or {}).get("refresh") or {}
+    return ("Loop cycle complete (%s) — proposals queue me: %d · "
+            "auto-applied (AUTO_WITHIN_RULES): %d · fresh brief bana: %s"
+            % (summary.get("profile", ""), summary.get("proposals_added", 0),
+               summary.get("auto_applied", 0),
+               "haan" if refresh.get("new_brief") else "nahi"))
+
+
+def post_loop_competitor_add(ctx, form):
+    pid = ctx["profile"]["id"] if ctx["profile"] else 0
+    profiles_mod.add_competitor(pid, {
+        "name": form.get("name", ""), "handle": form.get("handle", ""),
+        "url": form.get("url", ""), "niche": form.get("niche", ""),
+        "source": "owner-added (UI)",
+    }, ctx["conn"])
+    return "Competitor add ho gaya — loop ke discovery stage me shamil hai."
+
+
+def post_loop_competitor_delete(ctx, form):
+    profiles_mod.delete_competitor(int(form.get("competitor_id") or 0), ctx["conn"])
+    return "Competitor delete ho gaya."
+
+
+def post_loop_topcreative_add(ctx, form):
+    pid = ctx["profile"]["id"] if ctx["profile"] else 0
+    loop_mod.add_top_creative(pid, {
+        "theme": form.get("theme", ""), "hook": form.get("hook", ""),
+        "format": form.get("format", ""), "cta_style": form.get("cta_style", ""),
+        "source": form.get("source", ""), "source_date": form.get("source_date", ""),
+        "window_days": form.get("window_days", "7"),
+        "score_note": form.get("score_note", ""),
+    }, conn=ctx["conn"])
+    return "Top-creative record ho gaya — inspiration brief ab isse banega."
+
+
+# ------------------------------------------------------------- Guardrails
+def pg_guardrails(ctx):
+    conn = ctx["conn"]
+    status_rows = guardrails_mod.registry_status(ctx["settings"], conn)
+    rows = ""
+    for g in status_rows:
+        pill = "bad" if g["severity"] == "BLOCK" else "warn"
+        first_key = (g["setting_key"] or "").split(" / ")[0].strip()
+        value = ctx["settings"].get(first_key) if first_key else None
+        if not g["enabled"]:
+            state = "<span class='pill bad'>OFF (owner)</span>"
+        elif first_key and value in (None, "", 0, 0.0):
+            state = "<span class='pill warn'>setting unset — inactive</span>"
+        else:
+            state = "<span class='pill ok'>active</span>"
+        rows += ("<tr><td><strong>%s</strong><div class='small mut'>%s</div></td>"
+                 "<td><span class='pill %s'>%s</span></td><td class='small'>%s</td>"
+                 "<td class='small'>%s</td><td>%s</td>"
+                 "<td><form method='post' action='/guardrails/toggle' class='inline'>%s"
+                 "<input type='hidden' name='guardrail_id' value='%s'>"
+                 "<input type='hidden' name='action' value='%s'>"
+                 "<button class='secondary' type='submit'>%s</button></form></td></tr>"
+                 % (esc(g["id"]), esc(g["name"]), pill, g["severity"],
+                    esc(g["setting_key"] or "— (hamesha active)"),
+                    esc(str(value) if value not in (None, "") else "—"),
+                    state, ctx["csrf_field"], esc(g["id"]),
+                    "on" if not g["enabled"] else "off",
+                    "ON karo" if not g["enabled"] else "OFF karo"))
+    checklist = "".join(
+        "<li>%s<div class='small mut'>Guardrails: %s</div></li>" % (esc(item), esc(", ".join(ids)))
+        for item, ids in guardrails_mod.PREFLIGHT_CHECKLIST)
+    body = """<h1>Guardrails</h1>
+<p class="mut">CPC/CPL badhane wali galtiyaan — system-enforced. BLOCK = draft
+queue me nahi jayega; WARN = warning attach hogi.</p>
+<details><summary>Poori jaankari</summary>
+<p class="small">Har draft/plan approval queue se pehle in checks se guzarta
+hai. Optimiser bhi BLOCK wali action kabhi propose nahi karta. Thresholds
+owner settings hain — khaali/0 = wo guardrail inactive (research ke numbers
+sirf Settings me labelled reference hain, defaults kabhi nahi). Catalogue:
+winner-patterns research §D (D1–D26) + system ke built-in gates. Guardrails
+galtiyaan rok sakte hain — CPC/CPL ki guarantee koi system nahi de sakta,
+auction/market bhi matter karta hai.</p></details>
+<div class="card"><h2>Pre-flight checklist (har draft, queue se pehle)</h2>
+<ol>%s</ol></div>
+<div class="card"><table><tr><th>Guardrail</th><th>Severity</th><th>Setting</th>
+<th>Value</th><th>Status</th><th>Toggle</th></tr>%s</table>
+<p class="small mut">Toggle GUARDRAILS_DISABLED (global setting) me save hota hai —
+profile overrides se toggle nahi hota. OFF karna owner ka faisla hai; audit me
+record hota hai.</p></div>
+""" % (checklist, rows)
+    return page("Guardrails", "/guardrails", body, ctx["flash"], conn, ctx)
+
+
+def post_guardrails_toggle(ctx, form):
+    conn = ctx["conn"]
+    gid = (form.get("guardrail_id") or "").strip()
+    action = form.get("action") or ""
+    if not gid:
+        return "Guardrail id missing hai."
+    global_settings = load_settings()
+    disabled = set(guardrails_mod.disabled_ids(global_settings))
+    if action == "off":
+        disabled.add(gid)
+    else:
+        disabled.discard(gid)
+    global_settings["GUARDRAILS_DISABLED"] = sorted(disabled)
+    save_settings(global_settings)
+    audit(conn, "guardrail_toggled", "id=%s action=%s" % (gid, action))
+    return "Guardrail %s ab %s hai." % (gid, "OFF" if action == "off" else "ON")
 
 
 POST_ROUTES = {
@@ -1430,6 +2101,8 @@ POST_ROUTES = {
     "/killswitch": (post_killswitch, "/settings"),
     "/eligibility/confirm": (post_eligibility_confirm, "/eligibility"),
     "/eligibility/unconfirm": (post_eligibility_unconfirm, "/eligibility"),
+    "/eligibility/add": (post_eligibility_add, "/eligibility"),
+    "/eligibility/delete": (post_eligibility_delete, "/eligibility"),
     "/creative/generate": (post_creative_generate, "/creative"),
     "/creative/policycheck": (post_policycheck, "/creative"),
     "/creative/upload": (post_upload, "/creative"),
@@ -1444,6 +2117,16 @@ POST_ROUTES = {
     "/creative/api_video": (post_api_video, "/creative"),
     "/creative/api_video_check": (post_api_video_check, "/creative"),
     "/planner/plan": (post_planner_plan, "/approvals"),
+    "/profiles/switch": (post_profiles_switch, "/profiles"),
+    "/profiles/create": (post_profiles_create, "/profiles"),
+    "/profiles/update": (post_profiles_update, "/profiles"),
+    "/profiles/duplicate": (post_profiles_duplicate, "/profiles"),
+    "/profiles/delete": (post_profiles_delete, "/profiles"),
+    "/loop/run": (post_loop_run, "/loop"),
+    "/loop/competitor_add": (post_loop_competitor_add, "/loop"),
+    "/loop/competitor_delete": (post_loop_competitor_delete, "/loop"),
+    "/loop/topcreative_add": (post_loop_topcreative_add, "/loop"),
+    "/guardrails/toggle": (post_guardrails_toggle, "/guardrails"),
     "/leads/add": (post_leads_add, "/leads"),
     "/reports/generate": (post_reports_generate, "/reports"),
     "/roles/run": (post_roles_run, "/roles"),
@@ -1455,7 +2138,8 @@ GET_ROUTES = {
     "/": pg_today, "/connect": pg_connect, "/roles": pg_roles,
     "/settings": pg_settings, "/eligibility": pg_eligibility,
     "/creative": pg_creative, "/providers": pg_providers,
-    "/planner": pg_planner,
+    "/planner": pg_planner, "/profiles": pg_profiles, "/loop": pg_loop,
+    "/guardrails": pg_guardrails,
     "/approvals": pg_approvals, "/budget": pg_budget, "/leads": pg_leads,
     "/reports": pg_reports, "/trends": pg_trends, "/audit": pg_audit,
 }
@@ -1543,9 +2227,16 @@ class Handler(BaseHTTPRequestHandler):
         return auth.get_session(morsel.value, conn)
 
     def _ctx(self, conn, session, flash=""):
+        profile = profiles_mod.get_active_profile(conn)
+        settings = profiles_mod.effective_settings(load_settings(), profile)
+        eligibility = (profiles_mod.offerings_as_eligibility(profile["id"], conn)
+                       if profile else load_eligibility())
         return {
             "conn": conn,
-            "settings": load_settings(),
+            "settings": settings,
+            "profile": profile,
+            "eligibility": eligibility,
+            "extra_patterns": profiles_mod.compliance_patterns_for(profile),
             "queue": ApprovalQueue(),
             "csrf_field": '<input type="hidden" name="csrf" value="%s">' % esc(session["csrf"]),
             "flash": flash,

@@ -14,11 +14,12 @@ class ApprovalQueue:
     def __init__(self, db_path=None):
         self.conn = get_db(db_path) if db_path else get_db()
 
-    def add_item(self, kind, payload):
+    def add_item(self, kind, payload, profile_id=None):
         cur = self.conn.execute(
-            "INSERT INTO proposals (kind, payload, status, created_at) "
-            "VALUES (?, ?, 'PENDING', datetime('now'))",
-            (kind, json.dumps(payload, ensure_ascii=False, default=str)),
+            "INSERT INTO proposals (kind, payload, status, created_at, profile_id) "
+            "VALUES (?, ?, 'PENDING', datetime('now'), ?)",
+            (kind, json.dumps(payload, ensure_ascii=False, default=str),
+             int(profile_id or 0)),
         )
         self.conn.commit()
         item_id = cur.lastrowid
@@ -61,9 +62,14 @@ class ApprovalQueue:
         audit(self.conn, "approval_edited", "id=%s" % item_id)
         return "EDITED"
 
-    def list_pending(self):
-        rows = self.conn.execute(
-            "SELECT * FROM proposals WHERE status = 'PENDING' ORDER BY id").fetchall()
+    def list_pending(self, profile_id=None):
+        if profile_id is None:
+            rows = self.conn.execute(
+                "SELECT * FROM proposals WHERE status = 'PENDING' ORDER BY id").fetchall()
+        else:
+            rows = self.conn.execute(
+                "SELECT * FROM proposals WHERE status = 'PENDING' "
+                "AND profile_id IN (?, 0) ORDER BY id", (profile_id,)).fetchall()
         return [{"id": r["id"], "kind": r["kind"], "payload": json.loads(r["payload"])}
                 for r in rows]
 

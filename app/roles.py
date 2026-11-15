@@ -19,8 +19,28 @@ def _out(role, output):
     return {"role": role, "label": LABEL, "output": output}
 
 
+def _business_name(profile):
+    return (profile or {}).get("name") or "Software Hub"
+
+
 # ---------- A. Research and Strategy ----------
-def role_01_audience_research(goal="both"):
+def role_01_audience_research(goal="both", profile=None):
+    if profile is not None and profile.get("industry_preset") not in (None, "software_digital"):
+        from . import industries
+        preset = industries.get_preset(profile.get("industry_preset"))
+        hints = preset.get("audience_hints", [])
+        segments = {
+            "customers": [
+                {"segment": h, "pain_points": [], "interests": [],
+                 "source": "industry preset audience hint (editable starting point)"}
+                for h in hints],
+            "note": "Profile '%s' (%s) — segments seeded from the industry "
+                    "preset + profile target text: %s"
+                    % (profile.get("name"), profile.get("industry"),
+                       profile.get("target_text") or "—"),
+            "research_checklist": preset.get("research_checklist", []),
+        }
+        return _out("01_audience_research", segments)
     segments = {
         "customers": [
             {"segment": "students", "pain_points": ["AI tools costly on a student budget",
@@ -42,12 +62,23 @@ def role_01_audience_research(goal="both"):
     return _out("01_audience_research", segments)
 
 
-def role_02_competitor_watch():
+def role_02_competitor_watch(profile_slug="software-hub", conn=None, profile_id=None):
+    from . import competitor_seeds
+    entries = None
+    if conn is not None and profile_id is not None:
+        from . import profiles as profiles_mod
+        entries = profiles_mod.list_competitors(profile_id, conn)
+    if entries is None:
+        entries = competitor_seeds.seeded_for(profile_slug)
     return _out("02_competitor_watch", {
         "status": "UNTESTED in Step 1 — no live Ad Library pull is wired. "
                   "Manual check of the public Meta Ad Library is the Step 1 method; "
-                  "any API route must be eligibility-checked in Step 2.",
-        "entries": [],
+                  "any API route must be eligibility-checked in Step 2. "
+                  "Entries below are the profile's competitor list (owner-editable; "
+                  "seeded entries carry their 'source') — tracked for "
+                  "inspiration/research from public sources only; figures on "
+                  "them are as the owner shared, not system-verified.",
+        "entries": entries,
     })
 
 
@@ -64,7 +95,31 @@ def role_03_trend_analysis():
     })
 
 
-def role_04_funnel_strategy():
+_FUNNEL_BY_SALES_MODEL = {
+    "checkout": ["ad", "product/store page", "checkout", "paid order", "repeat order"],
+    "lead_gen": ["ad", "enquiry (message/lead)", "qualification", "conversation", "order"],
+    "whatsapp": ["ad", "WhatsApp chat", "qualification", "order"],
+    "calls": ["ad", "call", "booking", "job/order done"],
+    "footfall": ["ad", "direction/call", "store visit", "purchase"],
+}
+
+
+def role_04_funnel_strategy(profile=None):
+    if profile is not None:
+        overrides = profile.get("settings_overrides") or {}
+        stages = overrides.get("FUNNEL_STAGES")
+        model = profile.get("sales_model") or "lead_gen"
+        return _out("04_funnel_strategy", {
+            "business": profile.get("name"), "industry": profile.get("industry"),
+            "sales_model": model,
+            "funnel": ([s.strip() for s in str(stages).split(">")] if stages
+                       else _FUNNEL_BY_SALES_MODEL.get(model,
+                                                       _FUNNEL_BY_SALES_MODEL["lead_gen"])),
+            "lead_stages": overrides.get("LEAD_STAGES", []),
+            "note": "Funnel/KPI defaults come from the profile's settings "
+                    "overrides (seeded by the industry preset, editable) — "
+                    "kabhi code me hardcoded nahi.",
+        })
     return _out("04_funnel_strategy", {
         "customers": ["ad", "enquiry (message/lead)", "product page / order", "paid order"],
         "resellers": ["ad", "catalog / API info", "conversation", "reseller application"],
@@ -105,35 +160,44 @@ ANGLES = {
 }
 
 
-def role_06_angle_generator(segment="students"):
-    angles = ANGLES.get(segment, ANGLES["students"])
+def role_06_angle_generator(segment="students", profile=None):
+    if segment in ANGLES:
+        angles = ANGLES[segment]
+    elif profile is not None:
+        from . import industries
+        preset = industries.get_preset(profile.get("industry_preset"))
+        angles = preset.get("angle_templates", []) or ANGLES["students"]
+    else:
+        angles = ANGLES["students"]
     return _out("06_angle_generator", {"segment": segment, "angles": angles,
                                        "count": len(angles)})
 
 
-def role_07_copywriter(angle):
+def role_07_copywriter(angle, profile=None):
+    business = _business_name(profile)
     return _out("07_copywriter", {
         "angle": angle,
         "hinglish": {
             "headline": "Apna AI toolkit ek jagah ready karo",
-            "text": angle + " — Software Hub par collections dekho aur apne kaam ke hisaab se chuno.",
+            "text": angle + " — %s par collections dekho aur apne kaam ke hisaab se chuno." % business,
             "cta": "Learn More",
         },
         "english": {
             "headline": "Build your AI toolkit in one place",
-            "text": angle + " — browse the collections on Software Hub and pick what fits your work.",
+            "text": angle + " — browse the collections on %s and pick what fits your work." % business,
             "cta": "Learn More",
         },
         "note": "Draft copy only (SCRIPT/BRIEF, not a generated asset). Must pass Role 10 policy check and owner approval.",
     })
 
 
-def role_08_visual_poster_brief(angle):
+def role_08_visual_poster_brief(angle, profile=None):
+    business = _business_name(profile)
     return _out("08_visual_poster_brief", {
         "type": "BRIEF (text only — no image generated in Step 1)",
         "brief": "Clean poster: one headline line, product collection visual without "
-                 "unauthorised brand logos, Software Hub name, no price or claim text "
-                 "until verified. Angle: " + angle,
+                 "unauthorised brand logos, %s name, no price or claim text "
+                 "until verified. Angle: %s" % (business, angle),
         "visual_check_required": ["readable text", "correct product names",
                                   "no misleading claims", "no unauthorised brand marks"],
     })
@@ -199,14 +263,26 @@ def role_14_approval_queue_manager(queue):
     return _out("14_approval_queue_manager", {"pending_items": queue.list_pending()})
 
 
+NO_SPEND_CHECKLIST = [
+    "Account spending limit reached (naye accounts par Meta ka daily threshold chhota hota hai)",
+    "Learning limited — audience too small / budget too low / duplicate ad sets competing",
+    "Payment issues — expired card, insufficient balance, billing verification, unpaid balance",
+    "Meta-side technical glitch — uneven/zero spend, usually resolves in a day or two",
+    "Too many creatives in one ad set — budget fragments; 3–5 winning creatives per ad set rakho",
+    "Policy violation — ad copy/creative ya LANDING PAGE par bhi (Strategy S19, Damini Tripathi / Marketian)",
+]
+
+
 def role_15_account_health_monitor(flags=None):
     flags = flags or []
     if flags:
         return _out("15_account_health_monitor", {
             "flags": flags,
-            "action": "STOP automation and inform the owner. Never work around a rejection."})
+            "action": "STOP automation and inform the owner. Never work around a rejection.",
+            "no_spend_checklist": NO_SPEND_CHECKLIST})
     return _out("15_account_health_monitor", {
-        "flags": [], "action": "No flags in Step 1 (mock). Live monitoring starts after Step 3."})
+        "flags": [], "action": "No flags in Step 1 (mock). Live monitoring starts after Step 3.",
+        "no_spend_checklist": NO_SPEND_CHECKLIST})
 
 
 # ---------- D. Performance and Optimisation ----------
@@ -252,7 +328,8 @@ def role_19_optimiser(rows, settings):
     return _out("19_optimiser", optimiser_mod.analyse(rows, settings))
 
 
-def role_20_reporter(rows, proposals, language="Hinglish"):
+def role_20_reporter(rows, proposals, language="Hinglish", business_name=None,
+                     industry=None):
     total_spend = sum(float(r.get("spend") or 0) for r in rows)
     total_enq = sum(int(r.get("enquiries") or 0) for r in rows)
     total_q = sum(int(r.get("qualified_leads") or 0) for r in rows)
@@ -272,7 +349,12 @@ def role_20_reporter(rows, proposals, language="Hinglish"):
                    % (total_spend, total_enq, total_q,
                       ("n/a" if cpe is None else round(cpe, 2)),
                       ("n/a" if cpq is None else round(cpq, 2)), len(proposals)))
-    return _out("20_reporter", {"language": language, "summary": summary})
+    if business_name:
+        header = "Business: %s%s" % (
+            business_name, (" · Industry: %s" % industry) if industry else "")
+        summary = header + "\n" + summary
+    return _out("20_reporter", {"language": language, "summary": summary,
+                                "business": business_name, "industry": industry})
 
 
 ALL_ROLES = [
