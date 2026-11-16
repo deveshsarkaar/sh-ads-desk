@@ -251,3 +251,19 @@ Command: `python3 -m pytest tests/ -q`
   Analytics delta pills (no last-week baseline). Carousel creative cards not
   rendered (saved creatives are poster/reel/copy only).
 - Full suite after redesign: 94/94 pass. Live smoke: all routes 200.
+
+## Agents + Integrations pages — Owner Designs (16 Nov 2026, late)
+- Agents page rebuilt to the owner's design: AI AUTOMATION eyebrow, 4 stat chips
+  from real role_runs (Total / Active / Idle / Completed Today), department tabs
+  filtering via ?dept=, agents table (status dots Running/Completed/Idle, relative
+  Last Run, per-row Run posting to the existing /roles/run endpoint — the page
+  states plainly that it runs the standard role set; no per-role endpoint exists).
+  No "+ Create Agent" button (roles are fixed). 33-point smoke check passed.
+- Integrations page rebuilt to the owner's design: truthful status pill (kill
+  switch), 6 cards (Meta Ads with real mode pill + Connect -> /connect, Meta Ad
+  Library -> /loop, OpenAI / Anthropic Claude / Higgsfield / Kling AI with the
+  existing key machinery — Save Key posts carry current values as hidden inputs
+  so nothing resets; keys never rendered). Claude card carries the honest note:
+  Pro/Max subscriptions cannot connect to external software; API key only.
+  Existing provider settings section kept intact below the grid.
+- Full suite: 94/94 pass, no assertion changes.

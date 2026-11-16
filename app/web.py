@@ -71,6 +71,23 @@ h1{font-size:26px;margin:2px 0 8px;letter-spacing:-.3px;font-weight:800}
 h2{font-size:17px;margin:2px 0 12px;font-weight:700}
 h3{font-size:15px;margin:16px 0 6px}.mut{color:var(--mut)}.small{font-size:13px}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px}
+.ihead{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap}
+.ihead h1{margin-bottom:2px}
+.igrid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:0 0 18px}
+@media(max-width:1000px){.igrid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:640px){.igrid{grid-template-columns:1fr}}
+.icard{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+padding:18px;box-shadow:0 1px 3px rgba(31,27,80,.05);display:flex;flex-direction:column}
+.icard .ihead2{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:6px}
+.icard .ititle{display:flex;gap:10px;align-items:center;font-weight:700;font-size:16px}
+.iicon{width:36px;height:36px;border-radius:10px;background:var(--violetbg);color:var(--brand2);
+display:flex;align-items:center;justify-content:center;font-size:19px;flex:none}
+.ichips{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 14px}
+.ichip{background:#f1f0fb;color:var(--mut);border-radius:20px;padding:2px 10px;font-size:12px;font-weight:600}
+.ibtn{display:block;text-align:center}
+.keyrow{display:flex;gap:8px;align-items:stretch}
+.keyrow input{flex:1;margin:0;min-width:0}
+.keyrow button{white-space:nowrap}
 .kpi{font-size:28px;font-weight:800;letter-spacing:-.5px}
 .pill{display:inline-block;border-radius:20px;padding:2px 11px;font-size:12px;font-weight:600;white-space:nowrap}
 .pill.ok{background:var(--okbg);color:var(--ok)}.pill.bad{background:var(--badbg);color:var(--bad)}
@@ -150,6 +167,40 @@ ROLE_NAMES = [
     ("18_creative_analyst", "18 · Creative Analyst", "D. Performance & Optimisation"),
     ("19_optimiser", "19 · Optimiser", "D. Performance & Optimisation"),
     ("20_reporter", "20 · Reporter", "D. Performance & Optimisation"),
+]
+
+# Agents page metadata: icon glyph + a one-line description of what the
+# role function in app/roles.py actually does (no invented capabilities).
+ROLE_DESCRIPTIONS = {
+    "01_audience_research": ("&#128101;", "Segments customers and resellers — pain points and interests"),
+    "02_competitor_watch": ("&#128269;", "Tracks competitor ads, offers and positioning"),
+    "03_trend_analysis": ("&#128200;", "Surfaces market and platform trends to act on"),
+    "04_funnel_strategy": ("&#127919;", "Plans the funnel stages for the active business profile"),
+    "05_budget_planning": ("&#8377;", "Plans budgets inside the owner's caps"),
+    "06_angle_generator": ("&#128161;", "Generates fresh ad angles for each segment"),
+    "07_copywriter": ("&#9999;", "Writes ad copy from the chosen angle"),
+    "08_visual_poster_brief": ("&#128444;", "Briefs the poster and visual creative"),
+    "09_reel_script": ("&#127916;", "Scripts reel and video ads"),
+    "10_policy_checker": ("&#128737;", "Checks creative text against Meta advertising policy"),
+    "11_structure_planner": ("&#129513;", "Plans campaign structure and naming"),
+    "12_targeting_planner": ("&#128205;", "Plans audience targeting for each segment"),
+    "13_campaign_builder": ("&#128640;", "Builds campaign drafts — only after approval"),
+    "14_approval_queue_manager": ("&#128203;", "Manages the pending approval queue"),
+    "15_account_health_monitor": ("&#128154;", "Monitors compliance and account health flags"),
+    "16_data_collector": ("&#128229;", "Collects performance data for analysis"),
+    "17_lead_quality_tracker": ("&#11088;", "Tracks enquiries, qualified leads, junk and orders"),
+    "18_creative_analyst": ("&#128202;", "Analyses which creatives and angles perform"),
+    "19_optimiser": ("&#9881;", "Judges winners and losers and proposes changes"),
+    "20_reporter": ("&#128221;", "Writes the daily and weekly performance report"),
+}
+
+# Agents page department tabs: (query slug, tab label, ROLE_NAMES group).
+ROLE_DEPT_TABS = [
+    ("all", "All Agents", None),
+    ("research", "Research & Strategy", "A. Research & Strategy"),
+    ("creative", "Creative Production", "B. Creative Production"),
+    ("campaign", "Campaign Management", "C. Campaign Management"),
+    ("performance", "Performance & Optimisation", "D. Performance & Optimisation"),
 ]
 
 SETTING_FIELDS = [
@@ -678,40 +729,171 @@ API version pin: %s</p></div>
     return page("Connect", "/connect", body, ctx["flash"], conn, ctx)
 
 
+def _parse_ts(ts):
+    """Parse a stored timestamp (UTC ISO from common._now); naive values
+    are treated as UTC. Returns None when unparseable."""
+    from datetime import datetime, timezone
+    try:
+        parsed = datetime.fromisoformat(str(ts))
+    except (ValueError, TypeError):
+        return None
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    return parsed
+
+
+def _rel_time(ts, now):
+    """Relative label for a stored timestamp: 'Now', '12 min ago',
+    '1 hour ago', '3 days ago'; '—' when there is no timestamp."""
+    parsed = _parse_ts(ts) if ts else None
+    if parsed is None:
+        return "—"
+    secs = (now - parsed).total_seconds()
+    if secs < 60:
+        return "Now"
+    mins = int(secs // 60)
+    if mins < 60:
+        return "%d min ago" % mins
+    hours = mins // 60
+    if hours < 24:
+        return "%d hour%s ago" % (hours, "s" if hours != 1 else "")
+    days = hours // 24
+    return "%d day%s ago" % (days, "s" if days != 1 else "")
+
+
 def pg_roles(ctx):
+    """Agents — the 20 fixed logical roles in the owner's reference
+    layout. Every count and status is derived from the real role_runs
+    table: a role whose last run is within 5 minutes is Running, a role
+    that has run is Completed, a role that never ran is Idle."""
+    from datetime import datetime, timedelta, timezone
     conn = ctx["conn"]
-    last = {}
-    for r in conn.execute(
-            "SELECT role, status, MAX(created_at) AS t FROM role_runs GROUP BY role").fetchall():
-        last[r["role"]] = r
-    errs = {r["role"] for r in conn.execute(
-        "SELECT DISTINCT role FROM role_runs WHERE status = 'error'").fetchall()}
-    cards, current_group = [], None
-    for key, label, group in ROLE_NAMES:
-        if group != current_group:
-            cards.append('<h3>%s</h3><div class="grid">' % esc(group))
-            if current_group is not None:
-                cards.append("</div>")
-            current_group = group
+    now = datetime.now(timezone.utc)
+    runs = conn.execute(
+        "SELECT role, status, output, created_at FROM role_runs "
+        "ORDER BY id").fetchall()
+    last, ran_today, errs = {}, set(), set()
+    for r in runs:
+        last[r["role"]] = r  # latest wins (ordered by id)
+        if str(r["created_at"] or "")[:10] == now.date().isoformat():
+            ran_today.add(r["role"])
+        if r["status"] == "error":
+            errs.add(r["role"])
+
+    def status_of(key):
         run = last.get(key)
-        status = ('<span class="pill ok">Done %s</span>' % esc(run["t"][:16].replace("T", " "))
-                  if run else '<span class="pill info">Idle — not run yet</span>')
+        if run is None:
+            return "Idle"
+        ts = _parse_ts(run["created_at"])
+        if ts is not None and now - ts <= timedelta(minutes=5):
+            return "Running"
+        return "Completed"
+
+    known = [key for key, _label, _group in ROLE_NAMES]
+    n_active = sum(1 for k in known if status_of(k) == "Running")
+    n_idle = sum(1 for k in known if k not in last)
+    n_today = len(ran_today.intersection(known))
+
+    dept = (ctx.get("query") or {}).get("dept", ["all"])[0]
+    if dept not in [slug for slug, _l, _g in ROLE_DEPT_TABS]:
+        dept = "all"
+    want_group = {slug: g for slug, _l, g in ROLE_DEPT_TABS}[dept]
+
+    tabs = []
+    for slug, tlabel, tgroup in ROLE_DEPT_TABS:
+        n = len(known) if tgroup is None else sum(
+            1 for _k, _l, g in ROLE_NAMES if g == tgroup)
+        href = "/roles" if slug == "all" else "/roles?dept=%s" % slug
+        tabs.append('<a class="ag-tab%s" href="%s">%s (%d)</a>'
+                    % (" on" if slug == dept else "", href, esc(tlabel), n))
+
+    dot_colors = {"Completed": "#10b981", "Running": "#7c3aed", "Idle": "#b6b3c7"}
+    text_colors = {"Completed": "var(--ok)", "Running": "var(--brand2)",
+                   "Idle": "var(--mut)"}
+    rows_html = []
+    for key, label, group in ROLE_NAMES:
+        if want_group is not None and group != want_group:
+            continue
+        name = label.split(" · ", 1)[1] if " · " in label else label
+        icon, desc = ROLE_DESCRIPTIONS.get(key, ("&#8226;", ""))
+        dept_name = group.split(". ", 1)[1] if ". " in group else group
+        st = status_of(key)
+        status_html = ('<span style="color:%s;font-weight:600;white-space:nowrap">'
+                       '<span class="ag-dot" style="background:%s"></span>%s</span>'
+                       % (text_colors[st], dot_colors[st], st))
         if key in errs:
-            status += ' <span class="pill bad">Has errors</span>'
-        cards.append('<div class="card"><strong>%s</strong><br>%s</div>' % (esc(label), status))
-    cards.append("</div>")
+            status_html += ' <span class="pill bad">Has errors</span>'
+        run = last.get(key)
+        last_run = _rel_time(run["created_at"], now) if run else "—"
+        rows_html.append(
+            '<tr><td><div class="ag-agent"><span class="ag-chip">%s</span>'
+            '<div><strong>%s</strong><div class="small mut">%s</div></div></div></td>'
+            '<td><span class="pill dim">%s</span></td>'
+            '<td>%s</td><td style="white-space:nowrap">%s</td>'
+            '<td style="white-space:nowrap"><form method="post" action="/roles/run" '
+            'class="inline">%s<button type="submit" class="runbtn">&#9654; Run</button>'
+            '</form> <span class="mut">&#8942;</span></td></tr>'
+            % (icon, esc(name), esc(desc), esc(dept_name), status_html,
+               esc(last_run), ctx["csrf_field"]))
+
+    outputs_html = ""
+    done = [(key, label) for key, label, _g in ROLE_NAMES if key in last]
+    if done:
+        blocks = []
+        for key, label in done:
+            out = str(last[key]["output"] or "")
+            if len(out) > 600:
+                out = out[:600] + " …"
+            blocks.append("<h3>%s</h3><pre>%s</pre>" % (esc(label), esc(out)))
+        outputs_html = ('<details><summary>Latest role outputs '
+                        '(from role_runs)</summary>%s</details>'
+                        % "".join(blocks))
+
     body = """
-<h1>Roles — 20 logical roles</h1>
-<p class="mut">Every role's output is separate and auditable. Statuses come from the real
-<code>role_runs</code> table — roles run via the jobs (<code>python -m app.jobs optimise</code>)
-or the button below. There is no always-on agent.</p>
-<form method="post" action="/roles/run">%s
-<p class="small">Pressing this button runs Roles 1–9, 11, 12, 15–18, 20 once on MOCK data
-and their outputs appear on this page + in the audit log. Roles 10/13/14/19 run from
-their own pages (Creative/Approvals/Optimiser). Nothing is written to Meta.</p>
-<button type="submit">Run roles once (MOCK)</button></form>
+<style>
+.ag-eyebrow{color:var(--brand);font-weight:700;letter-spacing:2px;font-size:12px}
+.ag-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin:16px 0 18px}
+.ag-stat{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px 18px;display:flex;gap:14px;align-items:center;box-shadow:0 1px 3px rgba(31,27,80,.05)}
+.ag-ic{width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:19px;flex:none}
+.ag-stat b{font-size:24px;display:block;line-height:1.15;letter-spacing:-.5px}
+.ag-stat .lbl{color:var(--mut);font-size:13px}
+.ag-tabs{display:flex;gap:4px;flex-wrap:wrap;border-bottom:1px solid var(--line);margin-bottom:16px}
+.ag-tab{padding:9px 14px;font-weight:600;font-size:14px;color:var(--mut);border-bottom:2px solid transparent;margin-bottom:-1px}
+.ag-tab:hover{text-decoration:none;color:var(--ink)}
+.ag-tab.on{color:var(--brand2);border-bottom-color:var(--brand)}
+.ag-agent{display:flex;gap:12px;align-items:center}
+.ag-chip{width:38px;height:38px;border-radius:10px;background:var(--violetbg);display:inline-flex;align-items:center;justify-content:center;font-size:17px;flex:none}
+.ag-dot{width:9px;height:9px;border-radius:50%%;display:inline-block;margin-right:7px}
+button.runbtn{background:#fff;color:var(--ink);border:1px solid var(--line);padding:6px 14px;border-radius:9px;font-size:13.5px;font-weight:600}
+button.runbtn:hover{border-color:var(--brand);color:var(--brand2);background:#f5f2ff}
+</style>
+<div class="ag-eyebrow">&mdash; AI AUTOMATION</div>
+<h1>Agents</h1>
+<p class="mut" style="margin-top:-4px">20 AI agents across 4 departments, working for your workspace</p>
+<div class="ag-stats">
+<div class="ag-stat"><span class="ag-ic" style="background:var(--violetbg)">&#129302;</span><div><b>%d</b><span class="lbl">Total Agents</span></div></div>
+<div class="ag-stat"><span class="ag-ic" style="background:var(--okbg)">&#9654;</span><div><b>%d</b><span class="lbl">Active</span></div></div>
+<div class="ag-stat"><span class="ag-ic" style="background:var(--warnbg)">&#10074;&#10074;</span><div><b>%d</b><span class="lbl">Idle</span></div></div>
+<div class="ag-stat"><span class="ag-ic" style="background:var(--violetbg)">&#10003;</span><div><b>%d</b><span class="lbl">Completed (Today)</span></div></div>
+</div>
+<div class="ag-tabs">%s</div>
+<div class="card" style="padding:6px 18px"><div class="twrap"><table>
+<tr><th>Agent</th><th>Department</th><th>Status</th><th>Last Run</th><th>Actions</th></tr>
 %s
-""" % (ctx["csrf_field"], "".join(cards))
+</table></div></div>
+<div class="card"><h2>Run roles once (MOCK)</h2>
+<p class="small">Every role's output is separate and auditable. The statuses above come from
+the real <code>role_runs</code> table — roles also run via the jobs
+(<code>python -m app.jobs optimise</code>). There is no always-on agent.</p>
+<form method="post" action="/roles/run">%s
+<p class="small">Pressing this button — or any row's Run button — runs Roles 1–9, 11, 12,
+15–18, 20 once on MOCK data via the existing <code>/roles/run</code> action; outputs are
+logged in <code>role_runs</code> and the audit log. Roles 10/13/14/19 run from their own
+pages (Creative / Approvals / Optimiser). Nothing is written to Meta.</p>
+<button type="submit">Run roles once (MOCK)</button></form></div>
+%s
+""" % (len(known), n_active, n_idle, n_today, "".join(tabs),
+       "".join(rows_html), ctx["csrf_field"], outputs_html)
     return page("Roles", "/roles", body, ctx["flash"], conn, ctx)
 
 
@@ -1403,28 +1585,198 @@ it is not a guarantee that generation will work. These adapters are
        ctx["csrf_field"], cap, remove_html)
 
 
+CLAUDE_SUBSCRIPTION_NOTE = (
+    "Have a Claude Pro or Max plan? Subscriptions work only inside "
+    "Claude's own apps — Anthropic does not allow connecting them to "
+    "external software. An API key is the only supported way here.")
+
+
+def _ichips(labels):
+    return '<div class="ichips">%s</div>' % "".join(
+        '<span class="ichip">%s</span>' % esc(x) for x in labels)
+
+
+def _provider_last_test(conn, cap):
+    """Last saved test-connection result line for a capability (same kv
+    record the capability cards below use)."""
+    row = conn.execute(
+        "SELECT value FROM kv WHERE key = ?", ("provider_test_" + cap,)).fetchone()
+    if not row:
+        return ""
+    try:
+        t = json.loads(row["value"])
+    except ValueError:
+        return ""
+    return ('<p class="small">Last test: %s — %s</p>'
+            % ('<span class="pill ok">Connected (HTTP %s)</span>' % esc(t.get("status"))
+               if t.get("ok") else '<span class="pill bad">Failed</span>',
+               esc(t.get("detail", ""))))
+
+
+def _integration_meta_card(ctx):
+    live = os.environ.get("META_MODE", "MOCK").upper() == "LIVE"
+    token = bool(os.environ.get("META_ACCESS_TOKEN"))
+    if live and token:
+        pill = '<span class="pill ok">Connected</span>'
+    elif live:
+        pill = '<span class="pill bad">Not Connected</span>'
+    else:
+        pill = '<span class="pill dim">Mock Mode</span>'
+    return """
+<div class="icard">
+<div class="ihead2"><div class="ititle"><span class="iicon">&#8734;</span>Meta Ads</div>%s</div>
+<p class="small mut">Run and optimise campaigns across Facebook &amp; Instagram.</p>
+%s
+<div style="margin-top:auto"><a class="btn ibtn" href="/connect">Connect</a>
+<p class="small mut" style="margin:8px 0 0">Opens the Connect wizard. The access token
+itself is set in the server's .env as META_ACCESS_TOKEN — it is never typed
+inside this app.</p></div></div>
+""" % (pill, _ichips(["Campaigns", "Audience Sync", "Ad Insights"]))
+
+
+def _integration_library_card(ctx):
+    return """
+<div class="icard">
+<div class="ihead2"><div class="ititle"><span class="iicon">&#128269;</span>Meta Ad Library</div><span class="pill info">Public Search</span></div>
+<p class="small mut">Search and browse public ad library listings.</p>
+%s
+<div style="margin-top:auto"><a class="btn secondary ibtn" href="/loop">Open</a>
+<p class="small mut" style="margin:8px 0 0">Opens the Growth Loop page, where the
+Competitor Research Board holds the ready-made Ad Library search links.</p></div></div>
+""" % _ichips(["Search Ads", "View Creatives", "Competitor Insights"])
+
+
+def _integration_brand_card(ctx, cap, brand_preset, name, icon, desc, chips,
+                            note=None):
+    """One provider brand card (OpenAI / Claude / Higgsfield / Kling).
+    Key management is the EXISTING per-capability machinery: the Save Key
+    form posts to /providers/save with this brand's preset, carrying the
+    current field values as hidden inputs so nothing else is reset.
+    Test/Remove act on the capability, so they are shown only when this
+    brand is the capability's active preset. No key value is ever
+    rendered — only set/not-set state."""
+    conn = ctx["conn"]
+    cfg = providers.get_config(cap)
+    status = providers.connection_status(cap)
+    active = cfg["preset"] == brand_preset
+    cap_word = {"text": "Text", "image": "Image", "video": "Video"}[cap]
+    if not status["key_set"]:
+        pill = '<span class="pill dim">Not Connected</span>'
+    elif active:
+        pill = '<span class="pill ok">Connected</span>'
+    else:
+        pill = '<span class="pill warn">Key is set</span>'
+    src = cfg if active else providers.preset_defaults(cap, brand_preset)
+    hidden = "".join(
+        '<input type="hidden" name="%s" value="%s">'
+        % (k, esc(src.get(k) if src.get(k) is not None else ""))
+        for k in PROVIDER_FORM_FIELDS[cap])
+    placeholder = ("Key is set — type a new key only to change it"
+                   if status["key_set"] else "Paste your API key here")
+    if active:
+        state_html = ('<p class="small">Active %s provider · Preset: <strong>%s</strong>'
+                      ' · Model: <code>%s</code></p>'
+                      % (cap_word, esc(providers.PRESETS[cap][brand_preset]["label"]),
+                         esc(cfg.get("model") or "—")))
+    else:
+        state_html = ('<p class="small mut">Not the active %s provider right now. '
+                      'Saving a key here makes %s the active %s provider — its '
+                      'preset defaults apply and the %s settings card below then '
+                      'holds the live settings.</p>'
+                      % (cap_word, esc(name), cap_word, cap_word))
+    manage_html = ""
+    if active:
+        remove_html = ""
+        if status["key_source"] == "file":
+            remove_html = ("""<form method="post" action="/providers/removekey" class="inline">%s
+<input type="hidden" name="capability" value="%s">
+<button class="secondary" type="submit">Remove key</button></form>"""
+                           % (ctx["csrf_field"], cap))
+        elif status["key_source"] == "env":
+            remove_html = ('<p class="small mut">The key comes from the environment '
+                           'variable %s — to remove it, remove it from the server '
+                           'environment.</p>' % esc(providers.ENV_KEY_NAMES[cap]))
+        manage_html = """
+<div class="row" style="margin-top:10px">
+<form method="post" action="/providers/test" class="inline">%s
+<input type="hidden" name="capability" value="%s">
+<button class="secondary" type="submit">Test connection</button></form>
+%s</div>
+%s""" % (ctx["csrf_field"], cap, remove_html, _provider_last_test(conn, cap))
+    note_html = ('<p class="small mut">%s</p>' % esc(note)) if note else ""
+    return """
+<div class="icard">
+<div class="ihead2"><div class="ititle"><span class="iicon">%s</span>%s</div>%s</div>
+<p class="small mut">%s</p>
+%s
+%s
+<form method="post" action="/providers/save">%s
+<input type="hidden" name="capability" value="%s">
+<input type="hidden" name="preset" value="%s">
+%s
+<div class="keyrow"><input type="password" name="api_key" autocomplete="off" placeholder="%s">
+<button type="submit">Save Key</button></div></form>
+<p class="small mut">The key is stored only in the server's <code>data/secrets.env</code>
+file — it is never shown here again.</p>
+%s%s
+</div>
+""" % (icon, esc(name), pill, esc(desc), _ichips(chips), state_html,
+       ctx["csrf_field"], cap, brand_preset, hidden, esc(placeholder),
+       note_html, manage_html)
+
+
 def pg_providers(ctx):
+    conn = ctx["conn"]
+    queue = ApprovalQueue()
+    queue.conn = conn
+    sys_pill = ('<span class="pill bad">Paused</span>' if queue.kill_switch_active()
+                else '<span class="pill ok">All Systems Operational</span>')
+    grid = "".join([
+        _integration_meta_card(ctx),
+        _integration_library_card(ctx),
+        _integration_brand_card(
+            ctx, "text", "openai_compatible", "OpenAI", "&#9883;",
+            "Use GPT models for AI agents and copy generation.",
+            ["GPT-4o", "Text Generation", "Code Generation"]),
+        _integration_brand_card(
+            ctx, "text", "anthropic", "Anthropic Claude", "&#10035;",
+            "Claude for reasoning, drafting, and analysis.",
+            ["Claude 3.5", "Long Context", "Smart Analysis"],
+            note=CLAUDE_SUBSCRIPTION_NOTE),
+        _integration_brand_card(
+            ctx, "video", "higgsfield_style", "Higgsfield", "&#127916;",
+            "Generate video content with Higgsfield models.",
+            ["Video Generation", "Templates", "AI Motion"]),
+        _integration_brand_card(
+            ctx, "video", "kling_style", "Kling AI", "&#127909;",
+            "Produce video clips using Kling AI generation.",
+            ["Video Generation", "Templates", "High Quality"]),
+    ])
     cards = "".join(_provider_card(ctx, cap) for cap in providers.CAPABILITIES)
     body = """
-<h1>API Providers — connect your APIs</h1>
+<div class="ihead"><div><h1>Integrations</h1>
+<p class="mut" style="margin:0">Connect your ad accounts and AI providers</p></div>
+<div>%s</div></div>
+<div class="banner warn"><strong>UNTESTED:</strong> these adapters have not been tested on
+any real provider account (this build had no real key). Test the first real generation
+carefully, with a small prompt. Generation cost goes to the provider's billing — the
+app always shows cost as "unknown — provider billing" and never estimates it.</div>
+<div class="igrid">%s</div>
+<h2>Provider settings — presets, models and advanced options</h2>
 <p class="mut">This is where you connect your generation APIs: OpenAI/Claude for text,
 an image API for images, a Higgsfield/Kling-style API for video. Known presets have the
 <strong>base URL and default model pre-filled — you only paste the API key</strong>.
 Creative Studio's "Generate with API" buttons then create copy, posters, carousels
 and reels from these APIs. The system never selects a vendor itself and never keeps
 a key — the key lives only in this server's <code>data/secrets.env</code>.</p>
-<div class="banner warn"><strong>UNTESTED:</strong> these adapters have not been tested on
-any real provider account (this build had no real key). Test the first real generation
-carefully, with a small prompt. Generation cost goes to the provider's billing — the
-app always shows cost as "unknown — provider billing" and never estimates it.</div>
 %s
 <div class="card"><h2>Environment variables (the other way)</h2>
 <p class="small">Instead of the UI, you can keep the key in the server environment —
 an env key always wins: <code>SH_ADS_TEXT_API_KEY</code>, <code>SH_ADS_IMAGE_API_KEY</code>,
 <code>SH_ADS_VIDEO_API_KEY</code>. Keep a backup of <code>data/secrets.env</code> in a
 safe place — never put it in git/commits/chat.</p></div>
-""" % cards
-    return page("API Providers", "/providers", body, ctx["flash"], ctx["conn"], ctx)
+""" % (sys_pill, grid, cards)
+    return page("Integrations", "/providers", body, ctx["flash"], ctx["conn"], ctx)
 
 
 def pg_planner(ctx):
