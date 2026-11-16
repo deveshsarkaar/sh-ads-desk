@@ -280,3 +280,21 @@ Command: `python3 -m pytest tests/ -q`
   No finding -> "—". Nothing invented.
 - Full suite: 94/94 pass, no assertion changes. Smoke-tested in 3 states
   (fresh / findings recorded / full cycle run).
+
+## Eligibility & Gates page — Owner Design + sidebar profile fix (16 Nov 2026, late)
+- pg_eligibility rebuilt: COMPLIANCE eyebrow, products table (initial chip,
+  Category pill, permission switch, Ready/Blocked pill, Last Checked from the
+  audit log), Destination Gate card (green banner only when the real check
+  passes, otherwise the checker's real blockers), Policy Check card (only true
+  statements; register checked-date chip, no invented "version").
+- The switch NEVER posts: it links into the existing confirm/unconfirm forms
+  (pre-selected via ?confirm=/?unconfirm=); confirming still requires the proof
+  note + terms-checked date — the handler refuses without both. 21-check smoke:
+  33 offerings render OFF + Blocked, zero Ready; after a real confirm the row
+  flips to ON + Ready with the audit-derived Last Checked.
+- Sidebar profile duplication fixed (owner report): the profile switcher select
+  and the static "Software Hub / Enterprise" row showed the profile twice. Now
+  one block — avatar (profile initials) + the switcher select styled as the
+  bold profile name + industry line. Verified: profile name occurs exactly
+  once in the sidebar profile block.
+- Full suite: 94/94 pass, no assertion changes.

@@ -285,8 +285,24 @@ def page(title, active, body, flash=None, conn=None, ctx=None):
             for p in profiles_mod.list_profiles(conn))
         switcher = ('<form method="post" action="/profiles/switch" class="inline">%s'
                     '<select name="profile_id" onchange="this.form.submit()" '
-                    'style="width:100%%;margin:0 0 10px;padding:6px 8px">%s</select></form>'
+                    'style="width:100%%;margin:0;padding:2px 0;font-weight:700;'
+                    'font-size:13.5px;border:0;background:transparent">%s</select></form>'
                     % (ctx["csrf_field"], options))
+    profile_block = ""
+    if ctx is not None and ctx.get("profile"):
+        initials = "".join(
+            w[0] for w in profile["name"].split()[:2]).upper() or "SH"
+        profile_block = (
+            '<div class="sb-user"><div class="sb-avatar">%s</div>'
+            '<div style="flex:1;min-width:0">%s'
+            '<div class="small mut">%s</div></div></div>'
+            % (esc(initials), switcher,
+               esc(profile.get("industry") or "")))
+    else:
+        profile_block = (
+            '<div class="sb-user"><div class="sb-avatar">SH</div>'
+            '<div><div style="font-weight:700;font-size:13.5px">Software Hub</div>'
+            '<div class="small mut">Enterprise</div></div></div>')
     return """<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>%s · SH Ads Desk</title><style>%s</style></head><body>
@@ -297,9 +313,6 @@ def page(title, active, body, flash=None, conn=None, ctx=None):
 <nav class="side">%s</nav>
 <div class="sb-spacer"></div>
 <div class="sb-profile">%s
-<div class="sb-user"><div class="sb-avatar">SH</div>
-<div><div style="font-weight:700;font-size:13.5px">Software Hub</div>
-<div class="small mut">Enterprise</div></div></div>
 <form method="post" action="/logout" class="inline"><button class="secondary" type="submit" style="width:100%%">Logout</button></form></div>
 </aside>
 <div class="shell">
@@ -307,7 +320,7 @@ def page(title, active, body, flash=None, conn=None, ctx=None):
 <main>%s%s%s</main>
 <div class="footer">SH Ads Desk · Built for any industry · Step 1 logic VERIFIED (local tests) · Live Meta path UNTESTED · API %s · Provider API keys live only in the server's data/secrets.env file — the app never displays or logs them</div>
 </div></div>
-</body></html>""" % (esc(title), CSS, nav, switcher, esc(title), esc(biz_tag),
+</body></html>""" % (esc(title), CSS, nav, profile_block, esc(title), esc(biz_tag),
                      kill, flash_html, body, esc(API_VERSION_LABEL))
 
 
@@ -1078,40 +1091,199 @@ campaign, disables all automation and blocks approvals and execution. It
 
 
 def pg_eligibility(ctx):
+    """Eligibility & Gates — the owner's reference layout. The products
+    table shows each offering's REAL permission state: the switch is a
+    visual state + a shortcut into the existing confirm / withdraw
+    forms below — it never confirms silently. Confirming still requires
+    the proof note + terms-checked date (post_eligibility_confirm
+    refuses without them); nothing about the gate logic changes."""
+    from datetime import datetime, timezone
+    from . import policies_register
     conn, settings = ctx["conn"], ctx["settings"]
     profile = ctx["profile"]
     pid = profile["id"] if profile else 0
     offerings = profiles_mod.list_offerings(pid, conn)
     perm_label = esc(profile.get("permission_label") or "eligibility permission confirmed") \
         if profile else "eligibility permission confirmed"
+    perm_col = "Resale Permission" if "resale" in perm_label.lower() else "Permission"
     preset = industries_mod.get_preset(profile.get("industry_preset")) if profile else {}
+    now = datetime.now(timezone.utc)
+    query = ctx.get("query") or {}
+
+    def _qint(key):
+        try:
+            return int((query.get(key) or ["0"])[0] or 0)
+        except (TypeError, ValueError):
+            return 0
+
+    confirm_sel = _qint("confirm")
+    unconfirm_sel = _qint("unconfirm")
+
+    def last_gate_action(oid):
+        """Real timestamp of the last confirm/withdraw for an offering,
+        from the audit log; None when it never happened."""
+        row = conn.execute(
+            "SELECT created_at FROM audit_log WHERE event IN "
+            "('eligibility_confirmed', 'eligibility_unconfirmed') AND "
+            "(detail = ? OR detail LIKE ?) ORDER BY id DESC LIMIT 1",
+            ("offering_id=%d" % oid, "offering_id=%d %%" % oid)).fetchone()
+        return row["created_at"] if row else None
+
     rows_html = []
     for o in offerings:
         confirmed = o["permission_confirmed"]
-        pill = ('<span class="pill ok">CONFIRMED</span>' if confirmed
-                else '<span class="pill bad">NOT CONFIRMED — no ad can be created</span>')
+        status_pill = ('<span class="pill ok">&#10003; Ready</span>' if confirmed
+                       else '<span class="pill bad">&#10007; Blocked</span>')
+        if confirmed:
+            toggle = ('<a class="el-sw on" href="/eligibility?unconfirm=%d#unconfirm" '
+                      'title="Confirmed — open the withdraw form to switch it off" '
+                      'aria-label="Confirmed — open the withdraw form"></a>' % o["id"])
+        else:
+            toggle = ('<a class="el-sw" href="/eligibility?confirm=%d#confirm" '
+                      'title="Not confirmed — open the confirmation form" '
+                      'aria-label="Not confirmed — open the confirmation form"></a>' % o["id"])
+        sub_parts = [p for p in (o["type"], o["price"] or "", o["supplier"] or "") if p]
+        sub_line = " &middot; ".join(esc(p) for p in sub_parts)
+        proof_bits = []
+        if o["proof_note"]:
+            proof_bits.append("Proof: %s" % esc(o["proof_note"]))
+        if o["terms_checked_date"]:
+            proof_bits.append("Terms checked %s" % esc(o["terms_checked_date"]))
+        proof_line = ('<div class="small mut">%s</div>' % " &middot; ".join(proof_bits)) \
+            if proof_bits else ""
+        initial = esc(((o["name"] or "?").strip()[:1] or "?").upper())
         rows_html.append(
-            "<tr><td><strong>%s</strong></td><td>%s</td><td>%s</td><td>%s</td>"
-            "<td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>"
-            % (esc(o["name"]), esc(o["type"]), esc(o["category"] or "—"),
-               esc(o["price"] or "—"), esc(o["supplier"] or "—"), pill,
-               esc(o["proof_note"] or "—"), esc(o["terms_checked_date"] or "—")))
-    options = "".join('<option value="%d">%s</option>' % (o["id"], esc(o["name"]))
-                      for o in offerings)
+            '<tr><td><div class="el-prod"><span class="el-chip">%s</span>'
+            '<div><strong>%s</strong><div class="small mut">%s</div>%s</div></div></td>'
+            '<td><span class="pill dim">%s</span></td>'
+            '<td>%s</td><td>%s</td>'
+            '<td style="white-space:nowrap">%s</td>'
+            '<td><span class="mut">&#8942;</span></td></tr>'
+            % (initial, esc(o["name"]), sub_line, proof_line,
+               esc(o["category"] or "—"), toggle, status_pill,
+               esc(_rel_time(last_gate_action(o["id"]), now))))
+
+    def options(sel):
+        return "".join('<option value="%d"%s>%s</option>'
+                       % (o["id"], " selected" if o["id"] == sel else "",
+                          esc(o["name"]))
+                       for o in offerings)
+
+    # --- Destination Gate card -------------------------------------------
     dest = policy_checker.check_destination(settings)
+    dest_url = (settings.get("DESTINATION_URL") or "").strip()
+    if dest_url:
+        url_box = ('<div class="el-url">&#128279;&nbsp; <a href="%s" target="_blank" '
+                   'rel="noopener">%s</a></div>' % (esc(dest_url), esc(dest_url)))
+    else:
+        url_box = '<div class="el-url mut">&#128279;&nbsp; Not set</div>'
+    if dest["allowed"]:
+        dest_banner = '<div class="el-banner ok">&#10003;&nbsp; Destination Ready</div>'
+        dest_caption = ("This URL is set and marked ready, so approved drafts may "
+                        "send traffic to it.")
+    else:
+        dest_banner = ('<div class="el-banner bad">&#10007;&nbsp; Not ready — %s</div>'
+                       % esc("; ".join(dest["reasons"])))
+        dest_caption = ("No ad can run until the URL is set and marked ready. "
+                        "If an offering has its own destination override, that "
+                        "override applies to that offering's drafts.")
+
+    # --- Policy Check card -------------------------------------------------
     pack = profiles_mod.compliance_patterns_for(profile)
+    check_lines = [
+        '<div class="el-check"><span class="el-tick">&#10003;</span><span>'
+        'Banned-claims checklist active — every creative is scanned before '
+        'it can reach the approval queue.</span></div>']
+    if pack:
+        check_lines.append(
+            '<div class="el-check"><span class="el-tick">&#10003;</span><span>'
+            'Industry add-on pack active — %d extra pattern%s for this '
+            'profile (listed below).</span></div>'
+            % (len(pack), "s" if len(pack) != 1 else ""))
+    else:
+        check_lines.append(
+            '<p class="small mut" style="margin:8px 0 0">This preset has no '
+            'add-on pack — only the core Meta rules apply.</p>')
+    last_creative_check = conn.execute(
+        "SELECT MAX(created_at) AS m FROM creatives").fetchone()["m"]
+    if last_creative_check:
+        check_lines.append(
+            '<div class="el-check"><span class="el-tick">&#10003;</span><span>'
+            'Policy results are recorded for every generated creative — '
+            'latest check %s.</span></div>'
+            % esc(_rel_time(last_creative_check, now)))
+    reg = policies_register.register_status()
+    policy_footer = ('<span class="el-ver">Policies register &middot; checked %s</span>'
+                     % esc(_fmt_date(reg["date_checked"])))
+    if last_creative_check:
+        policy_footer += ('<span class="small mut">&#8635; Last checked: %s</span>'
+                          % esc(_rel_time(last_creative_check, now)))
+
     pack_html = "".join(
         "<li><code>%s</code> — %s</li>" % (esc(p["pattern"]), esc(p["reason"]))
         for p in pack) or "<li class='mut'>This preset has no add-on pack — only the core Meta rules apply.</li>"
-    body = """
-<h1>Eligibility &amp; Destination Gate — %s</h1>
-<p class="mut">Rule: until an offering's <strong>%s is confirmed with a proof note +
-terms-checked date</strong>, the system will not create an ad for that offering
-(fails closed — the same strictness for every industry).
-%s</p>
-<div class="card"><h2>Offerings catalog (%d) — %s</h2>
-<table><tr><th>Offering</th><th>Type</th><th>Category</th><th>Price</th><th>Supplier/Source</th><th>Permission</th><th>Proof note</th><th>Terms checked</th></tr>%s</table></div>
-<div class="card"><h2>Add an offering</h2>
+
+    style = """
+<style>
+.el-eyebrow{color:var(--brand);font-weight:700;letter-spacing:2px;font-size:12px}
+.el-prod{display:flex;gap:12px;align-items:center}
+.el-chip{width:38px;height:38px;border-radius:10px;background:var(--violetbg);color:var(--brand2);display:inline-flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;flex:none}
+.el-sw{position:relative;display:inline-block;width:46px;height:26px;border-radius:999px;background:#d8d8e4;flex:none;vertical-align:middle}
+.el-sw:before{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.25)}
+.el-sw.on{background:var(--brand)}
+.el-sw.on:before{transform:translateX(20px)}
+.el-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:820px){.el-grid{grid-template-columns:1fr}}
+.el-url{border:1px solid var(--line);border-radius:10px;padding:10px 14px;background:#fbfbfe;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.el-banner{border-radius:10px;padding:11px 14px;font-weight:700;margin-top:12px}
+.el-banner.ok{background:var(--okbg);color:var(--ok)}
+.el-banner.bad{background:var(--badbg);color:var(--bad)}
+.el-check{display:flex;gap:10px;align-items:flex-start;margin-top:10px}
+.el-tick{width:22px;height:22px;border-radius:50%;background:var(--okbg);color:var(--ok);display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex:none}
+.el-ver{display:inline-block;background:#f1f0fb;color:var(--mut);border-radius:8px;padding:4px 10px;font-size:12.5px;font-weight:600}
+.el-pfoot{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;border-top:1px solid var(--line);margin-top:14px;padding-top:12px}
+</style>
+"""
+    body = style
+    body += '<div class="el-eyebrow">COMPLIANCE</div>'
+    body += "<h1>Eligibility &amp; Gates</h1>"
+    body += ('<p class="mut" style="margin-top:-4px">Only confirmed products '
+             'can be advertised</p>')
+    body += ('<p class="small mut">Rule: until a product\'s <strong>%s</strong> '
+             'is confirmed with a proof note + terms-checked date, the system '
+             'will not create an ad for it (fails closed — the same strictness '
+             'for every industry). %s</p>'
+             % (perm_label, esc(preset.get("permission_note", ""))))
+    body += ('<div class="card"><h2>Products — %s (%d)</h2>'
+             '<table><tr><th>Product</th><th>Category</th><th>%s</th>'
+             '<th>Status</th><th>Last Checked</th><th></th></tr>%s</table>'
+             '<p class="small mut" style="margin-top:10px">The switch shows the '
+             'current state only. Switching a product on always goes through '
+             'the confirmation form below — a proof note and a terms-checked '
+             'date are required, and a confirm without them is refused. '
+             'Switching off uses the withdraw form. Nothing is ever confirmed '
+             'silently.</p></div>'
+             % (esc(profile["name"]) if profile else "—", len(offerings),
+                esc(perm_col),
+                "".join(rows_html) or '<tr><td colspan="6" class="mut">The catalog is empty — add the first offering below</td></tr>'))
+    body += '<div class="el-grid">'
+    body += ('<div class="card"><h2>&#128279; Destination Gate</h2>'
+             '<p class="small mut">Verify the destination URL for ad delivery</p>'
+             '<label>Destination URL</label>%s'
+             '<p class="small mut" style="margin-top:8px">Set in '
+             '<a href="/settings">Settings</a>; per-business overrides live on '
+             '<a href="/profiles">Profiles</a>. The system never picks a '
+             'destination itself.</p>%s'
+             '<p class="small" style="margin-top:8px">%s</p></div>'
+             % (url_box, dest_banner, dest_caption))
+    body += ('<div class="card"><h2>&#128737; Policy Check</h2>'
+             '<p class="small mut">Ensure your products and creatives follow '
+             'platform policies</p>%s'
+             '<div class="el-pfoot">%s</div></div>'
+             % ("".join(check_lines), policy_footer))
+    body += '</div>'
+    body += """
+<div class="card"><h2>Add a product</h2>
 <form method="post" action="/eligibility/add">%s
 <label>Name</label><input name="name" required>
 <div class="row"><div style="flex:1"><label>Type</label><select name="type"><option>product</option><option>service</option></select></div>
@@ -1122,46 +1294,34 @@ terms-checked date</strong>, the system will not create an ad for that offering
 <p class="small">Adding creates the offering as UNCONFIRMED — an ad can be created
 only after its permission is confirmed below.</p>
 <button type="submit">Add offering</button></form></div>
-<div class="card"><h2>Confirm permission (owner only)</h2>
-<form method="post" action="/eligibility/confirm">%s
-<label>Offering</label><select name="offering_id">%s</select>
-<label>Supplier</label><input name="supplier" placeholder="Supplier name (as in the proof)">
-<label>Proof note</label><input name="proof_note" placeholder="Where the proof is — file/agreement reference" required>
-<label>Terms checked date</label><input name="terms_checked_date" type="date" required>
-<p class="small">Confirming only updates this offering's catalog entry.
-If the proof note or date is empty, the confirm is <strong>refused</strong>.
-This creates no ad — it only opens the gate.</p>
-<button type="submit">Confirm permission</button></form>
-<form method="post" action="/eligibility/unconfirm" style="margin-top:10px">%s
-<label>Withdraw permission — Offering</label><select name="offering_id">%s</select>
-<p class="small">Unconfirming blocks that offering's ads again.</p>
-<button class="secondary" type="submit">Unconfirm</button></form>
-<form method="post" action="/eligibility/delete" style="margin-top:10px">%s
-<label>Remove offering — Offering</label><select name="offering_id">%s</select>
-<label><input type="checkbox" name="confirm_delete" style="width:auto"> Yes, delete it permanently</label>
-<button class="danger" type="submit">Delete</button></form></div>
-<div class="card"><h2>Industry compliance add-on pack — %s</h2>
-<p class="small mut">These patterns apply ON TOP of Meta's universal core rules
-(the policy checker runs both). A preset is an editable starting point —
-this is not legal advice.</p>
-<ul class="check">%s</ul></div>
-<div class="card"><h2>Destination gate</h2>
-<p>Current status: %s</p>
-<p class="small mut">DESTINATION_URL and DESTINATION_READY are set from Settings/Profile
-overrides — the system never picks a destination itself, and no traffic goes
-anywhere until the owner says so. If an offering has its own destination
-override, that override applies to that offering's drafts.</p></div>
-""" % (esc(profile["name"]) if profile else "—", perm_label,
-       esc(preset.get("permission_note", "")),
-       len(offerings), esc(profile["name"]) if profile else "—",
-       "".join(rows_html) or '<tr><td colspan="8" class="mut">The catalog is empty — add the first offering</td></tr>',
-       ctx["csrf_field"], ctx["csrf_field"], options, ctx["csrf_field"], options,
-       ctx["csrf_field"], options,
-       esc(profile.get("industry") or "") if profile else "", pack_html,
-       '<span class="pill ok">OPEN</span>' if dest["allowed"]
-       else '<span class="pill bad">CLOSED</span> — ' + esc("; ".join(dest["reasons"])))
+""" % ctx["csrf_field"]
+    body += ('<div class="card"><h2>Confirm permission (owner only)</h2>'
+             '<form method="post" action="/eligibility/confirm" id="confirm">%s'
+             '<label>Offering</label><select name="offering_id">%s</select>'
+             '<label>Supplier</label><input name="supplier" placeholder="Supplier name (as in the proof)">'
+             '<label>Proof note</label><input name="proof_note" placeholder="Where the proof is — file/agreement reference" required>'
+             '<label>Terms checked date</label><input name="terms_checked_date" type="date" required>'
+             '<p class="small">Confirming only updates this offering\'s catalog entry. '
+             'If the proof note or date is empty, the confirm is <strong>refused</strong>. '
+             'This creates no ad — it only opens the gate.</p>'
+             '<button type="submit">Confirm permission</button></form>'
+             '<form method="post" action="/eligibility/unconfirm" id="unconfirm" style="margin-top:14px">%s'
+             '<label>Withdraw permission — Offering</label><select name="offering_id">%s</select>'
+             '<p class="small">Unconfirming blocks that offering\'s ads again.</p>'
+             '<button class="secondary" type="submit">Unconfirm</button></form>'
+             '<form method="post" action="/eligibility/delete" style="margin-top:14px">%s'
+             '<label>Remove offering — Offering</label><select name="offering_id">%s</select>'
+             '<label><input type="checkbox" name="confirm_delete" style="width:auto"> Yes, delete it permanently</label>'
+             '<button class="danger" type="submit">Delete</button></form></div>'
+             % (ctx["csrf_field"], options(confirm_sel), ctx["csrf_field"],
+                options(unconfirm_sel), ctx["csrf_field"], options(0)))
+    body += ('<div class="card"><h2>Industry compliance add-on pack — %s</h2>'
+             '<p class="small mut">These patterns apply ON TOP of Meta\'s universal core rules '
+             '(the policy checker runs both). A preset is an editable starting point — '
+             'this is not legal advice.</p>'
+             '<ul class="check">%s</ul></div>'
+             % (esc(profile.get("industry") or "") if profile else "", pack_html))
     return page("Eligibility", "/eligibility", body, ctx["flash"], conn, ctx)
-
 
 def pg_creative(ctx):
     conn = ctx["conn"]
