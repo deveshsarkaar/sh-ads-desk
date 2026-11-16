@@ -21,6 +21,19 @@ reports feed it (both read in full on 2026-11-16):
    That report's section F earnings/case claims are quarantined as
    UNVERIFIED and are NOT seeded anywhere as facts or benchmarks.
 
+4. YouTube training videos (owner-sent 2026-11-16, watched via the
+   browser transcript panels the same day) — 23 strategies seeded as
+   YT1-*/YT2-*/YT3-* plus one DO-NOT-APPLY entry (YT-DNA):
+   YT1 = Sabri Suby, "Learn 97% of Meta Ads in Under 19 minutes"
+   (https://youtu.be/NTmWqnPIb2s); YT2 = HBA Services, "Master
+   Facebook Ads in Just 40 Mints | Meta Ads Full Course 2027"
+   (https://youtu.be/6QhaintnRFE); YT3 = WsCube Tech (Himanshu
+   Tiwari), "Master Meta Ads in 90 Minutes: AI, Targeting & Campaign
+   Setup (2027 Edition)" (https://www.youtube.com/live/m11HrK84lxY).
+   Full per-video notes: YOUTUBE_LEARNINGS.md in the repo root.
+   The creators' own earnings/revenue/ROAS figures are their
+   UNVERIFIED marketing claims — NOT seeded anywhere (see YT-DNA).
+
 COMPLIANCE SCREENING: every entry was screened against the system's
 policy/compliance rules (core banned claims, industry packs, and the
 knowledge base's own Section 4) before seeding. Anything conflicting is
@@ -803,8 +816,183 @@ VIRAL_PATTERN_ENTRIES = [
        "new-way contrast are her demonstrated shapes."),
 ]
 
+# --------------------------------------- YouTube training videos YT1–YT3
+# Owner-sent 2026-11-16; watched via browser transcript panels.
+YT_SABRI = "Sabri Suby (practitioner, YouTube)"
+YT_HBA = "HBA Services (practitioner, YouTube)"
+YT_WSCUBE = "WsCube Tech / Himanshu Tiwari (practitioner, YouTube)"
+_YT1 = "https://youtu.be/NTmWqnPIb2s"
+_YT2 = "https://youtu.be/6QhaintnRFE"
+_YT3 = "https://www.youtube.com/live/m11HrK84lxY"
+
+YOUTUBE_ENTRIES = [
+    # --- Video 1: Sabri Suby — hook-first direct response
+    _e("YT1-1", "Hook-first creative built on AIDA — Sabri Suby",
+       YT_SABRI, _YT1, "creative",
+       "Build the ad in AIDA order and spend the most effort on the "
+       "first seconds: Attention (hook) -> Interest -> Desire -> "
+       "Action (one clear CTA). A weak hook makes the rest of the ad "
+       "invisible, so the hook is briefed and tested first (matches "
+       "S21/V1, now also sourced to this video)."),
+    _e("YT1-2", "Clone the winning FORMAT, never the ad itself — Sabri Suby",
+       YT_SABRI, _YT1, "competitor_research",
+       "When a competitor format keeps winning, rebuild that format "
+       "with your own offer, words and assets. Format-level cloning "
+       "only.",
+       note="Screened and narrowed: verbatim copying or reusing "
+            "another advertiser's assets/text is banned in this "
+            "system (same narrowing as S10)."),
+    _e("YT1-3", "Simple static ads belong in every test batch — Sabri Suby",
+       YT_SABRI, _YT1, "creative",
+       "Do not test video only: a clear static image ad with one "
+       "benefit and one CTA is a cheap, fast test format and often "
+       "the control that video variants must beat."),
+    _e("YT1-4", "Broad targeting: let the creative do the filtering — Sabri Suby",
+       YT_SABRI, _YT1, "structure",
+       "With enough conversion signal, go broad and let distinct "
+       "creatives find their own audiences instead of stacking "
+       "narrow interest layers (Andromeda-era structure; per-profile "
+       "choice, signal first — see S3/S17)."),
+    _e("YT1-5", "Landing-page congruence: page headline = ad promise — Sabri Suby",
+       YT_SABRI, _YT1, "go_live",
+       "The landing page must repeat the ad's exact promise/headline "
+       "and offer. A mismatch is read by visitors as a different "
+       "offer and kills conversion even when the ad itself wins "
+       "(matches S7/W9; mismatch is also a policy risk — D4)."),
+    _e("YT1-6", "Structured retargeting ladder by intent — Sabri Suby",
+       YT_SABRI, _YT1, "funnel",
+       "Retarget in intent order with different messages: content "
+       "viewers -> page visitors -> product viewers -> abandoners. "
+       "Highest intent gets the most direct offer; lowest intent "
+       "gets proof/education first (matches S2/S28/B1)."),
+    _e("YT1-7", "Scale gradually inside a consolidated CBO — Sabri Suby",
+       YT_SABRI, _YT1, "scaling",
+       "Raise budgets in small steps on a consolidated campaign-"
+       "budget (CBO) structure while cost per result holds. In this "
+       "system every step stays inside MAX_BUDGET_CHANGE_PCT and "
+       "the owner's caps — never a single big jump."),
+    _e("YT1-8", "Pixel + Conversions API before scaling — Sabri Suby",
+       YT_SABRI, _YT1, "measurement",
+       "Install and verify Pixel AND Conversions API (deduped) "
+       "before scaling spend; scaling on browser-only signal feeds "
+       "the optimiser bad data (matches S31/W2)."),
+    # --- Video 2: HBA Services — full beginner course (Hindi/Urdu)
+    _e("YT2-1", "Setup order before the first campaign — HBA Services",
+       YT_HBA, _YT2, "structure",
+       "Complete the foundation in order before creating any "
+       "campaign: Business Suite/Business Manager -> ad account "
+       "(currency/timezone set once, carefully) -> Page -> "
+       "Pixel/dataset -> payment method. Skipping steps is the "
+       "top beginner failure this course corrects."),
+    _e("YT2-2", "Pick the objective from the real business goal — HBA Services",
+       YT_HBA, _YT2, "structure",
+       "Meta's six objectives are not interchangeable: Sales for "
+       "purchases, Leads for enquiries, Traffic only for visits. "
+       "Choosing Traffic and expecting sales is a beginner mistake "
+       "the optimiser cannot fix later (guardrail D-series)."),
+    _e("YT2-3", "Audience building blocks: Core, Custom, Lookalike — HBA Services",
+       YT_HBA, _YT2, "structure",
+       "Teach/target in three blocks: Core (location, age, "
+       "interests), Custom (your own visitors/customers/engagers), "
+       "Lookalike (Meta expands from a good Custom source). Start "
+       "from first-party Custom data when it exists (S16/W7)."),
+    _e("YT2-4", "Pixel-based retargeting audiences — HBA Services",
+       YT_HBA, _YT2, "funnel",
+       "Build Custom Audiences from Pixel events (page visitors, "
+       "view-content, add-to-cart) and run separate retargeting "
+       "with segment-specific copy — the course's repeat structure "
+       "for Sales/Leads walkthroughs (matches YT1-6)."),
+    _e("YT2-5", "Increase budgets gradually, only on stable results — HBA Services",
+       YT_HBA, _YT2, "scaling",
+       "Do not jump budgets on a new or unstable ad set. Increase "
+       "in small steps only after results are stable over the "
+       "evaluation window; sudden jumps restart learning and "
+       "spike costs (owner caps apply — YT1-7)."),
+    _e("YT2-6", "Bidding options: start simple, caps need data — HBA Services",
+       YT_HBA, _YT2, "optimisation",
+       "Beginners start with Meta's default lowest-cost bidding. "
+       "Cost/bid caps are advanced controls: use them only with "
+       "enough conversion volume and a target taken from real "
+       "history — a cap set from a guess starves delivery."),
+    _e("YT2-7", "Beginner mistakes checklist — HBA Services",
+       YT_HBA, _YT2, "monitoring",
+       "The course's closing checklist, encoded as pre-flight "
+       "prompts: wrong objective, audience too narrow, no Pixel, "
+       "editing during learning, judging on one day, too many "
+       "ad sets for the budget."),
+    # --- Video 3: WsCube Tech — AI-assisted setup, 2027 edition
+    _e("YT3-1", "AI-assisted setup workflow, human-approved — WsCube Tech",
+       YT_WSCUBE, _YT3, "creative",
+       "Use AI tools for audience research, ad copy and image "
+       "generation in multiple sizes/variations, then a human "
+       "checks and approves before anything launches. This is "
+       "exactly this system's API Providers + visual-check + "
+       "approval-queue flow — AI drafts, owner approves."),
+    _e("YT3-2", "Special Ad Category: declare correctly or lose targeting — WsCube Tech",
+       YT_WSCUBE, _YT3, "structure",
+       "Housing, employment and credit ads MUST be declared as a "
+       "Special Ad Category: targeting narrows by law and a wrong "
+       "or missing declaration risks rejection/restriction. "
+       "Directly relevant to Real Estate profiles in this system "
+       "(see Policies register)."),
+    _e("YT3-3", "Auction vs Reservation: auction is the default buy — WsCube Tech",
+       YT_WSCUBE, _YT3, "structure",
+       "Most advertisers buy through the auction (flexible cost, "
+       "compete per impression). Reservation buys guaranteed "
+       "reach/frequency in advance for big fixed-date pushes — a "
+       "deliberate exception, not the default."),
+    _e("YT3-4", "CBO vs ABO decision rule — WsCube Tech",
+       YT_WSCUBE, _YT3, "structure",
+       "ABO (ad-set budget) for controlled testing where each test "
+       "cell needs guaranteed spend; CBO (campaign budget) for "
+       "consolidated scaling where Meta may shift budget to the "
+       "winner. Pick per stage, do not mix by habit (S29/P21)."),
+    _e("YT3-5", "Testing structure: ad sets x creatives, one variable at a time — WsCube Tech",
+       YT_WSCUBE, _YT3, "creative",
+       "Structure tests as a grid: a few ad sets (audience/offer "
+       "variable) each with multiple distinct creatives (creative "
+       "variable). Change one variable per test so the winner's "
+       "reason is knowable (matches the planner's test-design "
+       "rule)."),
+    _e("YT3-6", "Performance goal must match the real funnel event — WsCube Tech",
+       YT_WSCUBE, _YT3, "optimisation",
+       "Select the performance goal that matches the actual "
+       "business event (lead, qualified lead, purchase) and the "
+       "volume available; optimising for a cheap shallow event "
+       "buys cheap shallow results (this system's main metric is "
+       "cost per QUALIFIED lead for the same reason)."),
+    _e("YT3-7", "Manual vs Advantage+ audience controls: know the trade-off — WsCube Tech",
+       YT_WSCUBE, _YT3, "structure",
+       "Advantage+ audience controls trade manual precision for "
+       "Meta's AI expansion. Know which controls become "
+       "suggestions when AI is on, and choose per profile/stage — "
+       "manual to learn, AI to scale (S17/S18)."),
+    _e("YT3-8", "One-week data rule before any verdict — WsCube Tech",
+       YT_WSCUBE, _YT3, "optimisation",
+       "Give a new campaign about a week of data before a "
+       "keep/kill/scale verdict, judged on the owner's evaluation "
+       "window and minimum events — never on day-one numbers "
+       "(matches S14/W3 and the optimiser's thin-data rule). "
+       "The week is a practitioner rule of thumb here, applied "
+       "through owner settings, not a hardcoded default."),
+    # --- Screening result for all three videos
+    _e("YT-DNA", "DO NOT APPLY: importing video creators' earnings/ROAS claims",
+       "YouTube videos YT1-YT3 (screening, 2026-11-16)", _YT1,
+       "creative",
+       "The presenters' own revenue, ROAS and results figures "
+       "shown or claimed inside these training videos.",
+       status="DO_NOT_APPLY",
+       note="Unverified marketing claims by the creators about "
+            "their own businesses. They are NOT benchmarks, NOT "
+            "defaults and NOT evidence a tactic produces those "
+            "numbers here (same quarantine as Damini S26 and the "
+            "knowledge base Section F). Tactics were seeded; "
+            "income claims were not."),
+]
+
 ENTRIES = (DAMINI_ENTRIES + PRACTITIONER_ENTRIES + BOOK_ENTRIES
            + WINNER_HABIT_ENTRIES + VIRAL_PATTERN_ENTRIES
+           + YOUTUBE_ENTRIES
            + DO_NOT_APPLY_ENTRIES)
 
 # Creative format taxonomy (Damini S22, screened) — used by inspiration

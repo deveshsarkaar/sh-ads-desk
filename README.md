@@ -118,11 +118,14 @@ matter karta hai.)
   jaise S20 ki inflated-anchor "reverse discount" display), 21
   practitioner playbook entries (P1–P21, contradictions flagged),
   4 book-derived (B1–B4), 14 winner habits (W1–W14) + 9 viral
-  creative patterns (V1–V9, PRACTITIONER/CASE), aur 9 DO-NOT-APPLY
-  entries (D1–D9). **Kisi ki bhi unverified performance claims
-  (ROAS/CTR numbers) benchmarks ya defaults ke roop me kahin seed
-  nahi hain.** Library data-driven hai — nayi entries bina code
-  change ke DB/file se jud sakti hain.
+  creative patterns (V1–V9, PRACTITIONER/CASE), 9 DO-NOT-APPLY
+  entries (D1–D9), **aur owner ke bheje teen YouTube training
+  videos se 23 strategies (YT1-* Sabri Suby, YT2-* HBA Services,
+  YT3-* WsCube Tech) + 1 screening entry (YT-DNA)** — per-video
+  notes `YOUTUBE_LEARNINGS.md` me. **Kisi ki bhi unverified
+  performance claims (ROAS/CTR/earnings numbers) benchmarks ya
+  defaults ke roop me kahin seed nahi hain.** Library data-driven
+  hai — nayi entries bina code change ke DB/file se jud sakti hain.
 
 ## Chalana (local / koi bhi Python host)
 
@@ -142,7 +145,7 @@ Docker: `docker compose up -d --build` (Dockerfile + compose package me hai).
   smoke tests (saare 14 pages + planner→approve→execute gate flow), aur
   **API Providers module** (preset pre-fill, key-only save → working adapter,
   secret storage rules, text/image/video adapters — sab stubbed HTTP par,
-  koi network nahi). Kul **78 tests passed** — dekho `TEST_RESULTS.md`.
+  koi network nahi). Kul **79 tests passed** — dekho `TEST_RESULTS.md`.
 - **MOCK:** default mode. Mock Meta client, MOCK insights datasets (thin
   data, one big winner, all losers, cheap-junk, lagged, spend breach,
   fatigue), demo numbers har page par labelled.
@@ -312,7 +315,8 @@ Live price verify nahi hue — ye sirf andaz hain, faisla owner ka:
 | `app/industries.py` | 11 industry presets — research checklist, audience hints, angle templates, funnel/KPI defaults, compliance packs |
 | `app/growth_loop.py` | Growth Loop — 8 stages, inspiration briefs, AUTO_WITHIN_RULES go-live, monitoring/refresh |
 | `app/guardrails.py`, `app/guardrail_catalogue.py` | Guardrail registry + pre-flight; catalogue D1–D26 (winner-patterns research §D) seeded |
-| `app/strategy_library.py` | Strategy Library — Damini S1–S35 (screened), practitioner P1–P21, books B1–B4, winner habits W1–W14, viral patterns V1–V9, DO-NOT-APPLY D1–D9 + S20-DNA |
+| `app/strategy_library.py` | Strategy Library — Damini S1–S35 (screened), practitioner P1–P21, books B1–B4, winner habits W1–W14, viral patterns V1–V9, YouTube YT1/YT2/YT3 (23) + YT-DNA, DO-NOT-APPLY D1–D9 + S20-DNA |
+| `YOUTUBE_LEARNINGS.md` | Owner ke teen YouTube training videos — per-video kya seekha, kya add hua, kya screen-out hua |
 | `app/policies_register.py` | Policies register — Meta policies digest (10 sections, flags preserved, PR9 DISPUTED) + personal-attributes union |
 | `app/competitor_seeds.py` | Competitor seed data (Damini Tripathi / Marketian) |
 | `app/providers.py` | API Providers — presets (pre-filled base URL/model), secrets.env handling, generic HTTP client, Text/Image/Video adapters, test-connection — **UNTESTED** on real providers, stub-verified |
@@ -321,7 +325,7 @@ Live price verify nahi hue — ye sirf andaz hain, faisla owner ka:
 | `app/auth.py` | Single-owner login (PBKDF2 hash, /setup ya env hash) |
 | `app/common.py`, `app/store.py` | Settings/eligibility IO, SQLite, redaction, lead/creative/report storage |
 | `settings.json`, `PRODUCT_ELIGIBILITY.yaml` | Saari settings (defaults khaali/zero); Software Hub eligibility ka migration source (sab false) |
-| `tests/` | 78 tests (Step 1 ke 18 + full-build ke 13 + API Providers ke 27 + industries/profiles/loop/guardrails ke 20) |
+| `tests/` | 79 tests (Step 1 ke 18 + full-build ke 13 + API Providers ke 27 + industries/profiles/loop/guardrails/YouTube ke 21) |
 | `Dockerfile`, `docker-compose.yml`, `HOSTING.md`, `.env.example` | Deploy pack |
 | `PRACTICES.md` | Official-guidance notes — Step 2 me official docs se verify ho chuke hain |
 | `META_ACCESS.md` | Meta access/setup ka verified guide (Step 2) |

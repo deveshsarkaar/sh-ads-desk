@@ -353,6 +353,26 @@ class TestRegisters(TempEnv):
         self.assertNotIn("1.2x", blob)
         self.assertNotIn("4.8x", blob)
 
+    def test_youtube_video_strategies_seeded_and_screened(self):
+        from app import strategy_library as sl
+        yt = [e for e in sl.all_entries() if e["id"].startswith("YT")]
+        # YT1 x8 + YT2 x7 + YT3 x8 + YT-DNA screening entry
+        self.assertEqual(len(yt), 24)
+        self.assertEqual(len([e for e in yt if e["id"].startswith("YT1-")]), 8)
+        self.assertEqual(len([e for e in yt if e["id"].startswith("YT2-")]), 7)
+        self.assertEqual(len([e for e in yt if e["id"].startswith("YT3-")]), 8)
+        for e in yt:
+            self.assertIn("youtu", e["source_url"])
+            self.assertEqual(e["date_read"], "2026-11-16")
+        self.assertIn("Sabri Suby", sl.get_entry("YT1-1")["source"])
+        self.assertIn("HBA Services", sl.get_entry("YT2-1")["source"])
+        self.assertIn("WsCube Tech", sl.get_entry("YT3-1")["source"])
+        self.assertEqual(sl.get_entry("YT-DNA")["status"], "DO_NOT_APPLY")
+        self.assertEqual(sl.get_entry("YT1-1")["status"], "ACTIVE")
+        # Creators' earnings claims must not appear as benchmarks.
+        blob = " ".join(e["summary"] for e in yt)
+        self.assertNotIn("million", blob.lower())
+
     def test_policies_register_flags_preserved(self):
         from app import policies_register as pr
         self.assertEqual(len(pr.POLICIES), 10)

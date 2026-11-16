@@ -1,6 +1,6 @@
-# TEST_RESULTS.md — SH Ads Desk (Full Build + API Providers + Industry Refactor)
+# TEST_RESULTS.md — SH Ads Desk (Full Build + API Providers + Industry Refactor + YouTube Learnings)
 
-**Result: 78 passed, 0 failed** (pytest 9.2.0, Python 3.12.3, run 2026-11-16)
+**Result: 79 passed, 0 failed** (pytest 9.2.0, Python 3.12.3, run 2026-11-16)
 Command: `python3 -m pytest tests/ -q`
 
 ## Step 1 tests (18) — carried over from the verified Step 1 build
@@ -86,6 +86,15 @@ Command: `python3 -m pytest tests/ -q`
   aur Connected status dikhta hai.
 - **Package hygiene:** package me kahin `secrets.env` file nahi;
   `.gitignore` me `data/secrets.env` aur `data/generated/*` hai.
+
+## YouTube learnings integration (owner-sent videos, 2026-11-16)
+- **Strategy Library YT entries:** teen YouTube training videos
+  (Sabri Suby YT1 x8, HBA Services YT2 x7, WsCube Tech YT3 x8) se
+  23 practitioner strategies + 1 DO-NOT-APPLY screening entry
+  (YT-DNA — creators ke earnings claims import karna banned) seed;
+  har entry par video ka source URL + date_read 2026-11-16;
+  dedicated test counts, sources aur YT-DNA ka status verify
+  karta hai. Per-video notes: `YOUTUBE_LEARNINGS.md`.
 
 ## Industry refactor tests (20) — tests/test_industries.py
 - **Profiles:** Software Hub seeded as profile #1; migration proof —
