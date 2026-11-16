@@ -317,6 +317,7 @@ Live price verify nahi hue — ye sirf andaz hain, faisla owner ka:
 | `app/guardrails.py`, `app/guardrail_catalogue.py` | Guardrail registry + pre-flight; catalogue D1–D26 (winner-patterns research §D) seeded |
 | `app/strategy_library.py` | Strategy Library — Damini S1–S35 (screened), practitioner P1–P21, books B1–B4, winner habits W1–W14, viral patterns V1–V9, YouTube YT1/YT2/YT3 (23) + YT-DNA, DO-NOT-APPLY D1–D9 + S20-DNA |
 | `YOUTUBE_LEARNINGS.md` | Owner ke teen YouTube training videos — per-video kya seekha, kya add hua, kya screen-out hua |
+| `SETUP_CHECKLIST.md` | 1-page setup checklist — tick karte-karte: software chalana, andar ka setup, Meta connect, pehla ad |
 | `app/policies_register.py` | Policies register — Meta policies digest (10 sections, flags preserved, PR9 DISPUTED) + personal-attributes union |
 | `app/competitor_seeds.py` | Competitor seed data (Damini Tripathi / Marketian) |
 | `app/providers.py` | API Providers — presets (pre-filled base URL/model), secrets.env handling, generic HTTP client, Text/Image/Video adapters, test-connection — **UNTESTED** on real providers, stub-verified |
