@@ -138,6 +138,40 @@ def competitor_research_board(profile_id, conn=None, profile=None):
             "active_url": ad_library_search_url(o["name"], country,
                                                 active_only=True),
         })
+    # Findings-derived board columns. The Ad Library publishes NO
+    # numbers, so Active Ads / Longest Running / Winning Signal are
+    # filled ONLY from the owner's own recorded findings
+    # (top_creatives): a finding counts for a competitor when the
+    # competitor's name appears in the finding's source or theme;
+    # "longest running" is counted from the finding's recorded
+    # source_date (the date the winning ad was first seen running);
+    # the winning signal is that finding's recorded score note/theme.
+    # No finding -> the fields stay empty and the page shows "—".
+    findings = list_top_creatives(profile_id, conn)
+    today = date.today()
+    for comp in competitors:
+        name_l = (comp["name"] or "").lower()
+        mine = [f for f in findings if name_l and (
+            name_l in (f.get("source") or "").lower()
+            or name_l in (f.get("theme") or "").lower())]
+        comp["findings_count"] = len(mine)
+        best_days, signal = None, ""
+        for f in mine:
+            days = None
+            try:
+                started = date.fromisoformat((f.get("source_date") or "")[:10])
+                days = (today - started).days
+            except ValueError:
+                days = None
+            if days is not None and days < 0:
+                days = None
+            if days is not None and (best_days is None or days > best_days):
+                best_days = days
+                signal = f.get("score_note") or f.get("theme") or ""
+        if not signal and mine:
+            signal = mine[0].get("score_note") or mine[0].get("theme") or ""
+        comp["longest_running_days"] = best_days
+        comp["winning_signal"] = signal
     industry = (profile or {}).get("industry") or ""
     return {
         "profile_id": profile_id, "country": country,

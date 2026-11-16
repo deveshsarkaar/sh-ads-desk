@@ -267,3 +267,16 @@ Command: `python3 -m pytest tests/ -q`
   Pro/Max subscriptions cannot connect to external software; API key only.
   Existing provider settings section kept intact below the grid.
 - Full suite: 94/94 pass, no assertion changes.
+
+## Growth Loop page — Owner Design (16 Nov 2026, late)
+- pg_loop rebuilt: 8 stage cards with real status (recorded run = green + check,
+  first un-run = violet "Current stage", rest grey), header pill with the real
+  last-run date, Competitor Research Board upgraded (Competitor / Ad Library /
+  Active Ads / Longest Running / Winning Signal) and Research Checklist with
+  ticks only from real records.
+- Board honesty: Active Ads = count of the owner's recorded findings for that
+  competitor (definition footnoted on the page); Longest Running = days from the
+  finding's recorded source_date; Winning Signal = the recorded score note.
+  No finding -> "—". Nothing invented.
+- Full suite: 94/94 pass, no assertion changes. Smoke-tested in 3 states
+  (fresh / findings recorded / full cycle run).

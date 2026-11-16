@@ -761,6 +761,14 @@ def _rel_time(ts, now):
     return "%d day%s ago" % (days, "s" if days != 1 else "")
 
 
+def _fmt_date(ts):
+    """'16 Nov 2026' for a stored timestamp; '' when there is none."""
+    parsed = _parse_ts(ts) if ts else None
+    if parsed is None:
+        return ""
+    return parsed.strftime("%d %b %Y")
+
+
 def pg_roles(ctx):
     """Agents — the 20 fixed logical roles in the owner's reference
     layout. Every count and status is derived from the real role_runs
@@ -3230,11 +3238,69 @@ def post_profiles_delete(ctx, form):
 
 
 # ------------------------------------------------------------ Growth Loop
+# Growth Loop stage cards: (stage key, short label, icon) in loop order.
+GL_STAGE_CARDS = [
+    ("competitor_discovery", "Competitor Discovery", "&#128269;"),
+    ("competitor_ads_research", "Best Ads Research", "&#129513;"),
+    ("top_creative_inspiration", "Inspiration Brief", "&#128196;"),
+    ("creative_production", "Creative Production", "&#128444;"),
+    ("optimisation_plan", "Optimisation Plan", "&#128640;"),
+    ("go_live", "Go Live (Approval)", "&#9654;"),
+    ("monitoring", "Winners vs Losers", "&#128200;"),
+    ("refresh", "Refresh Creatives", "&#128260;"),
+]
+
+
 def pg_loop(ctx):
+    from datetime import datetime, timezone
     conn = ctx["conn"]
     profile = ctx["profile"]
     pid = profile["id"] if profile else 0
+    now = datetime.now(timezone.utc)
     status = loop_mod.loop_status(conn, pid)
+    window = 10 if str(ctx["settings"].get("TOP_CREATIVE_WINDOW_DAYS")) == "10" else 7
+    brief = loop_mod.inspiration_brief(pid, window, conn=conn, profile=profile)
+    comps = profiles_mod.list_competitors(pid, conn) if pid else []
+    board = loop_mod.competitor_research_board(pid, conn=conn, profile=profile)
+    tops = loop_mod.list_top_creatives(pid, conn=conn)
+
+    # ---- header pill: latest loop-run date (real loop_runs data only)
+    last_run_at = status["history"][0]["at"] if status["history"] else None
+    pill_html = ("<span class='pill info'>&#128197; Last run &middot; %s</span>"
+                 % esc(_fmt_date(last_run_at))) if last_run_at else ""
+
+    # ---- stage cards: done / current / pending from real loop_runs.
+    # A stage with a recorded run is done (green); the first stage
+    # without one is current (violet); the rest are pending (grey).
+    # When every stage has run, all cards stay green and stage 1 is
+    # outlined as the restart point of the next cycle.
+    by_key = {s["key"]: s for s in status["stages"]}
+    keys = [k for k, _label, _icon in GL_STAGE_CARDS]
+    done_map = {k: bool(by_key.get(k, {}).get("last_run")) for k in keys}
+    all_done = all(done_map.values())
+    current_key = (status["current_stage"]
+                   if status["current_stage"] in keys else keys[0])
+    cards = []
+    for idx, (key, label, icon) in enumerate(GL_STAGE_CARDS):
+        if done_map[key]:
+            cls = "gl-stage done" + (" next" if all_done and key == keys[0] else "")
+            badge = "<span class='gl-check'>&#10003;</span>"
+            sub = "Last run %s" % _fmt_date(by_key[key]["last_run"])
+        elif key == current_key:
+            cls = "gl-stage now"
+            badge = ""
+            sub = "Current stage"
+        else:
+            cls = "gl-stage"
+            badge = ""
+            sub = "Not run yet"
+        cards.append("<div class='%s'><span class='ic'>%s</span>%s"
+                     "<div class='lb'>%d. %s</div><div class='sub'>%s</div></div>"
+                     % (cls, icon, badge, idx + 1, esc(label), esc(sub)))
+        if idx < len(GL_STAGE_CARDS) - 1:
+            cards.append("<div class='gl-arrow'>&#8594;</div>")
+    stages_html = "".join(cards)
+
     stage_rows = ""
     for s in status["stages"]:
         stage_rows += ("<tr><td>%s</td><td>%s</td><td>%s</td>"
@@ -3245,8 +3311,7 @@ def pg_loop(ctx):
     hist = "".join("<tr><td>%s</td><td>%s</td><td class='small'>%s</td></tr>"
                    % (esc(h["at"]), esc(h["stage"]), esc(h["detail"]))
                    for h in status["history"][:15])
-    window = 10 if str(ctx["settings"].get("TOP_CREATIVE_WINDOW_DAYS")) == "10" else 7
-    brief = loop_mod.inspiration_brief(pid, window, conn=conn, profile=profile)
+
     if brief:
         brief_html = ("<p><strong>Theme:</strong> %s<br><strong>Hook:</strong> %s<br>"
                       "<strong>Format:</strong> %s<br><strong>CTA style:</strong> %s<br>"
@@ -3259,7 +3324,7 @@ def pg_loop(ctx):
     else:
         brief_html = ("<p class='mut'>No inspiration source yet — record a "
                       "top creative below, or let the mock insights arrive first.</p>")
-    comps = profiles_mod.list_competitors(pid, conn) if pid else []
+
     comp_rows = "".join(
         "<tr><td>%s</td><td>%s</td><td>%s</td><td class='small'>%s</td>"
         "<td><form method='post' action='/loop/competitor_delete' class='inline'>%s"
@@ -3267,12 +3332,33 @@ def pg_loop(ctx):
         "<button class='danger' type='submit'>Delete</button></form></td></tr>"
         % (esc(c["name"]), esc(c["handle"]), esc(c["niche"]), esc(c["source"]),
            ctx["csrf_field"], c["id"]) for c in comps)
-    board = loop_mod.competitor_research_board(pid, conn=conn, profile=profile)
-    board_comp_rows = "".join(
-        "<tr><td>%s</td><td><a href='%s' target='_blank' rel='noopener'>All ads</a>"
-        " · <a href='%s' target='_blank' rel='noopener'>Active ads only</a></td></tr>"
-        % (esc(c["name"]), esc(c["search_url"]), esc(c["active_url"]))
-        for c in board["competitors"])
+
+    # ---- Competitor Research Board table. Active Ads / Longest
+    # Running / Winning Signal come ONLY from the owner's recorded
+    # findings (see growth_loop.competitor_research_board) — the Ad
+    # Library publishes no numbers, so anything unrecorded stays "—".
+    chip_classes = ["ok", "info", "warn"]
+    board_rows = []
+    for i, c in enumerate(board["competitors"]):
+        n = c.get("findings_count") or 0
+        active = str(n) if n else "—"
+        days = c.get("longest_running_days")
+        longest = ("%d days" % days) if days is not None else "—"
+        sig = c.get("winning_signal") or ""
+        sig_html = ("<span class='pill %s'>%s</span>"
+                    % (chip_classes[i % len(chip_classes)], esc(sig))) if sig else "—"
+        board_rows.append(
+            "<tr><td><strong>%s</strong></td>"
+            "<td><a href='%s' target='_blank' rel='noopener'>Open in Ad Library &#8599;</a>"
+            "<br><a class='small' href='%s' target='_blank' rel='noopener'>Active ads only</a></td>"
+            "<td>%s</td><td>%s</td><td>%s</td></tr>"
+            % (esc(c["name"]), esc(c["search_url"]), esc(c["active_url"]),
+               active, longest, sig_html))
+    if not board_rows:
+        board_rows.append(
+            "<tr><td colspan='5' class='mut'>No competitors yet — add them "
+            "in the Competitors section below.</td></tr>")
+    board_table = "".join(board_rows)
     board_kw = "".join(
         "<li>%s — <a href='%s' target='_blank' rel='noopener'>Ad Library search</a>"
         " · <a href='%s' target='_blank' rel='noopener'>active only</a></li>"
@@ -3283,25 +3369,75 @@ def pg_loop(ctx):
                      "rel='noopener'>Ad Library search</a></li>"
                      % (esc(board["industry_keyword"]["keyword"]),
                         esc(board["industry_keyword"]["search_url"])))
-    board_checklist = "".join("<li>%s</li>" % esc(s) for s in board["checklist"])
-    board_html = ("<p class='small'>A ready-made Ad Library search for every "
-                  "competitor and every product — one click opens the right "
-                  "search (country: %s).</p>"
-                  "<table><tr><th>Competitor</th><th>Ad Library</th></tr>%s</table>"
-                  "<h3>Search by product keywords</h3><ul class='small'>%s</ul>"
-                  "<h3>Research checklist (2 minutes)</h3><ol class='small'>%s</ol>"
-                  "<div class='banner warn'>%s</div>"
-                  "<p class='small mut'>%s</p>"
-                  % (esc(board["country"]), board_comp_rows, board_kw,
-                     board_checklist, esc(board["winner_signal_rule"]),
-                     esc(board["honest_note"])))
-    tops = loop_mod.list_top_creatives(pid, conn=conn)
+    board_open_url = "%s?country=%s" % (loop_mod.AD_LIBRARY_BASE, board["country"])
+
+    # ---- Research Checklist: a step is ticked only when the real
+    # record behind it exists (competitors / a recorded finding / an
+    # inspiration brief / a creative set / proposals).
+    creatives_exist = bool(store.list_creatives(conn, profile_id=pid)) if pid else False
+    props_exist = False
+    for s in status["stages"]:
+        if s["key"] == "optimisation_plan" and s.get("detail"):
+            try:
+                d = json.loads(s["detail"])
+            except (ValueError, TypeError):
+                d = {}
+            if isinstance(d, dict) and d.get("proposals"):
+                props_exist = True
+    queue = ctx.get("queue")
+    if (not props_exist and queue is not None
+            and getattr(queue, "conn", None) is not None):
+        try:
+            props_exist = bool(queue.list_pending(profile_id=pid))
+        except Exception:
+            props_exist = False
+    checks = [bool(comps), bool(tops), brief is not None,
+              creatives_exist, props_exist]
+    checklist_html = ""
+    for i, step in enumerate(board["checklist"]):
+        on = checks[i] if i < len(checks) else False
+        checklist_html += ("<div class='gl-check-item'>"
+                           "<span class='gl-tick%s'>&#10003;</span>"
+                           "<span class='small'>%s</span></div>"
+                           % ("" if on else " off", esc(step)))
+    updated_html = ("<p class='small mut' style='margin-top:10px'>Last updated %s</p>"
+                    % esc(_rel_time(last_run_at, now))) if last_run_at else ""
+
     top_rows = "".join(
         "<tr><td>%s</td><td>%s</td><td>%s</td><td>%s days</td><td class='small'>%s · %s</td></tr>"
         % (esc(t["theme"]), esc(t["hook"]), esc(t["format"]), t["window_days"],
            esc(t["source"]), esc(t["source_date"])) for t in tops)
     strat = strategy_library
-    body = """<h1>Growth Loop — %s</h1>
+    css = """
+<style>
+.gl-stages{display:flex;gap:6px;align-items:stretch;overflow-x:auto;padding:4px 0 8px}
+.gl-stage{flex:1;min-width:118px;background:#f4f4f8;border:1px solid var(--line);border-radius:12px;padding:12px 10px;position:relative}
+.gl-stage.done{background:var(--okbg);border-color:#a9dcc2}
+.gl-stage.now{background:var(--violetbg);border-color:var(--brand);box-shadow:0 0 0 1px var(--brand)}
+.gl-stage.next{border-color:var(--brand);box-shadow:0 0 0 1px var(--brand)}
+.gl-stage .ic{font-size:19px}
+.gl-stage .lb{font-weight:700;font-size:13px;line-height:1.35;margin-top:6px}
+.gl-stage .sub{font-size:11.5px;color:var(--mut);margin-top:3px}
+.gl-check{position:absolute;top:8px;right:8px;width:19px;height:19px;border-radius:50%;background:#10b981;color:#fff;font-size:12px;display:flex;align-items:center;justify-content:center}
+.gl-arrow{align-self:center;color:var(--mut);font-weight:700;flex:none}
+.gl-cols{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:18px;align-items:start}
+@media(max-width:1000px){.gl-cols{grid-template-columns:1fr}}
+.gl-open{display:inline-block;border:1.5px solid var(--brand);color:var(--brand2);border-radius:10px;padding:7px 14px;font-weight:600;font-size:13.5px;white-space:nowrap}
+.gl-open:hover{background:var(--violetbg);text-decoration:none}
+.gl-check-item{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--line)}
+.gl-check-item:last-child{border-bottom:0}
+.gl-tick{width:21px;height:21px;border-radius:50%;background:#10b981;color:#fff;font-size:12px;display:flex;align-items:center;justify-content:center;flex:none;margin-top:1px}
+.gl-tick.off{background:#fff;border:2px solid #cfcbe0;color:transparent}
+</style>
+"""
+    head = """
+<div class="ihead"><div><h1>Growth Loop</h1>
+<p class="mut" style="margin-top:-4px">Competitor research to winning creatives, on repeat</p></div>
+<div>%s</div></div>
+<div class="gl-stages">%s</div>
+<form method="post" action="/loop/run" style="margin:2px 0 18px">%s
+<button type="submit">Run one full cycle (mock data)</button>
+<span class="small mut" style="margin-left:10px">Current stage: %s &middot; Profile: %s</span></form>
 <details><summary>How the loop runs</summary>
 <p class="small">Competitor discovery → research of their best ads → inspiration
 from the last 7/10 days' top creatives → new creatives → optimise →
@@ -3310,10 +3446,26 @@ Scheduler: <code>python -m app.jobs loop</code>. The research stage creates
 task entries based on the public Meta Ad Library — a live pull is not wired
 yet and no metric is invented; but on the Research Board below, 1-click
 Ad Library links for every competitor/product are ready.</p></details>
-<div class="card"><h2>Loop stages — current stage: %s</h2>
-<table><tr><th>Stage</th><th>Status</th><th>Last run</th><th>Detail</th></tr>%s</table>
-<form method="post" action="/loop/run">%s
-<button type="submit">Run one full cycle (mock data)</button></form></div>
+""" % (pill_html, stages_html, ctx["csrf_field"],
+       esc(status["current_stage"]),
+       esc(profile["name"] if profile else "—"))
+    board_card = """
+<div class="card"><div class="ihead"><div><h2 style="margin-bottom:2px">Competitor Research Board</h2>
+<p class="small mut" style="margin:0">Top competitors tracked for creative trend analysis (country: %s)</p></div>
+<a class="gl-open" href="%s" target="_blank" rel="noopener">Open Ad Library &#8599;</a></div>
+<div class="twrap"><table><tr><th>Competitor</th><th>Ad Library</th><th>Active Ads</th><th>Longest Running</th><th>Winning Signal</th></tr>%s</table></div>
+<p class="small mut">Active Ads counts only the winning ads you recorded as findings for that
+competitor (Record top creative, below); Longest Running is counted from a finding's recorded
+Source date. The Ad Library itself publishes no numbers.</p>
+<h3>Search by product keywords</h3><ul class="small">%s</ul>
+<div class="banner warn">%s</div>
+<p class="small mut">%s</p></div>
+""" % (esc(board["country"]), esc(board_open_url), board_table, board_kw,
+       esc(board["winner_signal_rule"]), esc(board["honest_note"]))
+    checklist_card = """
+<div class="card"><h2>Research Checklist</h2>%s%s</div>
+""" % (checklist_html, updated_html)
+    rest = """
 <div class="card"><h2>Inspiration brief (window: %d days)</h2>%s</div>
 <div class="card"><h2>Competitors (for %s)</h2>
 <table><tr><th>Name</th><th>Handle</th><th>Niche</th><th>Source</th><th></th></tr>%s</table>
@@ -3323,7 +3475,6 @@ Ad Library links for every competitor/product are ready.</p></details>
 <div><label>URL</label><input name="url"></div>
 <div><label>Niche</label><input name="niche"></div></div>
 <button type="submit">Add competitor</button></form></div>
-<div class="card"><h2>Competitor Research Board — Ad Library (1-click)</h2>%s</div>
 <div class="card"><h2>Top creatives (last 7/10 days — from research)</h2>
 <table><tr><th>Theme</th><th>Hook</th><th>Format</th><th>Window</th><th>Source</th></tr>%s</table>
 <form method="post" action="/loop/topcreative_add">%s
@@ -3338,18 +3489,19 @@ Ad Library links for every competitor/product are ready.</p></details>
 <button type="submit">Record top creative</button></form>
 <p class="small mut">This is inspiration only — copying someone else's ad verbatim or
 reusing their assets is forbidden.</p></div>
-<div class="card"><h2>Loop history</h2>
+<div class="card"><h2>Loop stages &amp; history</h2>
+<details><summary>Stage details</summary>
+<table><tr><th>Stage</th><th>Status</th><th>Last run</th><th>Detail</th></tr>%s</table></details>
 <table><tr><th>When</th><th>Stage</th><th>Detail</th></tr>%s</table>
 <p class="small mut">Strategy Library: %d active entries · %d DO-NOT-APPLY ·
 format taxonomy %d formats (Damini S22). The knowledge register is on the Trends page.</p></div>
-""" % (esc(profile["name"] if profile else "—"),
-       esc(status["current_stage"]), stage_rows, ctx["csrf_field"],
-       window, brief_html,
+""" % (window, brief_html,
        esc(profile["name"] if profile else "—"), comp_rows, ctx["csrf_field"],
-       board_html,
-       top_rows, ctx["csrf_field"], hist,
+       top_rows, ctx["csrf_field"], stage_rows, hist,
        len(strat.active_entries()), len(strat.do_not_apply_entries()),
        len(strat.FORMAT_TAXONOMY))
+    body = (css + head + "<div class='gl-cols'>" + board_card + checklist_card
+            + "</div>" + rest)
     return page("Growth Loop", "/loop", body, ctx["flash"], conn, ctx)
 
 
