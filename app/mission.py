@@ -76,6 +76,23 @@ def _parse(ts):
     return parsed
 
 
+def _activity_series(conn, now, days=7):
+    """Role-run counts per day for the last `days` days (UTC dates),
+    oldest first — the Task Activity chart series. Real rows only."""
+    start = (now - timedelta(days=days - 1)).date()
+    per_day = {start + timedelta(days=i): 0 for i in range(days)}
+    try:
+        rows = conn.execute("SELECT created_at FROM role_runs").fetchall()
+    except Exception:
+        rows = []
+    for row in rows:
+        ts = _parse(row["created_at"])
+        if ts is not None and ts.date() in per_day:
+            per_day[ts.date()] += 1
+    return [{"date": d.isoformat(), "label": d.strftime("%d %b"),
+             "count": per_day[d]} for d in sorted(per_day)]
+
+
 def mission_data(conn, settings, profile=None, queue=None, now=None):
     now = now or datetime.now(timezone.utc)
     if now.tzinfo is None:
@@ -133,8 +150,10 @@ def mission_data(conn, settings, profile=None, queue=None, now=None):
                 "last_run": run["created_at"] if run else None,
                 "last_status": run["status"] if run else None,
             })
+        active = sum(1 for a in agents if a["status"] in ("DONE", "DOING"))
+        progress = int(round(100.0 * active / len(agents))) if agents else 0
         departments.append({"name": dept_name, "color": color,
-                            "agents": agents})
+                            "agents": agents, "progress": progress})
 
     def _count(sql):
         try:
@@ -158,4 +177,5 @@ def mission_data(conn, settings, profile=None, queue=None, now=None):
         "kill_switch": bool(queue.kill_switch_active()) if queue else False,
         "counts": counts,
     }
-    return {"departments": departments, "kpis": kpis, "centre": centre}
+    return {"departments": departments, "kpis": kpis, "centre": centre,
+            "activity": _activity_series(conn, now)}

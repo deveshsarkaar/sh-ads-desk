@@ -36,25 +36,37 @@ from .meta_client import API_VERSION_LABEL
 CSS = """
 /* Clean, minimal shell (owner UI directive 2026-11-16): whitespace first,
    one clear action per screen, detail behind <details> — no text walls. */
-:root{--ink:#1b2430;--mut:#6b7a8d;--line:#e6ebf2;--bg:#f7f9fc;--card:#fff;
---brand:#2563eb;--brand2:#1d4ed8;--ok:#0d7a4a;--bad:#b3261e;--warn:#9a6a00;
---warnbg:#fff8e1;--okbg:#e7f6ee;--badbg:#fdecea;--radius:16px}
+:root{--ink:#1f2430;--mut:#6b7280;--line:#e8e8f0;--bg:#f7f7fb;--card:#fff;
+--brand:#7c3aed;--brand2:#6d28d9;--violetbg:#ede9fe;--ok:#0d7a4a;--bad:#b3261e;--warn:#9a6a00;
+--warnbg:#fff8e1;--okbg:#e7f6ee;--badbg:#fdecea;--radius:14px}
 *{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;
 background:var(--bg);color:var(--ink);font-size:15px;line-height:1.6}
 a{color:var(--brand);text-decoration:none}a:hover{text-decoration:underline}
-header.top{background:#fff;color:var(--ink);padding:0 20px;display:flex;align-items:center;
-gap:12px;flex-wrap:wrap;position:sticky;top:0;z-index:5;border-bottom:1px solid var(--line)}
-header.top .brand{font-weight:800;font-size:19px;padding:14px 0;letter-spacing:-.2px}
-header.top .tag{font-size:11.5px;background:#eef2f9;color:var(--mut);border-radius:20px;padding:3px 11px}
-header.top form{margin-left:auto}
-nav.main{background:#fff;border-bottom:1px solid var(--line);padding:10px 16px;
-display:flex;gap:4px;flex-wrap:wrap;position:sticky;top:57px;z-index:4}
-nav.main a{padding:7px 13px;border-radius:20px;color:var(--mut);font-size:14px;font-weight:500}
-nav.main a:hover{background:var(--bg);text-decoration:none;color:var(--ink)}
-nav.main a.on{background:var(--ink);color:#fff}
-main{max-width:1020px;margin:0 auto;padding:28px 18px 70px}
+.layout{display:flex;min-height:100vh;align-items:stretch}
+aside.sidebar{width:252px;flex:none;background:#fff;border-right:1px solid var(--line);
+position:sticky;top:0;height:100vh;display:flex;flex-direction:column;
+padding:18px 14px;overflow-y:auto}
+.sb-brand{font-weight:800;font-size:19px;padding:2px 8px 14px;letter-spacing:-.2px}
+.sb-ws{background:var(--bg);border:1px solid var(--line);border-radius:12px;
+padding:10px 12px;margin-bottom:14px}
+.sb-ws .t{font-weight:700;font-size:13.5px}.sb-ws .s{color:var(--mut);font-size:12px}
+nav.side{display:flex;flex-direction:column;gap:2px}
+nav.side a{padding:8px 12px;border-radius:10px;color:var(--mut);font-size:14px;font-weight:500}
+nav.side a:hover{background:#f5f2ff;text-decoration:none;color:var(--ink)}
+nav.side a.on{background:var(--violetbg);color:var(--brand2);font-weight:700}
+.sb-spacer{flex:1}
+.sb-profile{border-top:1px solid var(--line);padding-top:12px;margin-top:12px}
+.sb-user{display:flex;gap:10px;align-items:center;padding:2px 6px 10px}
+.sb-avatar{width:34px;height:34px;border-radius:50%;background:var(--brand);color:#fff;
+display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex:none}
+.shell{flex:1;min-width:0;display:flex;flex-direction:column}
+.topbar{background:#fff;border-bottom:1px solid var(--line);padding:12px 22px;
+display:flex;gap:10px;align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:5}
+.topbar .ctx{font-weight:700;font-size:16px}
+.tag{font-size:11.5px;background:#f1f0fb;color:var(--mut);border-radius:20px;padding:3px 11px}
+main{width:100%;max-width:1180px;margin:0 auto;padding:26px 22px 60px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
-padding:22px 24px;margin:0 0 18px;box-shadow:0 1px 3px rgba(16,28,48,.03)}
+padding:22px 24px;margin:0 0 18px;box-shadow:0 1px 3px rgba(31,27,80,.05)}
 h1{font-size:26px;margin:2px 0 8px;letter-spacing:-.3px;font-weight:800}
 h2{font-size:17px;margin:2px 0 12px;font-weight:700}
 h3{font-size:15px;margin:16px 0 6px}.mut{color:var(--mut)}.small{font-size:13px}
@@ -62,8 +74,8 @@ h3{font-size:15px;margin:16px 0 6px}.mut{color:var(--mut)}.small{font-size:13px}
 .kpi{font-size:28px;font-weight:800;letter-spacing:-.5px}
 .pill{display:inline-block;border-radius:20px;padding:2px 11px;font-size:12px;font-weight:600;white-space:nowrap}
 .pill.ok{background:var(--okbg);color:var(--ok)}.pill.bad{background:var(--badbg);color:var(--bad)}
-.pill.warn{background:var(--warnbg);color:var(--warn)}.pill.info{background:#e8effe;color:var(--brand2)}
-.pill.dim{background:#eef2f9;color:var(--mut)}
+.pill.warn{background:var(--warnbg);color:var(--warn)}.pill.info{background:var(--violetbg);color:var(--brand2)}
+.pill.dim{background:#f1f0fb;color:var(--mut)}
 .banner{border-radius:var(--radius);padding:13px 17px;margin:0 0 18px;font-size:14px}
 .banner.warn{background:var(--warnbg);border:1px solid #ecd28a}
 .banner.bad{background:var(--badbg);border:1px solid #f0b6b1}
@@ -74,18 +86,18 @@ tr:last-child td{border-bottom:0}
 th{color:var(--mut);font-weight:600;font-size:12.5px;text-transform:uppercase;letter-spacing:.4px}
 input,select,textarea{width:100%;padding:10px 12px;border:1px solid var(--line);
 border-radius:10px;font:inherit;background:#fff;margin:4px 0 12px}
-input:focus,select:focus,textarea:focus{outline:2px solid #c7d7fb;border-color:var(--brand)}
+input:focus,select:focus,textarea:focus{outline:2px solid #ddd0fb;border-color:var(--brand)}
 label{font-weight:600;font-size:13.5px}
 button,.btn{display:inline-block;background:var(--brand);color:#fff;border:0;border-radius:10px;
 padding:10px 18px;font:inherit;font-weight:600;cursor:pointer}
 button:hover,.btn:hover{background:var(--brand2);text-decoration:none}
-button.secondary,.btn.secondary{background:#eef2f9;color:var(--ink)}
+button.secondary,.btn.secondary{background:#f1f0fb;color:var(--ink)}
 button.danger{background:var(--bad)}button:disabled{opacity:.5;cursor:not-allowed}
 .inline{display:inline}.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 .row>div{flex:1;min-width:150px}
 pre{background:#0f1a2c;color:#d7e3f5;border-radius:12px;padding:13px;overflow:auto;
 font-size:12.5px;white-space:pre-wrap;word-break:break-word;max-height:260px}
-.flash{border-radius:12px;padding:11px 15px;margin:0 0 16px;background:#e8effe;border:1px solid #b9ccfb}
+.flash{border-radius:12px;padding:11px 15px;margin:0 0 16px;background:#f3efff;border:1px solid #ddd0fb}
 .check li{margin:3px 0}.footer{color:var(--mut);font-size:12.5px;text-align:center;padding:20px}
 details{border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin:0 0 14px;background:#fcfdff}
 details summary{cursor:pointer;font-weight:600;font-size:14px;color:var(--mut)}
@@ -94,16 +106,20 @@ details[open ] summary{margin-bottom:8px;color:var(--ink)}
 .stage{display:flex;align-items:center;gap:7px;background:#f2f5fa;border-radius:20px;
 padding:6px 13px;font-size:13px;font-weight:500}
 .stage .dot{width:8px;height:8px;border-radius:50%;background:#c3cedd}
-.stage.done .dot{background:var(--ok)}.stage.now{background:#e8effe;color:var(--brand2)}
+.stage.done .dot{background:var(--ok)}.stage.now{background:var(--violetbg);color:var(--brand2)}
 .stage.now .dot{background:var(--brand)}
 .bigbtn{font-size:16px;padding:13px 26px;border-radius:12px}
+@media(max-width:860px){.layout{flex-direction:column}
+aside.sidebar{width:100%;height:auto;position:static}
+nav.side{flex-direction:row;overflow-x:auto;padding-bottom:6px}
+nav.side a{white-space:nowrap}.sb-spacer{display:none}
+.sb-profile{border-top:0;margin-top:4px}}
 @media(max-width:640px){main{padding:18px 12px 56px}h1{font-size:22px}
-header.top .tag{display:none}table{font-size:13px}.card{padding:17px 16px}
-nav.main{top:53px}}
+.topbar .tag{display:none}table{font-size:13px}.card{padding:17px 16px}}
 """
 
 NAV = [
-    ("/", "Today"), ("/mission", "Mission Control"), ("/profiles", "Profiles"), ("/loop", "Growth Loop"),
+    ("/", "Today"), ("/mission", "Mission Control"), ("/campaigns", "Campaigns"), ("/profiles", "Profiles"), ("/loop", "Growth Loop"),
     ("/connect", "Connect"), ("/roles", "Roles"),
     ("/settings", "Settings"), ("/guardrails", "Guardrails"),
     ("/eligibility", "Eligibility"),
@@ -137,56 +153,56 @@ ROLE_NAMES = [
 ]
 
 SETTING_FIELDS = [
-    ("TOTAL_DAILY_BUDGET_CAP", "number", "Sab campaigns milakar ek din ka max kharch. 0/khaali = koi cap set nahi (optimiser safety-stop check nahi karega)."),
-    ("PER_CAMPAIGN_CAP", "number", "Ek campaign ka max budget. 0/khaali = unset."),
-    ("LIFETIME_CAP", "number", "Poori lifetime ka max kharch cap. 0/khaali = unset."),
-    ("TARGET_COST_PER_QUALIFIED_LEAD", "number", "Ek qualified lead par target kharch. Optimiser isi se winner/loser judge karta hai — unset ho to judgement nahi hota."),
-    ("MIN_SPEND", "number", "Isse kam spend wale ad ko 'not enough data' kaha jayega."),
-    ("MIN_EVENTS", "number", "Isse kam enquiries wale ad ko judge nahi kiya jayega."),
-    ("EVALUATION_WINDOW_DAYS", "number", "Kitne din ke data par judgement hoga."),
-    ("CONVERSION_LAG_WINDOW_DAYS", "number", "Conversion report hone me lagne wale din — isse naye ad judge nahi honge."),
-    ("MAX_BUDGET_CHANGE_PCT", "number", "Ek baar me budget badlav ki max % sima (proposal bhi isse zyada ka nahi banega)."),
-    ("MIN_DAYS_BETWEEN_CHANGES", "number", "Do budget badlav ke beech kam se kam itne din."),
-    ("ACCOUNT_CURRENCY", "text", "Ad account ki currency (jaise INR). Sirf display/reconciliation ke liye."),
-    ("ACCOUNT_TIMEZONE", "text", "Ad account ka timezone (jaise Asia/Kolkata)."),
-    ("ATTRIBUTION_WINDOW", "text", "Insights attribution window jo use ho raha hai (Step 3 me verify hoga — abhi UNVERIFIED)."),
-    ("DESTINATION_URL", "text", "Ad kahan bhejegaa — owner hi set karega. Khaali = destination gate band."),
-    ("DESTINATION_READY", "checkbox", "Tick karne ka matlab: destination page ready hai aur traffic wahan ja sakta hai."),
-    ("DRY_RUN", "checkbox", "ON (default) = koi asli write nahi, sab MOCK par simulate hoga — LIVE mode me bhi."),
-    ("AUTOMATION_MODE", "select", "OFF = sirf reports. PROPOSE (default) = har cheez approval ke baad. AUTO_WITHIN_RULES = sirf tab jab owner ne exact rules likh kar approve kiye hon (Step 5)."),
-    ("AUTO_RULES_APPROVED", "checkbox", "AUTO_WITHIN_RULES ke liye: owner ne neeche wale written rules padh kar approve kiye hain. Bina iske AUTO mode bhi PROPOSE jaisa hi chalega."),
-    ("AUTO_RULES_TEXT", "text", "AUTO_WITHIN_RULES ke written rules (owner ki apni shabdon me — kaunsi actions caps ke andar auto ho sakti hain)."),
-    ("AUTO_COLLECT", "checkbox", "24x7 worker: har 6 ghante insights collect apne aap. OFF = sirf manual/CLI collect."),
-    ("AUTO_RESEARCH", "checkbox", "24x7 worker: hafte me Growth Loop cycle (competitor research + briefs) apne aap."),
-    ("AUTO_CREATIVE_DRAFTS", "checkbox", "24x7 worker: loop ke creative DRAFTS apne aap banein (live kuch nahi hota — draft approval queue tak)."),
-    ("AUTO_REPORTS", "checkbox", "24x7 worker: daily/weekly report apne aap bane."),
-    ("AUTO_OPTIMISE_PROPOSALS", "checkbox", "24x7 worker: roz optimisation PROPOSALS apne aap banein (PROPOSE mode me apply kabhi auto nahi)."),
-    ("WORKER_TICK_SECONDS", "number", "Worker kitne seconds me schedule check kare. Khaali = 60."),
-    ("QUIET_HOURS", "text", "Chup rehne ke ghante, jaise 23-07 — is dauraan sirf collect chalega. Khaali = koi quiet hours nahi."),
-    ("TOP_CREATIVE_WINDOW_DAYS", "number", "Growth Loop ka top-creative window: 7 ya 10 din. 0/khaali = 7."),
-    ("GUARDRAIL_LEARNING_MIN_DAYS", "number", "Guardrail: itne din se naye live object par edit/change BLOCK. 0 = inactive."),
-    ("GUARDRAIL_LEARNING_MIN_CONVERSIONS", "number", "Guardrail: itne conversions se pehle judge/edit BLOCK. 0 = inactive."),
-    ("GUARDRAIL_MAX_AD_SETS_PER_CAMPAIGN", "number", "Guardrail: ek campaign me isse zyada ad sets = fragmentation BLOCK. 0 = inactive."),
-    ("GUARDRAIL_MIN_AD_SET_BUDGET", "number", "Guardrail: per-ad-set budget isse kam ho to WARN. 0 = inactive."),
-    ("GUARDRAIL_MIN_CREATIVES_PER_ADSET", "number", "Guardrail: ad set me isse kam creatives ho to WARN. 0 = inactive."),
-    ("GUARDRAILS_DISABLED", "text", "OFF kiye hue guardrail ids (comma se) — Guardrails page se toggle karna behtar hai."),
-    ("LEARNING_EVENT_THRESHOLD", "number", "Guardrail D4/D1: ek ad set ko verdict se pehle hafte me kam se kam itne optimisation events. 0 = inactive. (Research reference sirf: ~50 — guidance, default nahi.)"),
-    ("MIN_EVALUATION_DAYS", "number", "Guardrail D2: verdict se pehle kam se kam itne din ka data. 0 = inactive. (Research reference sirf: ~7 din.)"),
-    ("FREQUENCY_CAP_PROSPECTING", "number", "Guardrail D7: prospecting frequency isse upar = WARN. 0 = inactive. (Research reference sirf: ~3.)"),
+    ("TOTAL_DAILY_BUDGET_CAP", "number", "Maximum spend per day across all campaigns combined. 0/empty = no cap set (the optimiser will not run its safety-stop check)."),
+    ("PER_CAMPAIGN_CAP", "number", "Maximum budget for a single campaign. 0/empty = unset."),
+    ("LIFETIME_CAP", "number", "Maximum total lifetime spend cap. 0/empty = unset."),
+    ("TARGET_COST_PER_QUALIFIED_LEAD", "number", "Target cost for one qualified lead. The optimiser judges winners/losers against this — if unset, no judgement is made."),
+    ("MIN_SPEND", "number", "An ad with less spend than this is treated as 'not enough data'."),
+    ("MIN_EVENTS", "number", "An ad with fewer enquiries than this will not be judged."),
+    ("EVALUATION_WINDOW_DAYS", "number", "How many days of data the judgement is based on."),
+    ("CONVERSION_LAG_WINDOW_DAYS", "number", "Days conversions take to be reported — ads newer than this are not judged."),
+    ("MAX_BUDGET_CHANGE_PCT", "number", "Maximum % limit for a single budget change (no proposal will exceed this either)."),
+    ("MIN_DAYS_BETWEEN_CHANGES", "number", "Minimum days between two budget changes."),
+    ("ACCOUNT_CURRENCY", "text", "The ad account's currency (e.g. INR). Used for display/reconciliation only."),
+    ("ACCOUNT_TIMEZONE", "text", "The ad account's timezone (e.g. Asia/Kolkata)."),
+    ("ATTRIBUTION_WINDOW", "text", "The Insights attribution window in use (will be verified in Step 3 — currently UNVERIFIED)."),
+    ("DESTINATION_URL", "text", "Where the ad sends traffic — set by the owner only. Empty = destination gate closed."),
+    ("DESTINATION_READY", "checkbox", "Ticking this means: the destination page is ready and traffic can be sent there."),
+    ("DRY_RUN", "checkbox", "ON (default) = no real writes at all; everything is simulated on MOCK — even in LIVE mode."),
+    ("AUTOMATION_MODE", "select", "OFF = reports only. PROPOSE (default) = everything happens only after approval. AUTO_WITHIN_RULES = only when the owner has written and approved the exact rules (Step 5)."),
+    ("AUTO_RULES_APPROVED", "checkbox", "For AUTO_WITHIN_RULES: the owner has read and approved the written rules below. Without this, AUTO mode behaves exactly like PROPOSE."),
+    ("AUTO_RULES_TEXT", "text", "The written rules for AUTO_WITHIN_RULES (in the owner's own words — which actions may run automatically within the caps)."),
+    ("AUTO_COLLECT", "checkbox", "24x7 worker: collect insights automatically every 6 hours. OFF = manual/CLI collect only."),
+    ("AUTO_RESEARCH", "checkbox", "24x7 worker: run the Growth Loop cycle (competitor research + briefs) automatically every week."),
+    ("AUTO_CREATIVE_DRAFTS", "checkbox", "24x7 worker: create the loop's creative DRAFTS automatically (nothing goes live — drafts stop at the approval queue)."),
+    ("AUTO_REPORTS", "checkbox", "24x7 worker: generate the daily/weekly report automatically."),
+    ("AUTO_OPTIMISE_PROPOSALS", "checkbox", "24x7 worker: create optimisation PROPOSALS automatically every day (in PROPOSE mode they are never applied automatically)."),
+    ("WORKER_TICK_SECONDS", "number", "How often, in seconds, the worker checks the schedule. Empty = 60."),
+    ("QUIET_HOURS", "text", "Quiet hours, e.g. 23-07 — during these hours only collect runs. Empty = no quiet hours."),
+    ("TOP_CREATIVE_WINDOW_DAYS", "number", "The Growth Loop's top-creative window: 7 or 10 days. 0/empty = 7."),
+    ("GUARDRAIL_LEARNING_MIN_DAYS", "number", "Guardrail: BLOCK edits/changes on a live object newer than this many days. 0 = inactive."),
+    ("GUARDRAIL_LEARNING_MIN_CONVERSIONS", "number", "Guardrail: BLOCK judging/editing before this many conversions. 0 = inactive."),
+    ("GUARDRAIL_MAX_AD_SETS_PER_CAMPAIGN", "number", "Guardrail: more ad sets than this in one campaign = fragmentation BLOCK. 0 = inactive."),
+    ("GUARDRAIL_MIN_AD_SET_BUDGET", "number", "Guardrail: WARN when the per-ad-set budget is below this. 0 = inactive."),
+    ("GUARDRAIL_MIN_CREATIVES_PER_ADSET", "number", "Guardrail: WARN when an ad set has fewer creatives than this. 0 = inactive."),
+    ("GUARDRAILS_DISABLED", "text", "Guardrail ids that are switched OFF (comma-separated) — toggling from the Guardrails page is preferred."),
+    ("LEARNING_EVENT_THRESHOLD", "number", "Guardrail D4/D1: an ad set needs at least this many optimisation events per week before a verdict. 0 = inactive. (Research reference only: ~50 — guidance, not a default.)"),
+    ("MIN_EVALUATION_DAYS", "number", "Guardrail D2: at least this many days of data before a verdict. 0 = inactive. (Research reference only: ~7 days.)"),
+    ("FREQUENCY_CAP_PROSPECTING", "number", "Guardrail D7: prospecting frequency above this = WARN. 0 = inactive. (Research reference only: ~3.)"),
     ("FREQUENCY_CAP_RETARGETING", "number", "Guardrail D7: retargeting frequency cap. 0 = inactive."),
-    ("FATIGUE_CTR_DROP_PCT", "number", "Guardrail D7: CTR drop % jiske baad fatigue mana jaye (monitor note). 0 = inactive."),
-    ("CREATIVES_PER_AD_SET_MIN", "number", "Guardrail D8: ad set me kam se kam itne creatives. 0 = inactive. (Research reference sirf: 3–5.)"),
-    ("CREATIVES_PER_AD_SET_MAX", "number", "Guardrail D8: ad set me zyada se zyada itne creatives. 0 = inactive. (Research reference sirf: 3–5.)"),
-    ("HOOK_RATE_FLOOR_PCT", "number", "Guardrail D9: video hook rate isse neeche = WARN. 0 = inactive. (Research reference sirf: 20–30% practitioner ranges.)"),
-    ("HOOK_MIN_IMPRESSIONS", "number", "Guardrail D9: hook rate tabhi judge ho jab itne impressions ho chuke hon. 0 = inactive."),
-    ("AUDIENCE_SIZE_FLOOR", "number", "Guardrail D6: audience size isse chhota = WARN. 0 = inactive."),
-    ("AUDIENCE_OVERLAP_MAX_PCT", "number", "Guardrail D5: ad sets ke beech overlap % isse zyada = WARN. 0 = inactive."),
-    ("LANDING_PAGE_MAX_LOAD_SEC", "number", "Guardrail D11: landing page mobile load seconds isse zyada = WARN. 0 = inactive."),
-    ("COMMENT_MODERATION_SLA_HOURS", "number", "Guardrail D12: negative comment itne ghante se zyada unaddressed = WARN. 0 = inactive."),
-    ("REJECTION_COUNT_LIMIT", "number", "Guardrail D16: rolling window me itne se zyada rejections = launch freeze BLOCK. 0 = inactive."),
-    ("EMQ_MIN", "number", "Guardrail D14: Event Match Quality isse kam = WARN. 0 = inactive. (Research reference sirf: ~8 practitioner figure.)"),
-    ("PAUSE_RELEARN_DAYS", "number", "Guardrail D25: itne din paused ad set ke resume par re-learning WARN. 0 = inactive. (Research reference sirf: 7 din.)"),
-    ("REVIEW_CADENCE_DAYS", "number", "Guardrail D23: itne din se review na ho to self-watch WARN. 0 = inactive."),
+    ("FATIGUE_CTR_DROP_PCT", "number", "Guardrail D7: CTR drop % after which fatigue is flagged (monitor note). 0 = inactive."),
+    ("CREATIVES_PER_AD_SET_MIN", "number", "Guardrail D8: minimum creatives per ad set. 0 = inactive. (Research reference only: 3–5.)"),
+    ("CREATIVES_PER_AD_SET_MAX", "number", "Guardrail D8: maximum creatives per ad set. 0 = inactive. (Research reference only: 3–5.)"),
+    ("HOOK_RATE_FLOOR_PCT", "number", "Guardrail D9: video hook rate below this = WARN. 0 = inactive. (Research reference only: 20–30% practitioner ranges.)"),
+    ("HOOK_MIN_IMPRESSIONS", "number", "Guardrail D9: judge the hook rate only after this many impressions. 0 = inactive."),
+    ("AUDIENCE_SIZE_FLOOR", "number", "Guardrail D6: audience size below this = WARN. 0 = inactive."),
+    ("AUDIENCE_OVERLAP_MAX_PCT", "number", "Guardrail D5: overlap % between ad sets above this = WARN. 0 = inactive."),
+    ("LANDING_PAGE_MAX_LOAD_SEC", "number", "Guardrail D11: landing page mobile load time above this many seconds = WARN. 0 = inactive."),
+    ("COMMENT_MODERATION_SLA_HOURS", "number", "Guardrail D12: a negative comment left unaddressed longer than this many hours = WARN. 0 = inactive."),
+    ("REJECTION_COUNT_LIMIT", "number", "Guardrail D16: more rejections than this in the rolling window = launch freeze BLOCK. 0 = inactive."),
+    ("EMQ_MIN", "number", "Guardrail D14: Event Match Quality below this = WARN. 0 = inactive. (Research reference only: ~8 practitioner figure.)"),
+    ("PAUSE_RELEARN_DAYS", "number", "Guardrail D25: re-learning WARN when an ad set paused this many days is resumed. 0 = inactive. (Research reference only: 7 days.)"),
+    ("REVIEW_CADENCE_DAYS", "number", "Guardrail D23: self-watch WARN when no review has happened for this many days. 0 = inactive."),
 ]
 
 
@@ -203,9 +219,9 @@ def page(title, active, body, flash=None, conn=None, ctx=None):
         q.conn = conn
         if q.kill_switch_active():
             kill = ('<div class="banner bad"><strong>KILL SWITCH ON.</strong> '
-                    'Automation disabled hai aur approvals/execution blocked hain. '
-                    'Ye apne aap kabhi resume nahi hoga — Settings me jaakar owner '
-                    'khud band karega.</div>')
+                    'Automation is disabled and approvals/execution are blocked. '
+                    'This never resumes on its own — the owner releases it '
+                    'manually in Settings.</div>')
     flash_html = '<div class="flash">%s</div>' % esc(flash) if flash else ""
     biz_tag = "Business · Meta Ads"
     switcher = ""
@@ -218,18 +234,30 @@ def page(title, active, body, flash=None, conn=None, ctx=None):
             for p in profiles_mod.list_profiles(conn))
         switcher = ('<form method="post" action="/profiles/switch" class="inline">%s'
                     '<select name="profile_id" onchange="this.form.submit()" '
-                    'style="width:auto;margin:0;padding:5px 8px">%s</select></form>'
+                    'style="width:100%%;margin:0 0 10px;padding:6px 8px">%s</select></form>'
                     % (ctx["csrf_field"], options))
     return """<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>%s · SH Ads Desk</title><style>%s</style></head><body>
-<header class="top"><span class="brand">SH Ads Desk</span>
-<span class="tag">%s</span><span class="tag">DRY_RUN + PROPOSE default</span>%s
-<form method="post" action="/logout" class="inline"><button class="secondary" type="submit">Logout</button></form></header>
-<nav class="main">%s</nav><main>%s%s%s</main>
-<div class="footer">SH Ads Desk · kisi bhi industry ke liye · Step 1 logic VERIFIED (local tests) · Live Meta path UNTESTED · API %s · Provider API keys sirf server ki data/secrets.env me rehti hain — app unhe kabhi dikhata ya log nahi karta</div>
-</body></html>""" % (esc(title), CSS, esc(biz_tag), switcher, nav, kill,
-                     flash_html, body, esc(API_VERSION_LABEL))
+<div class="layout">
+<aside class="sidebar">
+<div class="sb-brand">Software Hub</div>
+<div class="sb-ws"><div class="t">SH Ads Workspace</div><div class="s">Pro Plan</div></div>
+<nav class="side">%s</nav>
+<div class="sb-spacer"></div>
+<div class="sb-profile">%s
+<div class="sb-user"><div class="sb-avatar">SH</div>
+<div><div style="font-weight:700;font-size:13.5px">Software Hub</div>
+<div class="small mut">Enterprise</div></div></div>
+<form method="post" action="/logout" class="inline"><button class="secondary" type="submit" style="width:100%%">Logout</button></form></div>
+</aside>
+<div class="shell">
+<div class="topbar"><span class="ctx">%s</span><span class="tag">%s</span><span class="tag">DRY_RUN + PROPOSE default</span></div>
+<main>%s%s%s</main>
+<div class="footer">SH Ads Desk · Built for any industry · Step 1 logic VERIFIED (local tests) · Live Meta path UNTESTED · API %s · Provider API keys live only in the server's data/secrets.env file — the app never displays or logs them</div>
+</div></div>
+</body></html>""" % (esc(title), CSS, nav, switcher, esc(title), esc(biz_tag),
+                     kill, flash_html, body, esc(API_VERSION_LABEL))
 
 
 def simple_page(title, body):
@@ -244,33 +272,83 @@ def mode_banner(settings):
     mode = os.environ.get("META_MODE", "MOCK").upper()
     if mode == "LIVE":
         return ('<div class="banner warn"><strong>META_MODE=LIVE (UNTESTED).</strong> '
-                'Asli Meta adapter code-complete hai lekin kisi real account par '
-                'test NAHI hua. DRY_RUN=%s — jab tak DRY_RUN ON hai, writes MOCK '
-                'par hi simulate honge.</div>' % esc(settings.get("DRY_RUN")))
-    return ('<div class="banner ok"><strong>META_MODE=MOCK.</strong> Saara data aur '
-            'saare writes mock hain. Asli Meta connection Steps 2–4 me aayega '
-            '(abhi UNTESTED).</div>')
+                'The real Meta adapter is code-complete but has NOT been tested '
+                'on a real account. DRY_RUN=%s — while DRY_RUN is ON, writes are '
+                'simulated on MOCK only.</div>' % esc(settings.get("DRY_RUN")))
+    return ('<div class="banner ok"><strong>META_MODE=MOCK.</strong> All data and '
+            'all writes are mock. The real Meta connection arrives in Steps 2–4 '
+            '(currently UNTESTED).</div>')
 
 
 # ---------------------------------------------------------------- pages (GET)
 def pg_mission(ctx):
-    """Mission Control — reel-style agent office, lekin saara data
-    ASLI system records se (role_runs, approval queue, worker
-    heartbeat). Koi simulation nahi."""
+    """Mission Control — reel-style agent office, with every status
+    assembled from REAL system records (role_runs, approval queue,
+    worker heartbeat). Nothing is simulated."""
     from . import mission as mission_mod
     conn, settings = ctx["conn"], ctx["settings"]
     profile = ctx["profile"]
     data = mission_mod.mission_data(conn, settings, profile=profile,
                                     queue=ctx["queue"])
     c, k = data["centre"], data["kpis"]
-    chip_colors = {"DOING": "#2563eb", "DONE": "#059669",
+    cnt = c["counts"]
+    chip_colors = {"DOING": "#7c3aed", "DONE": "#059669",
                    "NEXT": "#d97706", "WAITING": "#6b7280"}
+    # --- Workflow Status donut (SVG, real DOING/DONE/NEXT/WAITING counts)
+    donut_colors = (("DOING", "#7c3aed"), ("DONE", "#10b981"),
+                    ("NEXT", "#f59e0b"), ("WAITING", "#c9c4d6"))
+    total_agents = sum(cnt[s] for s, _col in donut_colors) or 20
+    import math
+    circ = 2 * math.pi * 64
+    segs, start = [], 0.0
+    for status_name, color in donut_colors:
+        frac = (cnt[status_name] / total_agents) if total_agents else 0
+        seg = frac * circ
+        segs.append('<circle cx="90" cy="90" r="64" fill="none" stroke="%s" '
+                    'stroke-width="26" stroke-dasharray="%.2f %.2f" '
+                    'stroke-dashoffset="%.2f"/>'
+                    % (color, seg, circ - seg, -start))
+        start += seg
+    legend = "".join(
+        '<div class="mc-legend-row"><span class="mc-dot" style="background:%s"></span>'
+        '%s<span class="mc-legend-n">%d</span></div>'
+        % (color, status_name, cnt[status_name])
+        for status_name, color in donut_colors)
+    donut_html = (
+        '<div class="mc-donut-wrap"><svg viewBox="0 0 180 180" class="mc-donut">'
+        '<g transform="rotate(-90 90 90)">%s</g>'
+        '<text x="90" y="88" text-anchor="middle" class="mc-donut-total">%d</text>'
+        '<text x="90" y="110" text-anchor="middle" class="mc-donut-sub">Agents</text>'
+        '</svg><div class="mc-legend">%s</div></div>'
+        % ("".join(segs), total_agents, legend))
+    # --- Task Activity line chart (SVG polyline, role_runs per day, 7 days)
+    act = data.get("activity") or []
+    max_count = max([p["count"] for p in act] + [1])
+    pts, dots, labels = [], [], []
+    if act:
+        plot_w, plot_h, left, top = 500, 140, 34, 14
+        for i, p in enumerate(act):
+            x = left + (plot_w * i / (len(act) - 1 if len(act) > 1 else 1))
+            y = top + plot_h - (p["count"] / max_count) * plot_h
+            pts.append("%.1f,%.1f" % (x, y))
+            dots.append('<circle cx="%.1f" cy="%.1f" r="4" fill="#7c3aed"/>' % (x, y))
+            labels.append('<text x="%.1f" y="%d" text-anchor="middle" '
+                          'class="mc-axis">%s</text>' % (x, top + plot_h + 20,
+                                                         esc(p["label"])))
+    activity_html = (
+        '<svg viewBox="0 0 560 190" class="mc-chart">'
+        '<line x1="34" y1="154" x2="534" y2="154" stroke="#e8e8f0"/>'
+        '<text x="4" y="18" class="mc-axis">%d</text>'
+        '<polyline points="%s" fill="none" stroke="#7c3aed" stroke-width="2.5"/>'
+        '%s%s</svg>'
+        % (max_count, " ".join(pts), "".join(dots), "".join(labels)))
+    # --- Department cards with progress bars
     dept_html = []
     for dept in data["departments"]:
         agents = []
         for a in dept["agents"]:
             num = a["id"].split("_")[0]
-            last = ("last: %s" % esc(a["last_run"])) if a["last_run"] else "abhi tak nahi chala"
+            last = ("Last run: %s" % esc(a["last_run"])) if a["last_run"] else "Not run yet"
             pulse = " mc-pulse" if a["status"] == "DOING" else ""
             agents.append(
                 '<div class="mc-agent"><div class="mc-num" style="background:%s">%s</div>'
@@ -280,26 +358,47 @@ def pg_mission(ctx):
                 % (dept["color"], num, esc(a["label"]), last, pulse,
                    chip_colors[a["status"]], a["status"]))
         dept_html.append(
-            '<div class="card mc-dept"><h2 style="border-left:5px solid %s;'
-            'padding-left:10px">%s</h2>%s</div>'
-            % (dept["color"], esc(dept["name"]), "".join(agents)))
+            '<div class="card mc-dept"><div class="mc-dept-head">'
+            '<span class="mc-dept-badge" style="background:%s">%s</span>'
+            '<div><div class="mc-dept-name">%s</div>'
+            '<div class="small mut">%d Agents</div></div>'
+            '<span class="mc-dept-pct">%d%%</span></div>'
+            '<div class="mc-bar"><div class="mc-bar-fill" style="width:%d%%;background:%s"></div></div>'
+            '%s</div>'
+            % (dept["color"], esc(dept["name"].split(".")[0]),
+               esc(dept["name"]), len(dept["agents"]), dept["progress"],
+               dept["progress"], dept["color"], "".join(agents)))
     worker_pill = ('<span class="pill ok">WORKER LIVE</span>' if c["worker_live"]
                    else '<span class="pill">WORKER IDLE</span>')
     kill_pill = ('<span class="pill bad">KILL SWITCH ON</span>' if c["kill_switch"]
                  else '<span class="pill ok">SYSTEM ACTIVE</span>')
-    cnt = c["counts"]
     body = """
 <style>
-.mc-centre{background:linear-gradient(135deg,#111827,#1e3a8a);color:#fff;border-radius:18px;padding:26px 22px;text-align:center;margin-bottom:16px}
-.mc-centre h1{color:#fff;margin:0 0 4px;font-size:26px;letter-spacing:.5px}
-.mc-centre .sub{color:#bfdbfe;font-size:14px;margin-bottom:14px}
-.mc-counts{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:14px}
-.mc-count{background:rgba(255,255,255,.1);border-radius:12px;padding:8px 16px;font-size:14px}
-.mc-count b{font-size:19px;display:block}
-.mc-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:16px}
-.mc-kpi{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px;text-align:center}
-.mc-kpi b{font-size:22px;display:block}
-.mc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px}
+.mc-head{display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+.mc-head .sub{color:var(--mut);font-size:13.5px}
+.mc-head .pills{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+.mc-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;margin-bottom:16px}
+.mc-kpi{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px 18px;box-shadow:0 1px 3px rgba(31,27,80,.05)}
+.mc-kpi b{font-size:26px;display:block;letter-spacing:-.5px}
+.mc-kpi .lbl{font-weight:600;font-size:14px}
+.mc-charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:14px}
+.mc-donut-wrap{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.mc-donut{width:180px;height:180px;flex:none}
+.mc-donut-total{font-size:30px;font-weight:800;fill:var(--ink)}
+.mc-donut-sub{font-size:12px;fill:var(--mut)}
+.mc-legend{flex:1;min-width:130px}
+.mc-legend-row{display:flex;align-items:center;gap:8px;padding:4px 0;font-size:14px}
+.mc-dot{width:10px;height:10px;border-radius:50%%;flex:none}
+.mc-legend-n{margin-left:auto;font-weight:700}
+.mc-chart{width:100%%;height:auto}
+.mc-axis{font-size:11px;fill:var(--mut)}
+.mc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:14px}
+.mc-dept-head{display:flex;align-items:center;gap:11px;margin-bottom:10px}
+.mc-dept-badge{color:#fff;font-weight:800;border-radius:10px;width:34px;height:34px;display:flex;align-items:center;justify-content:center;flex:none}
+.mc-dept-name{font-weight:700;font-size:15.5px}
+.mc-dept-pct{margin-left:auto;font-weight:700;color:var(--mut)}
+.mc-bar{background:#f1f0fb;border-radius:20px;height:8px;margin-bottom:10px;overflow:hidden}
+.mc-bar-fill{height:100%%;border-radius:20px}
 .mc-agent{display:flex;align-items:center;gap:11px;padding:9px 4px;border-bottom:1px solid var(--line)}
 .mc-agent:last-child{border-bottom:none}
 .mc-num{color:#fff;font-weight:700;border-radius:10px;width:34px;height:34px;display:flex;align-items:center;justify-content:center;font-size:14px;flex:none}
@@ -310,31 +409,59 @@ def pg_mission(ctx):
 .mc-pulse{animation:mcpulse 1.2s infinite}
 @keyframes mcpulse{0%%{opacity:1}50%%{opacity:.45}100%%{opacity:1}}
 </style>
-<div class="mc-centre">
-<h1>&#129302; SH ADS DESK — META ADS AGENT</h1>
-<div class="sub">%s &middot; Mode: %s &middot; 20 Agents &middot; 4 Departments</div>
-<div>%s %s</div>
-<div class="mc-counts">
-<div class="mc-count"><b>%d</b>DOING</div>
-<div class="mc-count"><b>%d</b>DONE</div>
-<div class="mc-count"><b>%d</b>NEXT</div>
-<div class="mc-count"><b>%d</b>WAITING</div>
-</div>
-<p style="color:#93c5fd;font-size:12.5px;margin:14px 0 0">Status asli records se hai — role runs, approval queue aur worker heartbeat. Page har 30 second me khud refresh hoti hai.</p>
-</div>
+<div class="mc-head"><div>
+<h1>&#129302; Mission Control</h1>
+<div class="sub">SH ADS DESK — META ADS AGENT &middot; %s &middot; Mode: %s &middot; 20 Agents &middot; 4 Departments</div>
+<div class="sub">Every status comes from real records — role runs, the approval queue and the worker heartbeat. This page refreshes itself every 30 seconds.</div>
+</div><div class="pills">%s %s</div></div>
 <div class="mc-kpis">
-<div class="mc-kpi"><b>%d</b>Pending Approvals</div>
-<div class="mc-kpi"><b>%d</b>Queue Jobs</div>
-<div class="mc-kpi"><b>%d</b>Creatives</div>
-<div class="mc-kpi"><b>%d</b>Reports</div>
+<div class="mc-kpi"><b>%d</b><span class="lbl">Pending Approvals</span><div class="small mut">Waiting in the approval queue</div></div>
+<div class="mc-kpi"><b>%d</b><span class="lbl">Queue Jobs</span><div class="small mut">Waiting for the 24x7 worker</div></div>
+<div class="mc-kpi"><b>%d</b><span class="lbl">Creatives</span><div class="small mut">Saved creative sets and drafts</div></div>
+<div class="mc-kpi"><b>%d</b><span class="lbl">Reports</span><div class="small mut">Daily + weekly reports saved</div></div>
 </div>
+<div class="mc-charts">
+<div class="card"><h2>Workflow Status</h2>
+<p class="small mut" style="margin-top:-6px">Real-time task distribution across departments</p>
+%s</div>
+<div class="card"><h2>Task Activity</h2>
+<p class="small mut" style="margin-top:-6px">Role runs per day — last 7 days</p>
+%s</div>
+</div>
+<h2 style="margin:4px 0 12px">Departments</h2>
 <div class="mc-grid">%s</div>
 <script>setTimeout(function(){location.reload()},30000)</script>
 """ % (esc(c["profile"]), esc(c["automation_mode"]), worker_pill, kill_pill,
-       cnt["DOING"], cnt["DONE"], cnt["NEXT"], cnt["WAITING"],
        k["pending_approvals"], k["queue_pending"], k["creatives"],
-       k["reports"], "".join(dept_html))
+       k["reports"], donut_html, activity_html, "".join(dept_html))
     return page("Mission Control", "/mission", body, ctx["flash"], conn, ctx)
+
+
+def _donut_svg(items, centre_top, centre_sub):
+    """Donut chart from [(label, value, color)] — real values only.
+    Returns SVG + legend HTML with % shares."""
+    import math
+    total = sum(v for _l, v, _c in items) or 1
+    circ = 2 * math.pi * 64
+    segs, start = [], 0.0
+    for _label, value, color in items:
+        seg = (value / total) * circ
+        segs.append('<circle cx="90" cy="90" r="64" fill="none" stroke="%s" '
+                    'stroke-width="26" stroke-dasharray="%.2f %.2f" '
+                    'stroke-dashoffset="%.2f"/>'
+                    % (color, seg, circ - seg, -start))
+        start += seg
+    legend = "".join(
+        '<div class="mc-legend-row"><span class="mc-dot" style="background:%s"></span>'
+        '%s<span class="mc-legend-n">%s · %.0f%%</span></div>'
+        % (color, esc(label), value, 100.0 * value / total)
+        for label, value, color in items)
+    return ('<div class="mc-donut-wrap"><svg viewBox="0 0 180 180" class="mc-donut">'
+            '<g transform="rotate(-90 90 90)">%s</g>'
+            '<text x="90" y="88" text-anchor="middle" class="mc-donut-total">%s</text>'
+            '<text x="90" y="110" text-anchor="middle" class="mc-donut-sub">%s</text>'
+            '</svg><div class="mc-legend">%s</div></div>'
+            % ("".join(segs), esc(centre_top), esc(centre_sub), legend))
 
 
 def pg_today(ctx):
@@ -348,6 +475,7 @@ def pg_today(ctx):
     spend = sum(float(r.get("spend") or 0) for r in rows)
     enq = sum(int(r.get("enquiries") or 0) for r in rows)
     qual = sum(int(r.get("qualified_leads") or 0) for r in rows)
+    junk = sum(int(r.get("junk_leads") or 0) for r in rows)
     leads = store.lead_summary(conn)
     biz = esc(profile["name"]) if profile else "Software Hub"
     ind = esc(profile.get("industry") or "") if profile else ""
@@ -366,22 +494,107 @@ def pg_today(ctx):
                  if queue.kill_switch_active()
                  else '<span class="pill ok">system clear</span>')
     mode = os.environ.get("META_MODE", "MOCK").upper()
+    # --- Analytics components (real rows only; no invented history) ---
+    quality_donut = _donut_svg(
+        [("Qualified", qual, "#7c3aed"), ("Enquiries", enq, "#10b981"),
+         ("Junk", junk, "#f59e0b")],
+        str(qual + enq + junk), "Leads")
+    by_spend = sorted(rows, key=lambda r: float(r.get("spend") or 0),
+                      reverse=True)
+    max_spend = max([float(r.get("spend") or 0) for r in by_spend] + [1])
+    max_leads = max([int(r.get("qualified_leads") or 0) for r in by_spend] + [1])
+    s_pts, l_pts, dots, xlabels = [], [], [], []
+    if by_spend:
+        plot_w, plot_h, left, top = 500, 130, 34, 14
+        n = len(by_spend)
+        for i, r in enumerate(by_spend):
+            x = left + (plot_w * i / (n - 1 if n > 1 else 1))
+            ys = top + plot_h - (float(r.get("spend") or 0) / max_spend) * plot_h
+            yl = top + plot_h - (int(r.get("qualified_leads") or 0) / max_leads) * plot_h
+            s_pts.append("%.1f,%.1f" % (x, ys))
+            l_pts.append("%.1f,%.1f" % (x, yl))
+            dots.append('<circle cx="%.1f" cy="%.1f" r="3.5" fill="#7c3aed"/>'
+                        '<circle cx="%.1f" cy="%.1f" r="3.5" fill="#10b981"/>'
+                        % (x, ys, x, yl))
+            xlabels.append('<text x="%.1f" y="%d" text-anchor="middle" '
+                           'class="mc-axis">%s</text>'
+                           % (x, top + plot_h + 18, esc(r.get("ad_id") or "")))
+    spend_leads_chart = (
+        '<svg viewBox="0 0 560 180" class="mc-chart">'
+        '<line x1="34" y1="144" x2="534" y2="144" stroke="#e8e8f0"/>'
+        '<polyline points="%s" fill="none" stroke="#7c3aed" stroke-width="2.5"/>'
+        '<polyline points="%s" fill="none" stroke="#10b981" stroke-width="2.5"/>'
+        '%s%s</svg>'
+        '<div class="small mut"><span style="color:#7c3aed">●</span> Spend '
+        '(max %s) &nbsp; <span style="color:#10b981">●</span> Qualified leads '
+        '(max %d) — each series scaled to its own maximum; snapshot data, '
+        'no daily history yet.</div>'
+        % (" ".join(s_pts), " ".join(l_pts), "".join(dots), "".join(xlabels),
+           esc(max_spend), max_leads))
+    target_cpq = float(settings.get("TARGET_COST_PER_QUALIFIED_LEAD") or 0)
+    camps = {}
+    for r in rows:
+        c = camps.setdefault(r.get("campaign_id") or "—",
+                             {"formats": set(), "leads": 0, "cost": 0.0})
+        if r.get("format"):
+            c["formats"].add(str(r["format"]))
+        c["leads"] += int(r.get("qualified_leads") or 0)
+        c["cost"] += float(r.get("spend") or 0)
+    camp_rows = ""
+    for cid, cdata in sorted(camps.items(), key=lambda kv: kv[1]["cost"],
+                             reverse=True):
+        if target_cpq > 0 and cdata["leads"]:
+            cpq = cdata["cost"] / cdata["leads"]
+            verdict = ('<span class="pill ok">Winner</span>' if cpq <= target_cpq
+                       else '<span class="pill bad">Loser</span>')
+        elif target_cpq > 0:
+            verdict = '<span class="pill bad">Loser</span>'
+        else:
+            verdict = '<span class="pill dim">Not judged — set target cost per qualified lead</span>'
+        camp_rows += ("<tr><td>%s</td><td>%s</td><td>%d</td><td>%s</td><td>%s</td></tr>"
+                      % (esc(cid), esc(", ".join(sorted(cdata["formats"])) or "—"),
+                         cdata["leads"], esc(cdata["cost"]), verdict))
     body = """
-<h1>%s</h1><p class="mut">%s · DRY_RUN + PROPOSE — approval ke bina kuch nahi hota. %s</p>
+<style>
+.kpi-card{display:flex;gap:13px;align-items:flex-start}
+.kpi-ic{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;
+justify-content:center;font-size:18px;flex:none;background:var(--violetbg)}
+.mc-donut-wrap{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.mc-donut{width:170px;height:170px;flex:none}
+.mc-donut-total{font-size:28px;font-weight:800;fill:var(--ink)}
+.mc-donut-sub{font-size:12px;fill:var(--mut)}
+.mc-legend{flex:1;min-width:140px}
+.mc-legend-row{display:flex;align-items:center;gap:8px;padding:4px 0;font-size:14px}
+.mc-dot{width:10px;height:10px;border-radius:50%%;flex:none}
+.mc-legend-n{margin-left:auto;font-weight:700}
+.mc-chart{width:100%%;height:auto}.mc-axis{font-size:11px;fill:var(--mut)}
+.an-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:14px}
+</style>
+<h1>%s</h1><p class="mut">%s · DRY_RUN + PROPOSE — nothing happens without approval. %s</p>
 %s
 <div class="grid">
- <div class="card"><div class="mut small">Spend (MOCK)</div><div class="kpi">%s</div>
- <div class="small mut">Currency: %s</div></div>
- <div class="card"><div class="mut small">Qualified leads</div><div class="kpi">%d</div>
- <div class="small mut">Enquiries %d · Junk %d</div></div>
- <div class="card"><div class="mut small">Approvals pending</div><div class="kpi">%d</div>
- <div class="small mut"><a href="/approvals">Queue kholo →</a></div></div>
- <div class="card"><div class="mut small">Mode</div><div class="kpi">%s</div>
- <div class="small mut">Live Meta path UNTESTED</div></div>
+ <div class="card kpi-card"><div class="kpi-ic">₹</div><div><div class="mut small">Spend (MOCK)</div><div class="kpi">%s</div>
+ <div class="small mut">Currency: %s</div></div></div>
+ <div class="card kpi-card"><div class="kpi-ic">✓</div><div><div class="mut small">Qualified leads</div><div class="kpi">%d</div>
+ <div class="small mut">Enquiries %d · Junk %d</div></div></div>
+ <div class="card kpi-card"><div class="kpi-ic">⏳</div><div><div class="mut small">Approvals pending</div><div class="kpi">%d</div>
+ <div class="small mut"><a href="/approvals">Open the queue →</a></div></div></div>
+ <div class="card kpi-card"><div class="kpi-ic">⚙</div><div><div class="mut small">Mode</div><div class="kpi">%s</div>
+ <div class="small mut">Live Meta path UNTESTED</div></div></div>
 </div>
+<div class="an-grid">
+<div class="card"><h2>Spend vs Leads</h2>
+<p class="small mut" style="margin-top:-6px">Per ad, sorted by spend <span class="pill dim" style="float:right">Snapshot · MOCK data</span></p>
+%s</div>
+<div class="card"><h2>Lead Quality</h2>
+<p class="small mut" style="margin-top:-6px">Qualified vs enquiries vs junk — current data</p>
+%s</div>
+</div>
+<div class="card"><h2>Top Campaigns</h2>
+<div class="twrap"><table><tr><th>Campaign</th><th>Channel</th><th>Leads</th><th>Cost</th><th>Status</th></tr>%s</table></div></div>
 <div class="card"><h2>Growth Loop</h2>
 <div class="stages">%s</div>
-<p style="margin-top:14px"><a class="btn bigbtn" href="/loop">Loop chalao →</a>
+<p style="margin-top:14px"><a class="btn bigbtn" href="/loop">Run the loop →</a>
 &nbsp; %s</p></div>
 <div class="card"><h2>Departments</h2>
 <div class="grid">
@@ -394,19 +607,23 @@ def pg_today(ctx):
  <div><strong>Safety</strong><div class="small mut">Gates, policy, CPC/CPL guardrails<br>
  <a href="/eligibility">Eligibility</a> · <a href="/guardrails">Guardrails</a></div></div>
 </div></div>
-<details><summary>Kaise kaam karta hai — saari details</summary>
-<p class="small">Ye desk <strong>kisi bhi industry</strong> ke liye hai — upar ke
-switcher se business badlo; har profile (<a href="/profiles">Business Profiles</a>)
-ka catalog, competitors, settings aur data alag rehta hai. Eligibility gate fails
-closed: jab tak kisi offering ki permission proof ke saath confirm nahi, uska ad
-ban hi nahi sakta. Lead log counts: kul %d · orders %d · reseller applications %d.
-Neeche ke numbers MOCK demo dataset ke hain — asli numbers Step 3 (read-only API)
-ke baad aayenge. Meta connection ki sthiti: <a href="/connect">Connect wizard</a> ·
-<a href="/reports">Reports</a> · <a href="/budget">Budget</a> · <a href="/leads">Leads</a></p>
+<details><summary>How it works — all details</summary>
+<p class="small">This desk is built for <strong>any industry</strong> — switch the
+business from the sidebar profile switcher; every profile
+(<a href="/profiles">Business Profiles</a>) keeps its own catalog, competitors,
+settings and data separate. The eligibility gate fails closed: until an
+offering's permission is confirmed with proof, no ad can be created for it.
+Lead log counts: total %d · orders %d · reseller applications %d.
+The numbers on this page come from the MOCK demo dataset — real numbers
+arrive after Step 3 (read-only API). Meta connection status:
+<a href="/connect">Connect wizard</a> · <a href="/reports">Reports</a> ·
+<a href="/budget">Budget</a> · <a href="/leads">Leads</a></p>
 </details>
 """ % (biz, ind, kill_pill, mode_banner(settings), esc(spend),
        esc(settings.get("ACCOUNT_CURRENCY") or "unset"),
-       qual, enq, int(leads.get("junk", 0)), len(pending), esc(mode),
+       qual, enq, junk, len(pending), esc(mode),
+       spend_leads_chart, quality_donut,
+       camp_rows or '<tr><td colspan="5" class="mut">No campaign data yet</td></tr>',
        chips, kill_pill,
        sum(leads.values()), int(leads.get("order", 0)),
        int(leads.get("reseller_application", 0)))
@@ -416,46 +633,46 @@ ke baad aayenge. Meta connection ki sthiti: <a href="/connect">Connect wizard</a
 def pg_connect(ctx):
     conn = ctx["conn"]
     checks = [
-        ("Facebook Page (owner khud banayega Meta par)", bool(os.environ.get("META_PAGE_ID")),
+        ("Facebook Page (created by the owner on Meta)", bool(os.environ.get("META_PAGE_ID")),
          "META_PAGE_ID env"),
         ("Meta Business portfolio + ad account", bool(os.environ.get("META_AD_ACCOUNT_ID")),
          "META_AD_ACCOUNT_ID env"),
-        ("Developer app + access token (Meta ki apni screen se milega)",
-         bool(os.environ.get("META_ACCESS_TOKEN")), "META_ACCESS_TOKEN env — app me kabhi type nahi hota"),
+        ("Developer app + access token (issued on Meta's own screens)",
+         bool(os.environ.get("META_ACCESS_TOKEN")), "META_ACCESS_TOKEN env — never typed inside this app"),
         ("Mode", True, "META_MODE=%s (default MOCK)" % os.environ.get("META_MODE", "MOCK")),
     ]
     rows_html = "".join(
         "<tr><td>%s</td><td>%s</td><td class='small mut'>%s</td></tr>"
-        % (esc(name), '<span class="pill ok">Set hai</span>' if ok else '<span class="pill bad">Missing</span>', esc(hint))
+        % (esc(name), '<span class="pill ok">Set</span>' if ok else '<span class="pill bad">Missing</span>', esc(hint))
         for name, ok, hint in checks)
     body = """
 <h1>Connect Wizard — Meta setup (Step 2 guide)</h1>
-<p class="mut">Ye page sirf batata hai kya connected hai aur kya baki hai. Ye app
-<strong>kabhi password nahi mangta</strong> — login hamesha Meta ki apni screens par hota hai.
-Token sirf server ke environment (.env) me rehta hai, app ke andar type nahi hota.</p>
+<p class="mut">This page only shows what is connected and what is still missing. This app
+<strong>never asks for a password</strong> — login always happens on Meta's own screens.
+The token lives only in the server's environment (.env); it is never typed inside the app.</p>
 %s
-<div class="card"><h2>Status</h2><table><tr><th>Cheez</th><th>Status</th><th>Note</th></tr>%s</table></div>
-<div class="card"><h2>Owner ke manual steps (Meta ki screens par)</h2>
-<p class="small mut">Pura screen-by-screen guide package me hai: <strong>SETUP_GUIDE.md</strong> —
-wahi follow karo. Neeche sirf summary hai. <strong>Note:</strong> agar Meta login hi
-blocked hai (suspended account), pehle Meta ka appeal/recovery wala rasta hai —
-naya account ya Page banakar ban ko dodge karna bilkul nahi (policy ke khilaf hai).</p>
+<div class="card"><h2>Status</h2><table><tr><th>Item</th><th>Status</th><th>Note</th></tr>%s</table></div>
+<div class="card"><h2>Owner's manual steps (on Meta's screens)</h2>
+<p class="small mut">The full screen-by-screen guide is in the package: <strong>SETUP_GUIDE.md</strong> —
+follow that. Only a summary is below. <strong>Note:</strong> if Meta login itself is
+blocked (suspended account), the first route is Meta's appeal/recovery —
+never create a new account or Page to dodge a ban (that is against policy).</p>
 <ol class="check">
-<li>Facebook Page banao (agar nahi hai) — facebook.com/pages/create</li>
-<li>business.facebook.com par Business portfolio banao aur Page + Ad account jodo</li>
-<li>Ad account me payment method Meta ki billing screen me add karo (app kabhi card nahi mangta)</li>
-<li>developers.facebook.com par app banao → pehle sirf <strong>"Measure ad performance data"</strong> use case (read-only); "Create &amp; manage ads" Step 4 ki approval ke baad</li>
-<li>Permissions: pehle sirf read-only (ads_read) — write (ads_management) Step 4 ki approval ke baad hi</li>
-<li>Token generate karke apne server ke .env me META_ACCESS_TOKEN rakho; ad account id META_AD_ACCOUNT_ID me</li>
-<li>META_MODE ko tab tak MOCK rakho jab tak Step 3 (read-only compare) pass na ho</li></ol>
-<p class="small mut"><strong>Step 2 me verify hua (2026-11-16, official Authorization page padh kar):</strong>
-apne <em>khud ke</em> ad account ke liye <code>ads_read</code>/<code>ads_management</code> ka
-<strong>standard access kaafi hai</strong> — advanced access / App Review sirf tab chahiye jab
-app <em>dusre logo ke</em> accounts manage kare. Access tiers ke naye naam (May 2026 se):
-<strong>Limited</strong> (default, development ke liye, heavily rate-limited) aur
-<strong>Full</strong> (App Review + pichhle 15 din me 500+ successful calls + error rate 15%% se kam).
-Poori details URL + date ke saath package ki <strong>META_ACCESS.md</strong> aur
-<strong>PRACTICES.md</strong> me hain.
+<li>Create a Facebook Page (if you don't have one) — facebook.com/pages/create</li>
+<li>On business.facebook.com, create a Business portfolio and add the Page + ad account</li>
+<li>Add a payment method in the ad account's Meta billing screen (this app never asks for a card)</li>
+<li>Create an app on developers.facebook.com → first only the <strong>"Measure ad performance data"</strong> use case (read-only); "Create &amp; manage ads" only after Step 4 approval</li>
+<li>Permissions: read-only (ads_read) first — write (ads_management) only after Step 4 approval</li>
+<li>Generate the token and put it in your server's .env as META_ACCESS_TOKEN; the ad account id as META_AD_ACCOUNT_ID</li>
+<li>Keep META_MODE on MOCK until Step 3 (read-only comparison) passes</li></ol>
+<p class="small mut"><strong>Verified in Step 2 (2026-11-16, by reading the official Authorization page):</strong>
+for your <em>own</em> ad account, <code>ads_read</code>/<code>ads_management</code>
+<strong>standard access is enough</strong> — advanced access / App Review is needed only when
+the app manages <em>other people's</em> accounts. The access tiers' new names (since May 2026):
+<strong>Limited</strong> (default, for development, heavily rate-limited) and
+<strong>Full</strong> (App Review + 500+ successful calls in the last 15 days + error rate under 15%%).
+Full details with URL + date are in the package's <strong>META_ACCESS.md</strong> and
+<strong>PRACTICES.md</strong>.
 API version pin: %s</p></div>
 """ % (mode_banner(ctx["settings"]), rows_html, esc(API_VERSION_LABEL))
     return page("Connect", "/connect", body, ctx["flash"], conn, ctx)
@@ -478,21 +695,21 @@ def pg_roles(ctx):
             current_group = group
         run = last.get(key)
         status = ('<span class="pill ok">Done %s</span>' % esc(run["t"][:16].replace("T", " "))
-                  if run else '<span class="pill info">Idle — abhi run nahi hua</span>')
+                  if run else '<span class="pill info">Idle — not run yet</span>')
         if key in errs:
-            status += ' <span class="pill bad">Errors hue hain</span>'
+            status += ' <span class="pill bad">Has errors</span>'
         cards.append('<div class="card"><strong>%s</strong><br>%s</div>' % (esc(label), status))
     cards.append("</div>")
     body = """
 <h1>Roles — 20 logical roles</h1>
-<p class="mut">Har role ka output alag aur auditable hai. Status asal <code>role_runs</code>
-table se aata hai — jobs chalane par (<code>python -m app.jobs optimise</code>) ya
-neeche wale button se roles run hote hain. Koi always-on agent nahi hai.</p>
+<p class="mut">Every role's output is separate and auditable. Statuses come from the real
+<code>role_runs</code> table — roles run via the jobs (<code>python -m app.jobs optimise</code>)
+or the button below. There is no always-on agent.</p>
 <form method="post" action="/roles/run">%s
-<p class="small">Ye button dabane se Roles 1–9, 11, 12, 15–18, 20 ek baar MOCK data par
-chalenge aur unke outputs is page + audit log me dikhenge. Role 10/13/14/19 apne
-pages (Creative/Approvals/Optimiser) se chalte hain. Kuch bhi Meta par write nahi hoga.</p>
-<button type="submit">Roles ek baar chalao (MOCK)</button></form>
+<p class="small">Pressing this button runs Roles 1–9, 11, 12, 15–18, 20 once on MOCK data
+and their outputs appear on this page + in the audit log. Roles 10/13/14/19 run from
+their own pages (Creative/Approvals/Optimiser). Nothing is written to Meta.</p>
+<button type="submit">Run roles once (MOCK)</button></form>
 %s
 """ % (ctx["csrf_field"], "".join(cards))
     return page("Roles", "/roles", body, ctx["flash"], conn, ctx)
@@ -514,11 +731,36 @@ ADVANCED_SETTING_KEYS = {
 }
 
 
+_SETTING_LABELS = {
+    "TOTAL_DAILY_BUDGET_CAP": "Total Daily Budget Cap",
+    "PER_CAMPAIGN_CAP": "Per Campaign Cap",
+    "TARGET_COST_PER_QUALIFIED_LEAD": "Target Cost per Qualified Lead",
+    "MAX_BUDGET_CHANGE_PCT": "Max Budget Change %",
+    "DESTINATION_URL": "Destination URL",
+    "DESTINATION_READY": "Mark as Destination Ready",
+    "AUTOMATION_MODE": "Automation Mode",
+    "QUIET_HOURS": "Quiet Hours",
+    "AUTO_COLLECT": "Auto Collect",
+    "AUTO_RESEARCH": "Auto Research",
+    "AUTO_CREATIVE_DRAFTS": "Auto Creative Drafts",
+    "AUTO_REPORTS": "Auto Reports",
+    "AUTO_OPTIMISE_PROPOSALS": "Auto Optimise Proposals",
+}
+
+
+def _setting_label(key):
+    if key in _SETTING_LABELS:
+        return _SETTING_LABELS[key]
+    return key.replace("_", " ").title().replace(" Url", " URL").replace(" Pct", " %")
+
+
 def pg_settings(ctx):
     conn = ctx["conn"]
     settings = load_settings()  # global file; profile overrides win at read time
-    core_fields, advanced_fields = [], []
-    for key, kind, helptext in SETTING_FIELDS:
+    kinds = {k: (kind, helptext) for k, kind, helptext in SETTING_FIELDS}
+
+    def field_html(key):
+        kind, helptext = kinds[key]
         val = settings.get(key)
         if kind == "checkbox":
             input_html = ('<input type="checkbox" name="%s" %s style="width:auto">'
@@ -529,14 +771,33 @@ def pg_settings(ctx):
                 for o in ("OFF", "PROPOSE", "AUTO_WITHIN_RULES"))
             input_html = '<select name="%s">%s</select>' % (key, opts)
         else:
-            input_html = '<input name="%s" value="%s">' % (key, esc(val if val is not None else ""))
-        html = ('<label>%s</label>%s<p class="small mut" style="margin-top:-6px">%s</p>'
-                % (key, input_html, esc(helptext)))
-        (advanced_fields if key in ADVANCED_SETTING_KEYS else core_fields).append(html)
-    fields = core_fields + [
-        '<details><summary>Advanced — guardrail thresholds aur AUTO rules '
-        '(%d fields)</summary>%s</details>' % (len(advanced_fields),
-                                               "".join(advanced_fields))]
+            input_html = '<input name="%s" value="%s">' % (
+                key, esc(val if val is not None else ""))
+        return ('<div class="fld"><label>%s</label>%s'
+                '<p class="small mut" style="margin-top:2px">%s</p></div>'
+                % (esc(_setting_label(key)), input_html, esc(helptext)))
+
+    def switch_html(key):
+        _kind, helptext = kinds[key]
+        return ('<div class="sw-row"><div><div style="font-weight:600">%s</div>'
+                '<div class="small mut">%s</div></div>'
+                '<label class="switch"><input type="checkbox" name="%s" %s>'
+                '<span class="track"></span></label></div>'
+                % (esc(_setting_label(key)), esc(helptext), key,
+                   "checked" if settings.get(key) else ""))
+
+    caps_keys = ["TOTAL_DAILY_BUDGET_CAP", "PER_CAMPAIGN_CAP",
+                 "TARGET_COST_PER_QUALIFIED_LEAD", "MAX_BUDGET_CHANGE_PCT"]
+    auto_keys = ["AUTO_COLLECT", "AUTO_RESEARCH", "AUTO_CREATIVE_DRAFTS",
+                 "AUTO_REPORTS", "AUTO_OPTIMISE_PROPOSALS"]
+    rules_keys = ["AUTO_RULES_APPROVED", "AUTO_RULES_TEXT"]
+    placed = set(caps_keys + auto_keys + rules_keys +
+                 ["DESTINATION_URL", "DESTINATION_READY", "AUTOMATION_MODE",
+                  "QUIET_HOURS"])
+    rest_keys = [k for k, _kind, _h in SETTING_FIELDS
+                 if k not in placed and k not in ADVANCED_SETTING_KEYS]
+    advanced_keys = [k for k, _kind, _h in SETTING_FIELDS
+                     if k in ADVANCED_SETTING_KEYS and k not in placed]
     kill_on = ctx["queue"].kill_switch_active()
     from . import autonomy as autonomy_mod
     _asum = autonomy_mod.autonomy_summary(conn, settings)
@@ -544,36 +805,85 @@ def pg_settings(ctx):
     worker_html = (
         "Worker heartbeat: <strong>%s</strong> · Queue backend: <strong>%s</strong> "
         "· Pending jobs: <strong>%d</strong> · Quiet hours: <strong>%s</strong><br>"
-        "Auto ON: %s<br><span class='mut'>Worker ek alag 24x7 service hai "
-        "(docker-compose ka 'worker'). Ye sirf housekeeping auto karta hai — "
-        "Meta-writes hamesha AUTOMATION_MODE + signed rules ke andar hi rehte hain.</span>"
-        % (esc(_asum["worker_heartbeat"] or "abhi tak koi heartbeat nahi — worker chalu nahi hai"),
+        "Auto features ON: %s<br><span class='mut'>The worker is a separate 24x7 "
+        "service (the 'worker' in docker-compose). It automates housekeeping only — "
+        "Meta writes always stay inside AUTOMATION_MODE + the signed rules.</span>"
+        % (esc(_asum["worker_heartbeat"] or "No heartbeat yet — the worker is not running"),
            esc(_asum["queue_backend"]), _asum["queue_pending"],
            esc(_asum["quiet_hours"] or "none"),
-           esc(", ".join(_on) if _on else "kuch nahi — sab auto OFF hai")))
+           esc(", ".join(_on) if _on else "None — all auto features are OFF")))
     body = """
-<h1>Settings</h1>
-<p class="mut">Global settings — defaults khaali/zero, kuch hardcoded nahi.
-Per-business overrides <a href="/profiles">Profiles</a> par; guardrail toggles
-<a href="/guardrails">Guardrails</a> par.</p>
-<div class="card"><form method="post" action="/settings">%s%s
-<p class="small">Save dabane se settings is server ki local settings file me save hongi
-(audit log me entry ke saath). Isse koi Meta write nahi hota.</p>
-<button type="submit">Settings save karo</button></form></div>
-<div class="card"><h2>24x7 Worker — sthiti</h2>
+<style>
+.set-head{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap}
+.set-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start}
+@media(max-width:860px){.set-grid{grid-template-columns:1fr}}
+.caps-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px 16px}
+@media(max-width:640px){.caps-grid{grid-template-columns:1fr}}
+.fld label{margin-top:8px}
+.switch{position:relative;display:inline-block;width:46px;height:26px;flex:none}
+.switch input{opacity:0;width:0;height:0;position:absolute}
+.switch .track{position:absolute;inset:0;background:#d8d8e4;border-radius:999px;transition:.2s;cursor:pointer}
+.switch .track:before{content:"";position:absolute;width:20px;height:20px;border-radius:50%%;
+background:#fff;top:3px;left:3px;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.25)}
+.switch input:checked + .track{background:var(--brand)}
+.switch input:checked + .track:before{transform:translateX(20px)}
+.sw-row{display:flex;align-items:center;justify-content:space-between;gap:12px;
+padding:9px 0;border-bottom:1px solid var(--line)}
+.sw-row:last-child{border-bottom:none}
+.kill-card{background:#fef2f2;border:1px solid #fecaca}
+.kill-flex{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+</style>
+<form method="post" action="/settings">%s
+<div class="set-head"><div>
+<h1 style="margin-bottom:2px">Settings</h1>
+<p class="mut" style="margin:0">Manage budget caps, automation, and safety controls for your workspace</p>
+<p class="small mut">Global settings — defaults are empty/zero, nothing is hardcoded.
+Per-business overrides live on <a href="/profiles">Profiles</a>; guardrail toggles on
+<a href="/guardrails">Guardrails</a>. Saving writes to this server's local settings file
+(with an audit log entry) — it never writes anything to Meta.</p>
+</div><button type="submit" class="bigbtn">Save Changes</button></div>
+<div class="set-grid">
+<div>
+<div class="card"><h2>Budget Caps</h2><div class="caps-grid">%s</div></div>
+<div class="card"><h2>Destination Gate</h2>%s%s</div>
+</div>
+<div>
+<div class="card"><h2>Automation</h2>%s%s%s
+<p class="small mut">AUTO_WITHIN_RULES applies only when the written rules below are
+approved. Going LIVE, raising caps and resuming after a safety stop are never automatic.</p></div>
+<div class="card"><h2>24x7 Worker Status</h2>
 <p class="small">%s</p></div>
-<div class="card"><h2>Kill Switch</h2>
-<p>Kill switch ON karne se: automation band, saare managed objects (mock/live registry)
-PAUSED, aur approvals/execution blocked. Ye <strong>apne aap kabhi resume nahi hota</strong> —
-band bhi owner khud karega.</p>
-<p>Abhi ki sthiti: %s</p>
+</div>
+</div>
+<div class="card"><h2>Automation Rules (AUTO_WITHIN_RULES)</h2>%s</div>
+<div class="card"><h2>Thresholds &amp; Account</h2><div class="caps-grid">%s</div></div>
+<div class="card"><details><summary>Advanced — guardrail thresholds (%d fields)</summary>
+<div class="caps-grid">%s</div></details></div>
+<p><button type="submit" class="bigbtn">Save Changes</button></p>
+</form>
+<div class="card kill-card"><div class="kill-flex"><div style="flex:1;min-width:260px">
+<h2 style="color:var(--bad);margin-top:0">Kill Switch</h2>
+<p class="small" style="margin-bottom:6px">Activating the kill switch pauses every managed
+campaign, disables all automation and blocks approvals and execution. It
+<strong>never resumes on its own</strong> — only the owner can release it, from this card.</p>
+<p class="small" style="margin:0">Current status: %s</p></div>
 <form method="post" action="/killswitch">%s
 <input type="hidden" name="action" value="%s">
-<button class="danger" type="submit">%s</button></form></div>
-""" % (ctx["csrf_field"], "".join(fields), worker_html,
-       '<span class="pill bad">ON — sab ruka hua hai</span>' if kill_on else '<span class="pill ok">OFF</span>',
+<button class="danger" type="submit">%s</button></form></div></div>
+""" % (ctx["csrf_field"],
+       "".join(field_html(k) for k in caps_keys),
+       field_html("DESTINATION_URL"), field_html("DESTINATION_READY"),
+       field_html("AUTOMATION_MODE"),
+       "".join(switch_html(k) for k in auto_keys),
+       field_html("QUIET_HOURS"),
+       worker_html,
+       "".join(field_html(k) for k in rules_keys),
+       "".join(field_html(k) for k in rest_keys),
+       len(advanced_keys),
+       "".join(field_html(k) for k in advanced_keys),
+       '<span class="pill bad">ON — everything is stopped</span>' if kill_on else '<span class="pill ok">OFF</span>',
        ctx["csrf_field"], "off" if kill_on else "on",
-       "Kill switch band karo (owner action)" if kill_on else "KILL SWITCH ON karo — sab roko")
+       "Release Kill Switch (owner action)" if kill_on else "Activate Kill Switch")
     return page("Settings", "/settings", body, ctx["flash"], conn, ctx)
 
 
@@ -589,7 +899,7 @@ def pg_eligibility(ctx):
     for o in offerings:
         confirmed = o["permission_confirmed"]
         pill = ('<span class="pill ok">CONFIRMED</span>' if confirmed
-                else '<span class="pill bad">NOT CONFIRMED — ad nahi ban sakta</span>')
+                else '<span class="pill bad">NOT CONFIRMED — no ad can be created</span>')
         rows_html.append(
             "<tr><td><strong>%s</strong></td><td>%s</td><td>%s</td><td>%s</td>"
             "<td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>"
@@ -602,64 +912,64 @@ def pg_eligibility(ctx):
     pack = profiles_mod.compliance_patterns_for(profile)
     pack_html = "".join(
         "<li><code>%s</code> — %s</li>" % (esc(p["pattern"]), esc(p["reason"]))
-        for p in pack) or "<li class='mut'>Is preset ka koi add-on pack nahi hai — sirf core Meta rules lagte hain.</li>"
+        for p in pack) or "<li class='mut'>This preset has no add-on pack — only the core Meta rules apply.</li>"
     body = """
 <h1>Eligibility &amp; Destination Gate — %s</h1>
-<p class="mut">Rule: jab tak kisi offering ki <strong>%s, proof note +
-terms-checked date</strong> ke saath confirm nahi hoti, us offering ka ad system
-banane hi nahi dega (fails closed — har industry ke liye ek jaisi sakhti).
+<p class="mut">Rule: until an offering's <strong>%s is confirmed with a proof note +
+terms-checked date</strong>, the system will not create an ad for that offering
+(fails closed — the same strictness for every industry).
 %s</p>
 <div class="card"><h2>Offerings catalog (%d) — %s</h2>
 <table><tr><th>Offering</th><th>Type</th><th>Category</th><th>Price</th><th>Supplier/Source</th><th>Permission</th><th>Proof note</th><th>Terms checked</th></tr>%s</table></div>
-<div class="card"><h2>Offering add karo</h2>
+<div class="card"><h2>Add an offering</h2>
 <form method="post" action="/eligibility/add">%s
-<label>Naam</label><input name="name" required>
+<label>Name</label><input name="name" required>
 <div class="row"><div style="flex:1"><label>Type</label><select name="type"><option>product</option><option>service</option></select></div>
 <div style="flex:1"><label>Category</label><input name="category"></div>
 <div style="flex:1"><label>Price (optional)</label><input name="price"></div></div>
 <label>Supplier / source note</label><input name="supplier">
-<label>Destination override (optional — is offering ka apna landing URL)</label><input name="destination_override">
-<p class="small">Add dabane se offering UNCONFIRMED bankar judegi — ad tabhi
-banega jab neeche se permission confirm hogi.</p>
-<button type="submit">Offering add karo</button></form></div>
-<div class="card"><h2>Permission confirm karo (owner only)</h2>
+<label>Destination override (optional — this offering's own landing URL)</label><input name="destination_override">
+<p class="small">Adding creates the offering as UNCONFIRMED — an ad can be created
+only after its permission is confirmed below.</p>
+<button type="submit">Add offering</button></form></div>
+<div class="card"><h2>Confirm permission (owner only)</h2>
 <form method="post" action="/eligibility/confirm">%s
 <label>Offering</label><select name="offering_id">%s</select>
-<label>Supplier</label><input name="supplier" placeholder="Supplier ka naam (jaisa proof me hai)">
-<label>Proof note</label><input name="proof_note" placeholder="Proof kahan hai — file/agreement ka sandarbh" required>
+<label>Supplier</label><input name="supplier" placeholder="Supplier name (as in the proof)">
+<label>Proof note</label><input name="proof_note" placeholder="Where the proof is — file/agreement reference" required>
 <label>Terms checked date</label><input name="terms_checked_date" type="date" required>
-<p class="small">Confirm dabane se sirf is offering ki catalog entry update hogi.
-Proof note ya date khaali ho to confirm <strong>refuse</strong> ho jayega.
-Isse koi ad create nahi hota — ye sirf gate kholta hai.</p>
-<button type="submit">Permission confirm karo</button></form>
+<p class="small">Confirming only updates this offering's catalog entry.
+If the proof note or date is empty, the confirm is <strong>refused</strong>.
+This creates no ad — it only opens the gate.</p>
+<button type="submit">Confirm permission</button></form>
 <form method="post" action="/eligibility/unconfirm" style="margin-top:10px">%s
-<label>Permission wapas lo — Offering</label><select name="offering_id">%s</select>
-<p class="small">Unconfirm dabane se us offering ke ads phir se block ho jayenge.</p>
-<button class="secondary" type="submit">Unconfirm karo</button></form>
+<label>Withdraw permission — Offering</label><select name="offering_id">%s</select>
+<p class="small">Unconfirming blocks that offering's ads again.</p>
+<button class="secondary" type="submit">Unconfirm</button></form>
 <form method="post" action="/eligibility/delete" style="margin-top:10px">%s
-<label>Offering hatao — Offering</label><select name="offering_id">%s</select>
-<label><input type="checkbox" name="confirm_delete" style="width:auto"> Haan, pakka hatao</label>
-<button class="danger" type="submit">Delete karo</button></form></div>
+<label>Remove offering — Offering</label><select name="offering_id">%s</select>
+<label><input type="checkbox" name="confirm_delete" style="width:auto"> Yes, delete it permanently</label>
+<button class="danger" type="submit">Delete</button></form></div>
 <div class="card"><h2>Industry compliance add-on pack — %s</h2>
-<p class="small mut">Ye patterns Meta ke universal core rules ke UPAR lagte hain
-(policy checker dono chalata hai). Preset ek editable starting point hai —
-ye legal advice nahi hai.</p>
+<p class="small mut">These patterns apply ON TOP of Meta's universal core rules
+(the policy checker runs both). A preset is an editable starting point —
+this is not legal advice.</p>
 <ul class="check">%s</ul></div>
 <div class="card"><h2>Destination gate</h2>
-<p>Abhi ki sthiti: %s</p>
-<p class="small mut">DESTINATION_URL aur DESTINATION_READY Settings/Profile overrides
-se set hote hain — system khud koi destination nahi chunta, aur Lucifer bot par
-traffic tab tak nahi jayega jab tak owner na kahe. Kisi offering ka apna
-destination override ho to usi offering ke drafts par wahi lagega.</p></div>
+<p>Current status: %s</p>
+<p class="small mut">DESTINATION_URL and DESTINATION_READY are set from Settings/Profile
+overrides — the system never picks a destination itself, and no traffic goes
+anywhere until the owner says so. If an offering has its own destination
+override, that override applies to that offering's drafts.</p></div>
 """ % (esc(profile["name"]) if profile else "—", perm_label,
        esc(preset.get("permission_note", "")),
        len(offerings), esc(profile["name"]) if profile else "—",
-       "".join(rows_html) or '<tr><td colspan="8" class="mut">Catalog khaali hai — pehla offering add karo</td></tr>',
+       "".join(rows_html) or '<tr><td colspan="8" class="mut">The catalog is empty — add the first offering</td></tr>',
        ctx["csrf_field"], ctx["csrf_field"], options, ctx["csrf_field"], options,
        ctx["csrf_field"], options,
        esc(profile.get("industry") or "") if profile else "", pack_html,
-       '<span class="pill ok">KHULA hai</span>' if dest["allowed"]
-       else '<span class="pill bad">BAND hai</span> — ' + esc("; ".join(dest["reasons"])))
+       '<span class="pill ok">OPEN</span>' if dest["allowed"]
+       else '<span class="pill bad">CLOSED</span> — ' + esc("; ".join(dest["reasons"])))
     return page("Eligibility", "/eligibility", body, ctx["flash"], conn, ctx)
 
 
@@ -682,7 +992,7 @@ def pg_creative(ctx):
         view = ""
         if (a["source"] or "").startswith("api"):
             if "." in a["filename"] and " " not in a["filename"]:
-                view = ' <a href="/generated/%s" target="_blank" rel="noopener">dekho</a>' % esc(a["filename"])
+                view = ' <a href="/generated/%s" target="_blank" rel="noopener">view</a>' % esc(a["filename"])
             if a["remote_url"]:
                 view += ' · <a href="%s" target="_blank" rel="noopener">provider link</a>' % esc(a["remote_url"])
         asset_html += ('<tr><td>%s%s</td><td>%s</td><td>%s</td><td>%s</td></tr>'
@@ -700,7 +1010,7 @@ def pg_creative(ctx):
             return '<span class="pill ok">Connected — %s (%s)</span>' % (
                 esc(s["provider_name"]), esc(s["model"] or "model unset"))
         return ('<span class="pill bad">API not connected</span> '
-                '<span class="small">— <a href="/providers">API Providers page</a> se connect karo</span>')
+                '<span class="small">— connect it from the <a href="/providers">API Providers page</a></span>')
 
     jobs = store.list_video_jobs(conn)
     job_html = ""
@@ -708,41 +1018,41 @@ def pg_creative(ctx):
         job_html += ('<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td>'
                      '<td><form method="post" action="/creative/api_video_check" class="inline">%s'
                      '<input type="hidden" name="job_id" value="%s">'
-                     '<button class="secondary" type="submit">Status check karo</button></form></td></tr>'
+                     '<button class="secondary" type="submit">Check status</button></form></td></tr>'
                      % (esc(j.get("job_id")), esc(j.get("provider")), esc(j.get("status")),
                         esc((j.get("prompt") or "")[:60]), ctx["csrf_field"],
                         esc(j.get("job_id"))))
     api_section = """
-<div class="card"><h2>Generate with API (owner ki connected APIs)</h2>
-<p class="small mut">Ye actions sirf generation karte hain — Meta par kuch write nahi hota.
-Generated copy pehle policy check se guzregi; generated files asset bankar visual-check
-PENDING ke saath save hongi. Cost har jagah <strong>unknown — provider billing</strong>
-rahega. Adapters real accounts par UNTESTED hain.</p>
+<div class="card"><h2>Generate with API (the owner's connected APIs)</h2>
+<p class="small mut">These actions only generate — nothing is written to Meta.
+Generated copy passes the policy check first; generated files are saved as assets
+with visual check PENDING. Cost everywhere stays <strong>unknown — provider billing</strong>.
+The adapters are UNTESTED on real accounts.</p>
 <h3>Ad copy — Text API: %s</h3>
 <form method="post" action="/creative/api_copy">%s
 <label>Product</label><select name="product">%s</select>
 <label>Segment</label><select name="segment">%s</select>
-<label>Extra instruction (optional)</label><input name="instruction" placeholder="Jaise: hostel students ke angle se likho">
-<p class="small">API connected na ho to template drafts banenge aur saaf label lagega.</p>
-<button type="submit">Copy generate karo (API/templates)</button></form>
+<label>Extra instruction (optional)</label><input name="instruction" placeholder="E.g.: write from the hostel-student angle">
+<p class="small">If the API is not connected, template drafts are created and clearly labelled.</p>
+<button type="submit">Generate copy (API/templates)</button></form>
 <h3>Poster image — Image API: %s</h3>
 <form method="post" action="/creative/api_image">%s
-<label>Image prompt</label><textarea name="prompt" rows="2" placeholder="Poster ke liye prompt — saaf, bina kisi brand logo/claim ke" required></textarea>
-<button type="submit">Poster image banao</button></form>
-<h3>Carousel — Image API (ek slide = ek line = ek image)</h3>
+<label>Image prompt</label><textarea name="prompt" rows="2" placeholder="Prompt for the poster — clean, with no brand logos or claims" required></textarea>
+<button type="submit">Create poster image</button></form>
+<h3>Carousel — Image API (one slide = one line = one image)</h3>
 <form method="post" action="/creative/api_carousel">%s
-<label>Slide briefs (har line ek slide ka prompt)</label>
-<textarea name="slides" rows="4" placeholder="Slide 1 ka prompt&#10;Slide 2 ka prompt&#10;Slide 3 ka prompt" required></textarea>
-<button type="submit">Carousel images banao</button></form>
+<label>Slide briefs (each line is one slide's prompt)</label>
+<textarea name="slides" rows="4" placeholder="Slide 1 prompt&#10;Slide 2 prompt&#10;Slide 3 prompt" required></textarea>
+<button type="submit">Create carousel images</button></form>
 <h3>Reel video — Video API: %s</h3>
 <form method="post" action="/creative/api_video">%s
-<label>Video prompt</label><textarea name="prompt" rows="2" placeholder="Reel ke liye prompt" required></textarea>
-<label>Image URL (optional — image-to-video ke liye)</label><input name="image_url">
+<label>Video prompt</label><textarea name="prompt" rows="2" placeholder="Prompt for the reel" required></textarea>
+<label>Image URL (optional — for image-to-video)</label><input name="image_url">
 <div class="row"><div style="flex:1"><label>Duration (optional)</label><input name="duration" placeholder="5"></div>
 <div style="flex:1"><label>Aspect ratio (optional)</label><input name="aspect" placeholder="9:16"></div></div>
-<p class="small">Submit dabane se video job provider par jayega. Status neeche wali table
-me "Status check karo" se poll hoga — done hone par file yahin asset bankar aa jayegi.</p>
-<button type="submit">Reel video submit karo</button></form>
+<p class="small">Submitting sends the video job to the provider. Poll its status from the
+table below with "Check status" — when done, the file arrives here as an asset.</p>
+<button type="submit">Submit reel video</button></form>
 %s
 </div>
 """ % (api_pill("text"), ctx["csrf_field"], options, segments,
@@ -750,55 +1060,199 @@ me "Status check karo" se poll hoga — done hone par file yahin asset bankar aa
        api_pill("video"), ctx["csrf_field"],
        ('<h3>Video jobs</h3><table><tr><th>Job ID</th><th>Provider</th><th>Status</th>'
         '<th>Prompt</th><th>Action</th></tr>%s</table>' % job_html) if job_html else "")
+    # --- Creative Studio design: header, inspiration, insights, cards ---
+    pid = ctx["profile"]["id"] if ctx["profile"] else 0
+    window = int(ctx["settings"].get("TOP_CREATIVE_WINDOW_DAYS") or 7)
+    brief = loop_mod.inspiration_brief(pid, window, conn=conn, profile=ctx["profile"])
+    if brief:
+        pattern_box = ('<div class="pattern-box"><strong>Winning Pattern</strong><br>'
+                       '<strong>Theme:</strong> %s<br><strong>Hook:</strong> %s<br>'
+                       '<strong>Format:</strong> %s<br><strong>CTA style:</strong> %s<br>'
+                       '<span class="small mut">Source: %s</span></div>'
+                       '<p class="small" style="color:var(--ok);font-weight:600">'
+                       '✓ Pattern copied, creative original</p>'
+                       % (esc(brief.get("theme", "")), esc(brief.get("hook", "")),
+                          esc(brief.get("format", "")), esc(brief.get("cta_style", "")),
+                          esc(brief.get("source", ""))))
+    else:
+        pattern_box = ('<div class="pattern-box"><strong>Winning Pattern</strong><br>'
+                       '<span class="mut">No inspiration brief yet — record a top '
+                       'creative in the Growth Loop and the brief appears here '
+                       'automatically.</span></div>')
+    n_sets = len(saved)
+    n_pass = sum(1 for c in saved if c["policy_allowed"])
+    n_blocked = n_sets - n_pass
+    insights_html = (
+        '<div class="ins-line"><span>Creative sets</span><strong>%d</strong></div>'
+        '<div class="ins-line"><span>Policy PASS</span><strong>%d</strong></div>'
+        '<div class="ins-line"><span>Policy BLOCKED</span><strong>%d</strong></div>'
+        '<div class="ins-line"><span>Poster briefs</span><strong>%d</strong></div>'
+        '<div class="ins-line"><span>Reel scripts</span><strong>%d</strong></div>'
+        '<div class="ins-line"><span>Assets registered</span><strong>%d</strong></div>'
+        % (n_sets, n_pass, n_blocked, n_sets, n_sets, len(assets)))
+    meta_mode = os.environ.get("META_MODE", "MOCK").upper()
+    connected = meta_mode == "LIVE" and bool(os.environ.get("META_ACCESS_TOKEN"))
+    status_pill = ('<span class="pill ok">Connected</span>' if connected
+                   else '<span class="pill dim">Mock Mode</span>')
+
+    def policy_pill(c):
+        if c["policy_allowed"]:
+            return '<span class="pill ok">Policy Check: PASS</span>'
+        try:
+            reasons = json.loads(c["policy_reasons"] or "[]")
+        except ValueError:
+            reasons = []
+        return ('<span class="pill bad">Policy Check: BLOCKED%s</span>'
+                % ((" — " + esc(reasons[0])) if reasons else ""))
+
+    def card_actions(c, fmt):
+        return (
+            '<div class="cc-actions">'
+            '<form method="post" action="/planner/plan" class="inline">%s'
+            '<input type="hidden" name="product" value="%s">'
+            '<input type="hidden" name="segment" value="%s">'
+            '<input type="hidden" name="audience_type" value="customers">'
+            '<input type="hidden" name="format" value="%s">'
+            '<button type="submit" class="approve-outline">Approve</button></form>'
+            '<form method="post" action="/creative/generate" class="inline">%s'
+            '<input type="hidden" name="product" value="%s">'
+            '<input type="hidden" name="segment" value="%s">'
+            '<button type="submit" class="secondary">Regenerate</button></form></div>'
+            % (ctx["csrf_field"], esc(c["product"]), esc(c["segment"]), fmt,
+               ctx["csrf_field"], esc(c["product"]), esc(c["segment"])))
+
+    cards_html = ""
+    for c in saved[:4]:
+        try:
+            content = json.loads(c["content"] or "{}")
+        except ValueError:
+            content = {}
+        copy_d = content.get("copy") or {}
+        brief_d = content.get("poster_brief") or {}
+        script_d = content.get("reel_script") or {}
+        headline = copy_d.get("headline") or content.get("angle") or c["product"]
+        pill = policy_pill(c)
+        # Poster card
+        cards_html += (
+            '<div class="card cc"><div class="cc-visual"><span>%s</span></div>'
+            '<h3>Poster — %s</h3>%s'
+            '<p class="small mut">Format: Poster brief (text)</p>'
+            '<p class="small">%s</p>%s</div>'
+            % (esc(headline), esc(c["product"]), pill,
+               esc((brief_d.get("brief") or "")[:220]), card_actions(c, "IMAGE")))
+        # Reel card
+        lines = script_d.get("script") or []
+        hook = lines[0].split("hook:", 1)[-1].strip() if lines else ""
+        body_lines = lines[1:-1] if len(lines) > 2 else lines[1:]
+        cta_line = lines[-1] if len(lines) > 1 else ""
+        dur = script_d.get("duration_sec")
+        dur_badge = ('<span class="cc-dur">%ss</span>' % esc(dur)) if dur else ""
+        cards_html += (
+            '<div class="card cc"><div class="cc-visual"><span class="cc-play">▶</span>'
+            '<span>%s</span>%s</div>'
+            '<h3>Reel — %s</h3>%s'
+            '<p class="small mut">Format: Reel script (text)</p>'
+            '<p class="small"><strong>Hook:</strong> %s<br><strong>Body:</strong> %s<br>'
+            '<strong>CTA:</strong> %s</p>%s</div>'
+            % (esc(headline), dur_badge, esc(c["product"]), pill,
+               esc(hook), esc(" ".join(body_lines)[:180]), esc(cta_line),
+               card_actions(c, "REEL")))
+        # Ad copy card
+        cards_html += (
+            '<div class="card cc"><div class="cc-visual"><span>%s</span></div>'
+            '<h3>Ad Copy — %s</h3>%s'
+            '<p class="small mut">Format: Text</p>'
+            '<p class="small">%s</p>'
+            '<p class="small mut">CTA: %s</p>%s</div>'
+            % (esc(headline), esc(c["product"]), pill,
+               esc((copy_d.get("primary_text") or "")[:220]),
+               esc(copy_d.get("cta") or "—"), card_actions(c, "IMAGE")))
+    if not cards_html:
+        cards_html = ('<div class="card"><p class="mut">No creative sets yet — '
+                      'use "+ Generate New Set" above to create the first one.</p></div>')
     body = """
-<h1>Creative Studio</h1>
-<p class="mut">Yahan TEXT banta hai: angles, Hinglish + English copy, poster BRIEF aur
-reel SCRIPT. Asal image/video files aur API-wali copy neeche ke <strong>Generate with
-API</strong> section se banti hai — lekin sirf tab, jab owner ne
-<a href="/providers">API Providers</a> page par apni API (Higgsfield/Kling/OpenAI/Claude
-wagairah) connect ki ho. Koi API connect na ho to wo buttons saaf bolenge "API not
-connected" aur template wala rasta chalta rahega. Owner apni file khud bhi upload kar
-sakta hai. Har asset — generated ho ya uploaded — visual check pass hue bina approval
-queue me nahi ja sakta, aur generated copy bhi pehle policy check se guzarti hai.</p>
-<div class="card"><h2>Naya creative set banao</h2>
-<form method="post" action="/creative/generate">%s
-<label>Product</label><select name="product">%s</select>
-<label>Segment</label><select name="segment">%s</select>
-<p class="small">Generate dabane se Roles 6–9 chalenge, copy Role 10 (policy checker)
-se pass hogi, aur set neeche save ho jayega. Eligibility/destination gate band ho to
-copy <strong>BLOCKED</strong> mark hogi aur approval ke liye bhejna mumkin nahi hoga.</p>
-<button type="submit">Creative set generate karo</button></form></div>
-<div class="card"><h2>Policy checker (turant test)</h2>
+<style>
+.cs-head{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap}
+.cs-pills{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.outline-pill{border:1px solid var(--line);border-radius:999px;padding:6px 13px;
+font-size:13px;font-weight:600;background:#fff}
+.gen-form{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap}
+.gen-form select{width:auto}
+.cs-grid{display:grid;grid-template-columns:330px 1fr;gap:14px;align-items:start}
+@media(max-width:960px){.cs-grid{grid-template-columns:1fr}}
+.pattern-box{background:var(--violetbg);border-radius:12px;padding:13px 15px;font-size:14px}
+.ins-line{display:flex;justify-content:space-between;padding:7px 0;
+border-bottom:1px solid var(--line);font-size:14px}
+.ins-line:last-child{border-bottom:none}
+.cc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+.cc-visual{background:linear-gradient(135deg,#7c3aed,#a78bfa);color:#fff;border-radius:12px;
+padding:20px 16px;min-height:96px;display:flex;align-items:center;gap:10px;
+font-weight:700;font-size:16.5px;position:relative;margin-bottom:10px}
+.cc-play{background:rgba(255,255,255,.25);border-radius:50%%;width:34px;height:34px;
+display:inline-flex;align-items:center;justify-content:center;flex:none}
+.cc-dur{position:absolute;right:10px;bottom:10px;background:rgba(0,0,0,.45);
+border-radius:7px;padding:2px 8px;font-size:12px}
+.cc-actions{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.approve-outline{background:#fff;color:var(--ok);border:1px solid var(--ok)}
+</style>
+<div class="cs-head"><div>
+<h1 style="margin-bottom:2px">Creative Studio</h1>
+<p class="mut" style="margin:0">Review, approve and generate ad creatives powered by SH Ads Desk</p>
+<p class="small mut">Creatives here are TEXT — angles, copy, poster briefs and reel
+scripts. Real image/video files come from the "Generate with API" section below
+(only with the owner's own connected API) or the owner's uploads. Every asset
+needs the visual check before it can enter the approval queue.</p>
+</div>
+<div>
+<div class="cs-pills"><span class="outline-pill">SH Ads Desk · Meta Ads</span>%s</div>
+<form method="post" action="/creative/generate" class="gen-form" style="margin-top:10px">%s
+<select name="product">%s</select>
+<select name="segment">%s</select>
+<button type="submit" class="bigbtn">+ Generate New Set</button></form>
+<p class="small mut">Generating runs Roles 6–9; the copy passes Role 10 (policy checker).
+If a gate is closed, the set is marked BLOCKED.</p>
+</div></div>
+<div class="cs-grid">
+<div>
+<div class="card"><h2 style="margin-top:0">Inspiration Brief</h2>
+%s
+<p style="margin-bottom:0"><a class="btn secondary" href="/loop">View Full Brief →</a></p></div>
+<div class="card"><h2 style="margin-top:0">Insights</h2>%s
+<p class="small mut">Counts from real records only — this system does not invent
+creative performance metrics.</p></div>
+</div>
+<div class="cc-grid">%s</div>
+</div>
+<div class="card"><h2>Policy checker (instant test)</h2>
 <form method="post" action="/creative/policycheck">%s
-<label>Ad text</label><textarea name="text" rows="3" placeholder="Apni ad line yahan likho — banned claims turant pakde jayenge"></textarea>
-<p class="small">Check dabane se sirf scan hoga — kuch save ya create nahi hoga.</p>
-<button class="secondary" type="submit">Claims check karo</button></form></div>
-<div class="card"><h2>Saved creative sets</h2>
-<table><tr><th>#</th><th>Product</th><th>Kind</th><th>Policy</th></tr>%s</table></div>
+<label>Ad text</label><textarea name="text" rows="3" placeholder="Write your ad line here — banned claims are caught instantly"></textarea>
+<p class="small">Checking only scans — nothing is saved or created.</p>
+<button class="secondary" type="submit">Check claims</button></form></div>
 %s
 <div class="card"><h2>Assets (generated + manual upload)</h2>
 <form method="post" action="/creative/upload">%s
-<label>File ka naam (file aap apne paas rakho — yahan sirf registry entry banti hai)</label>
+<label>File name (keep the file with you — only a registry entry is created here)</label>
 <input name="filename" placeholder="poster-v1.png" required>
 <label>Kind</label><select name="kind"><option>image</option><option>video</option></select>
-<p class="small">Upload dabane se asset PENDING visual-check ke saath register hoga.
-Neeche checklist ke saare item tick karke hi PASS hoga — uske bina asset approval
-queue me nahi ja sakta.</p>
-<button class="secondary" type="submit">Asset register karo</button></form>
+<p class="small">Registering adds the asset with visual check PENDING.
+It passes only when every checklist item below is ticked — without that, the
+asset cannot enter the approval queue.</p>
+<button class="secondary" type="submit">Register asset</button></form>
 <table><tr><th>File</th><th>Kind</th><th>Source</th><th>Visual check</th></tr>%s</table>
 <form method="post" action="/creative/visualcheck" style="margin-top:12px">%s
-<label>Asset file naam (PASS karne ke liye)</label><input name="filename" required>
-<label><input type="checkbox" name="c1" style="width:auto"> Readable text hai</label><br>
-<label><input type="checkbox" name="c2" style="width:auto"> Product names/logos sahi hain</label><br>
-<label><input type="checkbox" name="c3" style="width:auto"> Koi misleading claim nahi hai</label><br>
-<label><input type="checkbox" name="c4" style="width:auto"> Koi unauthorized brand mark nahi hai</label>
-<p class="small">PASS dabane se asset ka visual check PASS mark hoga (audit entry ke saath).
-Ek bhi item untick ho to refuse ho jayega.</p>
-<button type="submit">Visual check PASS karo</button></form></div>
-""" % (ctx["csrf_field"], options, segments, ctx["csrf_field"],
-       saved_html or '<tr><td colspan="4" class="mut">Abhi koi creative set save nahi hai</td></tr>',
+<label>Asset file name (to mark PASS)</label><input name="filename" required>
+<label><input type="checkbox" name="c1" style="width:auto"> The text is readable</label><br>
+<label><input type="checkbox" name="c2" style="width:auto"> Product names/logos are correct</label><br>
+<label><input type="checkbox" name="c3" style="width:auto"> There is no misleading claim</label><br>
+<label><input type="checkbox" name="c4" style="width:auto"> There is no unauthorized brand mark</label>
+<p class="small">Marking PASS records the asset's visual check as PASS (with an audit entry).
+If even one item is unticked, it is refused.</p>
+<button type="submit">Mark visual check PASS</button></form></div>
+""" % (status_pill, ctx["csrf_field"], options, segments,
+       pattern_box, insights_html, cards_html,
+       ctx["csrf_field"],
        api_section,
-       ctx["csrf_field"], asset_html or '<tr><td colspan="4" class="mut">Koi asset register nahi hai</td></tr>',
+       ctx["csrf_field"], asset_html or '<tr><td colspan="4" class="mut">No assets registered yet</td></tr>',
        ctx["csrf_field"])
     return page("Creative Studio", "/creative", body, ctx["flash"], conn, ctx)
 
@@ -809,8 +1263,8 @@ PROVIDER_FIELD_LABELS = {
               ("prompt_field", "Prompt field name"),
               ("model_field", "Model field name"),
               ("size_field", "Size field name"), ("size", "Size"),
-              ("response_url_path", "Response me image URL ka path"),
-              ("response_b64_path", "Response me b64 image ka path")],
+              ("response_url_path", "Image URL path in the response"),
+              ("response_b64_path", "b64 image path in the response")],
     "video": [("submit_path", "Submit path"),
               ("poll_path", "Status/poll path ({id} = job id)"),
               ("prompt_field", "Prompt field name"),
@@ -818,19 +1272,19 @@ PROVIDER_FIELD_LABELS = {
               ("image_field", "Image URL field name"),
               ("duration_field", "Duration field name"),
               ("aspect_field", "Aspect ratio field name"),
-              ("job_id_path", "Job ID ka response path"),
-              ("status_path", "Status ka response path"),
-              ("done_values", "Done status values (comma se)"),
-              ("fail_values", "Fail status values (comma se)"),
-              ("result_url_path", "Result video URL ka response path"),
+              ("job_id_path", "Job ID path in the response"),
+              ("status_path", "Status path in the response"),
+              ("done_values", "Done status values (comma-separated)"),
+              ("fail_values", "Fail status values (comma-separated)"),
+              ("result_url_path", "Result video URL path in the response"),
               ("poll_interval_sec", "Poll interval (seconds)"),
               ("max_wait_sec", "Max wait (seconds)")],
 }
 
 PROVIDER_TITLES = {
-    "text": ("Text / LLM", "Ad copy ke liye — OpenAI (ChatGPT models), Anthropic Claude, ya koi OpenAI-compatible API."),
-    "image": ("Image generation", "Poster aur carousel images ke liye — OpenAI-compatible image API ya custom mapping wali API."),
-    "video": ("Video generation", "Reel video ke liye — Higgsfield, Kling-style async APIs (submit + poll)."),
+    "text": ("Text / LLM", "For ad copy — OpenAI (ChatGPT models), Anthropic Claude, or any OpenAI-compatible API."),
+    "image": ("Image generation", "For poster and carousel images — an OpenAI-compatible image API or a custom-mapped API."),
+    "video": ("Video generation", "For reel video — Higgsfield, Kling-style async APIs (submit + poll)."),
 }
 
 
@@ -844,8 +1298,8 @@ def _provider_card(ctx, cap):
         '<option value="%s" %s>%s</option>'
         % (k, "selected" if k == preset else "", esc(v["label"]))
         for k, v in providers.PRESETS[cap].items())
-    key_pill = ('<span class="pill ok">Key set hai (%s)</span>' % esc(status["key_source"])
-                if status["key_set"] else '<span class="pill bad">Key set nahi hai</span>')
+    key_pill = ('<span class="pill ok">Key is set (%s)</span>' % esc(status["key_source"])
+                if status["key_set"] else '<span class="pill bad">Key is not set</span>')
     conn_pill = ('<span class="pill ok">CONNECTED</span>' if status["configured"]
                  else '<span class="pill warn">Not connected</span>')
     last_test = conn.execute(
@@ -869,7 +1323,7 @@ def _provider_card(ctx, cap):
         % (v, "selected" if cfg.get("auth_style") == v else "", label)
         for v, label in (("bearer", "Bearer (Authorization: Bearer KEY)"),
                          ("x-api-key", "x-api-key header"),
-                         ("custom", "Custom header + prefix (jaise Higgsfield: Authorization + 'Key ')")))
+                         ("custom", "Custom header + prefix (e.g. Higgsfield: Authorization + 'Key ')")))
     fmt_opts = "".join(
         '<option value="%s" %s>%s</option>'
         % (v, "selected" if cfg.get("payload_format") == v else "", v)
@@ -878,11 +1332,11 @@ def _provider_card(ctx, cap):
     if status["key_source"] == "file":
         remove_html = ("""<form method="post" action="/providers/removekey" class="inline">%s
 <input type="hidden" name="capability" value="%s">
-<button class="secondary" type="submit">Key hatao</button></form>"""
+<button class="secondary" type="submit">Remove key</button></form>"""
                        % (ctx["csrf_field"], cap))
     elif status["key_source"] == "env":
-        remove_html = ('<p class="small mut">Key environment variable %s se aa rahi hai — '
-                       'hatana hai to server ke env se hatao.</p>'
+        remove_html = ('<p class="small mut">The key comes from the environment variable %s — '
+                       'to remove it, remove it from the server environment.</p>'
                        % esc(providers.ENV_KEY_NAMES[cap]))
     return """
 <div class="card"><h2>%s</h2>
@@ -893,56 +1347,56 @@ def _provider_card(ctx, cap):
 %s
 <form method="post" action="/providers/preset">%s
 <input type="hidden" name="capability" value="%s">
-<label>Preset badlo (preset ke pre-filled defaults lag jayenge — base URL, model, paths reset ho jayenge; key bani rahegi)</label>
+<label>Change preset (the preset's pre-filled defaults will apply — base URL, model and paths reset; the key stays)</label>
 <select name="preset">%s</select>
-<button class="secondary" type="submit">Preset lagao</button></form>
+<button class="secondary" type="submit">Apply preset</button></form>
 <form method="post" action="/providers/save">%s
 <input type="hidden" name="capability" value="%s">
 <input type="hidden" name="preset" value="%s">
-<label>Provider naam (apni pehchan ke liye)</label>
+<label>Provider name (for your own identification)</label>
 <input name="provider_name" value="%s">
 <label>Model</label>
 <input name="model" value="%s">
 <label>API key %s</label>
 <input type="password" name="api_key" autocomplete="off" placeholder="%s">
-<details><summary><strong>Advanced (optional)</strong> — base URL override, auth aur paths. Known presets me ye sab pehle se bhara hai; sirf tab badlo jab provider ki docs kuch aur kahein.</summary>
+<details><summary><strong>Advanced (optional)</strong> — base URL override, auth and paths. Known presets have all of this pre-filled; change it only if the provider's docs say otherwise.</summary>
 <label>Base URL %s</label>
 <input name="base_url" value="%s">
 <label>Auth style</label><select name="auth_style">%s</select>
 <label>Auth header name</label><input name="auth_header" value="%s">
-<label>Auth value prefix (jaise 'Key ' ya 'Bearer ')</label><input name="auth_prefix" value="%s">
+<label>Auth value prefix (e.g. 'Key ' or 'Bearer ')</label><input name="auth_prefix" value="%s">
 <label>Extra headers (JSON object, optional)</label>
 <textarea name="extra_headers" rows="2">%s</textarea>
-<label>Test connection path (GET — models/list type ka harmless endpoint)</label>
+<label>Test connection path (GET — a harmless models/list-type endpoint)</label>
 <input name="test_path" value="%s">
 <label>Payload format</label><select name="payload_format">%s</select>
 %s
 </details>
-<p class="small">Save dabane se sirf upar ki settings save hongi. Key sirf tab badlegi jab
-key wale khane me nayi key likhi ho — khaali chhodne par purani key bani rehti hai.
-Key server ki <code>data/secrets.env</code> file me jaati hai (kabhi settings/DB/log me nahi)
-aur yahan kabhi wapas dikhti nahi.</p>
-<button type="submit">Connection save karo</button></form>
+<p class="small">Saving saves only the settings above. The key changes only when a new key
+is typed in the key field — left empty, the old key stays.
+The key goes into the server's <code>data/secrets.env</code> file (never into
+settings/DB/logs) and is never shown here again.</p>
+<button type="submit">Save connection</button></form>
 <div class="row" style="margin-top:10px">
 <form method="post" action="/providers/test" class="inline">%s
 <input type="hidden" name="capability" value="%s">
 <button class="secondary" type="submit">Test connection</button></form>
 %s</div>
-<p class="small mut">Test connection sirf ek harmless GET karta hai (models/list type) —
-koi generation nahi hoti, koi paisa nahi katata. Green ka matlab hai endpoint ne jawab
-diya; generation chalegi hi, ye guarantee nahi hai. Ye adapters real provider accounts
-par <strong>UNTESTED</strong> hain.</p>
+<p class="small mut">Test connection makes only one harmless GET (models/list type) —
+no generation happens and nothing is charged. Green means the endpoint responded;
+it is not a guarantee that generation will work. These adapters are
+<strong>UNTESTED</strong> on real provider accounts.</p>
 </div>
 """ % (esc(PROVIDER_TITLES[cap][0]), esc(PROVIDER_TITLES[cap][1]),
        conn_pill, key_pill, esc(preset_meta["label"]), esc(cfg.get("base_url") or "—"),
        esc(cfg.get("model") or "—"), esc(preset_meta["base_url_source"]), test_html,
        ctx["csrf_field"], cap, preset_opts, ctx["csrf_field"], cap, preset,
        esc(cfg.get("provider_name") or ""), esc(cfg.get("model") or ""),
-       "(env var %s se set hai)" % providers.ENV_KEY_NAMES[cap] if status["key_source"] == "env"
-       else "(server ki secrets file me jayegi)",
-       "Key set hai — badalne ke liye hi nayi key likho, warna khaali chhodo"
-       if status["key_set"] else "Apni API key yahan paste karo",
-       "— Custom preset me mandatory" if preset == "custom" else "(optional override)",
+       "(set via env var %s)" % providers.ENV_KEY_NAMES[cap] if status["key_source"] == "env"
+       else "(will be stored in the server's secrets file)",
+       "Key is set — type a new key only to change it, otherwise leave it empty"
+       if status["key_set"] else "Paste your API key here",
+       "— mandatory for the Custom preset" if preset == "custom" else "(optional override)",
        esc(cfg.get("base_url") or ""), auth_opts, esc(cfg.get("auth_header") or ""),
        esc(cfg.get("auth_prefix") or ""), esc(cfg.get("extra_headers") or ""),
        esc(cfg.get("test_path") or ""), fmt_opts, cap_fields,
@@ -952,24 +1406,23 @@ par <strong>UNTESTED</strong> hain.</p>
 def pg_providers(ctx):
     cards = "".join(_provider_card(ctx, cap) for cap in providers.CAPABILITIES)
     body = """
-<h1>API Providers — apni APIs connect karo</h1>
-<p class="mut">Yahan aap apni generation APIs jodte ho: text ke liye OpenAI/Claude,
-image ke liye image API, video ke liye Higgsfield/Kling-style API. Known presets me
-<strong>base URL aur default model pehle se bhara hai — aapko bas API key paste karni hai</strong>.
-Phir Creative Studio ke "Generate with API" buttons inhi APIs se copy, poster, carousel
-aur reel banayenge. System khud koi vendor select nahi karta aur koi key apne paas
-nahi rakhta — key sirf is server ki <code>data/secrets.env</code> me rehti hai.</p>
-<div class="banner warn"><strong>UNTESTED:</strong> ye adapters kisi real provider account
-par test nahi hue hain (koi asal key is build ke paas nahi thi). Pehli asal generation
-dhyaan se, chhote prompt se test karo. Generation ka kharcha provider ke billing par
-jata hai — app me cost hamesha "unknown — provider billing" likha aayega, koi andaz
-nahi lagaya jayega.</div>
+<h1>API Providers — connect your APIs</h1>
+<p class="mut">This is where you connect your generation APIs: OpenAI/Claude for text,
+an image API for images, a Higgsfield/Kling-style API for video. Known presets have the
+<strong>base URL and default model pre-filled — you only paste the API key</strong>.
+Creative Studio's "Generate with API" buttons then create copy, posters, carousels
+and reels from these APIs. The system never selects a vendor itself and never keeps
+a key — the key lives only in this server's <code>data/secrets.env</code>.</p>
+<div class="banner warn"><strong>UNTESTED:</strong> these adapters have not been tested on
+any real provider account (this build had no real key). Test the first real generation
+carefully, with a small prompt. Generation cost goes to the provider's billing — the
+app always shows cost as "unknown — provider billing" and never estimates it.</div>
 %s
-<div class="card"><h2>Environment variables (dusra tareeka)</h2>
-<p class="small">UI ki jagah server ke env me bhi key rakh sakte ho — env wali key
-hamesha jeet-ti hai: <code>SH_ADS_TEXT_API_KEY</code>, <code>SH_ADS_IMAGE_API_KEY</code>,
-<code>SH_ADS_VIDEO_API_KEY</code>. <code>data/secrets.env</code> ka backup surakshit
-jagah rakho — use kabhi git/commit/chat me mat daalo.</p></div>
+<div class="card"><h2>Environment variables (the other way)</h2>
+<p class="small">Instead of the UI, you can keep the key in the server environment —
+an env key always wins: <code>SH_ADS_TEXT_API_KEY</code>, <code>SH_ADS_IMAGE_API_KEY</code>,
+<code>SH_ADS_VIDEO_API_KEY</code>. Keep a backup of <code>data/secrets.env</code> in a
+safe place — never put it in git/commits/chat.</p></div>
 """ % cards
     return page("API Providers", "/providers", body, ctx["flash"], ctx["conn"], ctx)
 
@@ -979,10 +1432,10 @@ def pg_planner(ctx):
     options = "".join('<option>%s</option>' % esc(p.get("product")) for p in products)
     body = """
 <h1>Campaign Planner</h1>
-<p class="mut">Plan banana sirf data hai — isse Meta par kuch write nahi hota. Plan
-approval queue me jayega; wahan Approve hone ke baad bhi execution sirf PAUSED
-objects banayegi (aur DRY_RUN ON ho to MOCK par). Customer aur reseller campaigns
-hamesha alag rehte hain.</p>
+<p class="mut">Creating a plan is only data — nothing is written to Meta. The plan goes
+to the approval queue; even after approval, execution creates only PAUSED
+objects (and on MOCK while DRY_RUN is ON). Customer and reseller campaigns
+always stay separate.</p>
 <div class="card"><form method="post" action="/planner/plan">%s
 <label>Product</label><select name="product">%s</select>
 <label>Segment</label><select name="segment">
@@ -991,45 +1444,251 @@ hamesha alag rehte hain.</p>
 <label>Audience type</label><select name="audience_type">
 <option>customers</option><option>resellers</option></select>
 <label>Format</label><select name="format"><option>REEL</option><option>IMAGE</option><option>CAROUSEL</option></select>
-<label>Daily budget (campaign level — optional, caps ke andar)</label>
-<input name="daily_budget" placeholder="Khaali chhodo to budget plan me nahi lagega">
-<p class="small">Plan dabane se structure plan (AUD_ANGLE_FORMAT_DATE_VERSION naam ke saath)
-bankar neeche dikhega aur ek CAMPAIGN_DRAFT approval queue me chala jayega. Plan ki
-copy policy check se guzregi — gate band ho to draft BLOCKED rahega aur execute nahi hoga.</p>
-<button type="submit">Plan banao + approval ke liye bhejo</button></form></div>
+<label>Daily budget (campaign level — optional, within the caps)</label>
+<input name="daily_budget" placeholder="Leave empty to keep the budget out of the plan">
+<p class="small">Planning builds the structure plan (named AUD_ANGLE_FORMAT_DATE_VERSION)
+and sends a CAMPAIGN_DRAFT to the approval queue. The plan's copy passes the
+policy check — if a gate is closed, the draft stays BLOCKED and will not execute.</p>
+<button type="submit">Create plan + send for approval</button></form></div>
 """ % (ctx["csrf_field"], options)
     return page("Planner", "/planner", body, ctx["flash"], ctx["conn"], ctx)
+
+
+def pg_campaigns(ctx):
+    conn, settings = ctx["conn"], ctx["settings"]
+    profile = ctx["profile"]
+    pid = profile["id"] if profile else 0
+    store.seed_insights(conn=conn, profile_id=pid)
+    rows = store.load_insight_rows(conn, profile_id=pid)
+    cur = settings.get("ACCOUNT_CURRENCY") or "INR"
+    sym = "₹" if cur == "INR" else (cur + " ")
+    kill_on = ctx["queue"].kill_switch_active()
+    from . import optimiser as optimiser_mod
+    try:
+        per_ad = optimiser_mod.analyse(rows, settings).get("per_ad", {})
+    except Exception:
+        per_ad = {}
+
+    def verdict_for(ad_ids):
+        vs = [str(per_ad.get(a, {}).get("verdict") or "") for a in ad_ids]
+        if any(v == "winner" for v in vs):
+            return "Winner"
+        if any(v.startswith("loser") for v in vs):
+            return "Loser"
+        if any(v.startswith("not enough data") or v == "fatigued creative"
+               for v in vs):
+            return "Learning"
+        return ""
+
+    camps = {}
+    for r in rows:
+        cid = r.get("campaign_id") or "—"
+        c = camps.setdefault(cid, {"ads": [], "formats": set(), "spend": 0.0,
+                                   "enq": 0, "qual": 0, "budgets": {}})
+        c["ads"].append(r.get("ad_id"))
+        if r.get("format"):
+            c["formats"].add(str(r["format"]))
+        c["spend"] += float(r.get("spend") or 0)
+        c["enq"] += int(r.get("enquiries") or 0)
+        c["qual"] += int(r.get("qualified_leads") or 0)
+        if r.get("budget_object_id"):
+            c["budgets"][r["budget_object_id"]] = float(r.get("current_budget") or 0)
+    paused_ids = set()
+    try:
+        for w in conn.execute("SELECT object_ids FROM meta_writes").fetchall():
+            try:
+                paused_ids.update(str(i) for i in json.loads(w["object_ids"] or "[]"))
+            except ValueError:
+                pass
+    except Exception:
+        paused_ids = set()
+
+    def camp_status(cid):
+        return "Paused" if (kill_on or cid in paused_ids) else "Active"
+
+    total_spend = sum(c["spend"] for c in camps.values())
+    total_enq = sum(c["enq"] for c in camps.values())
+    total_qual = sum(c["qual"] for c in camps.values())
+    avg_cpl = (total_spend / total_qual) if total_qual else None
+    n_active = sum(1 for cid in camps if camp_status(cid) == "Active")
+    n_paused = len(camps) - n_active
+    latest_row = conn.execute(
+        "SELECT MAX(created_at) AS t FROM insight_rows WHERE profile_id IN (?, 0)",
+        (pid,)).fetchone()
+    latest_date = (latest_row["t"] or "")[:10] if latest_row else ""
+    status_filter = (ctx.get("query") or {}).get("status", ["all"])[0]
+    if status_filter not in ("all", "active", "paused"):
+        status_filter = "all"
+    fmt_icon = {"reel": "▶", "image": "▣", "carousel": "▦", "video": "▶"}
+    shown = 0
+    table_rows = ""
+    for cid, c in sorted(camps.items(), key=lambda kv: kv[1]["spend"],
+                         reverse=True):
+        st = camp_status(cid)
+        if status_filter != "all" and st.lower() != status_filter:
+            continue
+        shown += 1
+        fmt = sorted(c["formats"])[0] if c["formats"] else ""
+        icon = fmt_icon.get(fmt, "•")
+        st_pill = ('<span class="pill ok">Active</span>' if st == "Active"
+                   else '<span class="pill dim">Paused</span>')
+        budget = sum(c["budgets"].values())
+        cpl = ("%s%s" % (sym, esc(round(c["spend"] / c["qual"], 2)))) if c["qual"] else "—"
+        verdict = verdict_for(c["ads"])
+        v_pill = {"Winner": '<span class="pill ok">Winner</span>',
+                  "Learning": '<span class="pill warn">Learning</span>',
+                  "Loser": '<span class="pill bad">Loser</span>'}.get(verdict, "—")
+        table_rows += ("<tr><td><span class='camp-ic'>%s</span> <strong>%s</strong>"
+                       "<div class='small mut' style='margin-left:30px'>Meta · %s</div></td>"
+                       "<td>%s</td><td>%s</td><td>%s</td><td>%d</td><td>%s</td>"
+                       "<td>%s</td><td class='mut'>⋯</td></tr>"
+                       % (icon, esc(cid), esc(fmt or "—"), st_pill,
+                          ("%s%s/day" % (sym, esc(budget))) if budget else "—",
+                          "%s%s" % (sym, esc(c["spend"])), c["enq"], cpl, v_pill))
+    # --- New Campaign Draft card data (real gate state) ---
+    products = ctx["eligibility"]
+    options = "".join('<option>%s</option>' % esc(p.get("product")) for p in products)
+    dest = policy_checker.check_destination(settings)
+    offerings = profiles_mod.list_offerings(pid, conn)
+    any_confirmed = any(o["permission_confirmed"] for o in offerings)
+    blockers = []
+    if not dest["allowed"]:
+        blockers.extend(dest["reasons"])
+    if not any_confirmed:
+        blockers.append("No offering has confirmed permission yet — drafts stay BLOCKED")
+    gate_box = ('<div class="gate-box ok">Ready to submit for review</div>'
+                if not blockers else
+                '<div class="gate-box bad">Not ready yet:<br>%s</div>'
+                % "<br>".join("• " + esc(b) for b in blockers))
+    body = """
+<style>
+.kpi-ic{width:40px;height:40px;border-radius:12px;display:inline-flex;align-items:center;
+justify-content:center;font-size:18px;flex:none;background:var(--violetbg)}
+.camp-head{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap}
+.camp-title{display:flex;gap:13px;align-items:center}
+.camp-ic{width:24px;height:24px;border-radius:7px;background:var(--violetbg);
+display:inline-flex;align-items:center;justify-content:center;font-size:13px}
+.camp-grid{display:grid;grid-template-columns:1.7fr 1fr;gap:14px;align-items:start}
+@media(max-width:960px){.camp-grid{grid-template-columns:1fr}}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%%;margin-right:5px}
+.gate-box{border-radius:12px;padding:12px 14px;font-size:13.5px;margin:12px 0}
+.gate-box.ok{background:var(--violetbg);color:var(--brand2);font-weight:600}
+.gate-box.bad{background:#fef2f2;color:#991b1b;border:1px solid #fecaca}
+.filter-form select{width:auto;display:inline-block;padding:7px 10px}
+</style>
+<div class="camp-head"><div class="camp-title">
+<span class="kpi-ic" style="width:46px;height:46px;font-size:21px">📣</span>
+<div><h1 style="margin:0">Campaigns</h1>
+<p class="mut" style="margin:2px 0 0">Manage and monitor your ad campaigns across Meta platforms</p></div>
+</div><a class="btn bigbtn" href="#new-draft">+ New Campaign</a></div>
+<div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(230px,1fr))">
+<div class="card"><div class="mut small">Total Campaigns</div><div class="kpi">%d</div>
+<div class="small"><span class="dot" style="background:var(--ok)"></span>%d Active
+&nbsp;<span class="dot" style="background:#c9c4d6"></span>%d Paused</div></div>
+<div class="card"><div class="mut small">Total Spend</div><div class="kpi">%s%s</div>
+<div class="small mut">Snapshot · latest insights %s (MOCK data)</div></div>
+<div class="card"><div class="mut small">Total Enquiries</div><div class="kpi">%d</div>
+<div class="small mut">Avg. CPL %s</div></div>
+</div>
+<div class="camp-grid">
+<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+<h2 style="margin:0">All Campaigns</h2>
+<form method="get" action="/campaigns" class="filter-form">
+<label style="display:inline;margin:0">Filter:</label>
+<select name="status" onchange="this.form.submit()">
+<option value="all" %s>All Status</option>
+<option value="active" %s>Active</option>
+<option value="paused" %s>Paused</option>
+</select> <span class="pill dim">Snapshot data</span></form></div>
+<div class="twrap"><table><tr><th>Campaign Name</th><th>Status</th><th>Budget</th>
+<th>Spend</th><th>Enquiries</th><th>Cost per Lead</th><th>Verdict</th><th></th></tr>%s</table></div>
+<p class="small mut">Showing %d of %d campaigns</p></div>
+<div class="card" id="new-draft"><h2 style="margin-top:0">New Campaign Draft</h2>
+<form method="post" action="/planner/plan">%s
+<label>Product</label><select name="product">%s</select>
+<div class="sw-row"><span class="small mut">Objective</span><strong>Outcome Leads</strong></div>
+<p class="small mut" style="margin-top:-4px">The planner's default objective (UNTESTED default — the owner confirms the objective in Step 2).</p>
+<label>Audience</label><select name="audience_type">
+<option>customers</option><option>resellers</option></select>
+<label>Segment</label><select name="segment">
+<option>students</option><option>freelancers</option><option>creators</option>
+<option>bot owners</option><option>agencies</option></select>
+<label>Format</label><select name="format"><option>REEL</option><option>IMAGE</option><option>CAROUSEL</option></select>
+<label>Daily budget (optional, within the caps)</label><input name="daily_budget">
+%s
+<button type="submit" class="bigbtn" style="width:100%%">Send to Approval Queue</button>
+<p class="small mut" style="text-align:center">Draft will be sent for approval for compliance review.</p>
+</form></div>
+</div>
+""" % (len(camps), n_active, n_paused, sym, esc(total_spend),
+       esc(latest_date or "—"), total_enq,
+       ("%s%s" % (sym, esc(round(avg_cpl, 2)))) if avg_cpl is not None else "—",
+       "selected" if status_filter == "all" else "",
+       "selected" if status_filter == "active" else "",
+       "selected" if status_filter == "paused" else "",
+       table_rows or '<tr><td colspan="8" class="mut">No campaigns match this filter</td></tr>',
+       shown, len(camps),
+       ctx["csrf_field"], options, gate_box)
+    return page("Campaigns", "/campaigns", body, ctx["flash"], conn, ctx)
+
+
+_PROPOSAL_CHIPS = {
+    "PROPOSE_BUDGET_INCREASE": ("Budget Increase", "#fff7ed", "#c2410c", "Role 19 · Optimiser"),
+    "PROPOSE_PAUSE": ("Pause", "#fdf2f8", "#be123c", "Role 19 · Optimiser"),
+    "CAMPAIGN_DRAFT": ("New Campaign Draft", "#eff6ff", "#1d4ed8", "Role 13 · Campaign Builder"),
+    "PROPOSE_CREATIVE_REFRESH": ("Creative Refresh", "#f5f3ff", "#6d28d9", "Role 19 · Optimiser"),
+    "SAFETY_STOP": ("Safety Stop", "#fef2f2", "#b91c1c", "Role 19 · Optimiser"),
+}
 
 
 def pg_approvals(ctx):
     conn = ctx["conn"]
     queue = ctx["queue"]
+    settings = ctx["settings"]
     pid = ctx["profile"]["id"] if ctx["profile"] else None
     pending = queue.list_pending(profile_id=pid)
-    all_items = ctx["conn"].execute(
+    all_items = conn.execute(
         "SELECT * FROM proposals WHERE profile_id IN (?, 0) "
         "ORDER BY id DESC LIMIT 50", (pid or 0,)).fetchall()
+    created = {r["id"]: r["created_at"] for r in all_items}
     cards = []
     for item in pending:
-        payload = item["payload"]
+        payload = item["payload"] or {}
+        chip_label, chip_bg, chip_fg, role = _PROPOSAL_CHIPS.get(
+            item["kind"], (item["kind"].replace("_", " ").title(),
+                           "#f5f3ff", "#6d28d9", "System"))
+        title = payload.get("what") or chip_label
+        lines = ""
+        if payload.get("why"):
+            lines += '<p class="small" style="margin:4px 0">%s</p>' % esc(payload["why"])
+        if payload.get("budget_effect"):
+            lines += ('<p class="small mut" style="margin:2px 0">Budget effect: %s</p>'
+                      % esc(payload["budget_effect"]))
         cards.append("""
-<div class="card"><h3>#%d · %s</h3>
-<p class="small mut">Approve karne se EXACTLY ye hoga: item APPROVED mark hoga. Uske baad
-"Execute" dabane par hi — DRY_RUN ke hisaab se MOCK ya (Step 4 ke baad) LIVE — PAUSED
-objects banenge. Activation kabhi auto nahi hota.</p>
-<pre>%s</pre>
-<div class="row">
-<form method="post" action="/approvals/approve" class="inline">%s<input type="hidden" name="id" value="%d"><button type="submit">Approve</button></form>
-<form method="post" action="/approvals/reject" class="inline">%s<input type="hidden" name="id" value="%d"><button class="secondary" type="submit">Reject</button></form>
+<div class="card prop-card">
+<div class="prop-top"><span class="type-chip" style="background:%s;color:%s">%s</span>
+<span class="small mut">#%d</span></div>
+<h3 style="margin:8px 0 2px">%s</h3>
+%s
+<p class="small mut">Approving marks this item APPROVED — nothing more. Only pressing
+"Execute" afterwards creates PAUSED objects (MOCK, or LIVE after Step 4).
+Activation is never automatic.</p>
+<div class="prop-actions">
+<form method="post" action="/approvals/approve" class="inline">%s<input type="hidden" name="id" value="%d"><button type="submit" class="approve-btn">Approve</button></form>
+<form method="post" action="/approvals/reject" class="inline">%s<input type="hidden" name="id" value="%d"><button type="submit" class="reject-btn">Reject</button></form>
+<span class="prop-meta">Proposed %s • by %s</span>
 </div>
-<form method="post" action="/approvals/edit" style="margin-top:10px">%s
-<label>Payload edit karo (JSON)</label><textarea name="payload" rows="4">%s</textarea>
-<p class="small">Save dabane se sirf draft badlega — kuch execute nahi hoga.</p>
-<button class="secondary" type="submit">Edit save karo</button>
-<input type="hidden" name="id" value="%d"></form></div>
-""" % (item["id"], esc(item["kind"]),
-       esc(json.dumps(payload, ensure_ascii=False, indent=1)[:3000]),
+<details style="margin-top:10px"><summary>Payload &amp; edit</summary>
+<pre>%s</pre>
+<form method="post" action="/approvals/edit">%s
+<label>Edit payload (JSON)</label><textarea name="payload" rows="4">%s</textarea>
+<p class="small">Saving only changes the draft — nothing is executed.</p>
+<button class="secondary" type="submit">Save edit</button>
+<input type="hidden" name="id" value="%d"></form></details></div>
+""" % (chip_bg, chip_fg, esc(chip_label), item["id"], esc(title), lines,
        ctx["csrf_field"], item["id"], ctx["csrf_field"], item["id"],
+       esc(created.get(item["id"], "")), esc(role),
+       esc(json.dumps(payload, ensure_ascii=False, indent=1)[:3000]),
        ctx["csrf_field"], esc(json.dumps(payload, ensure_ascii=False)), item["id"]))
     history = "".join(
         "<tr><td>%d</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>"
@@ -1038,18 +1697,87 @@ objects banenge. Activation kabhi auto nahi hota.</p>
            '<input type="hidden" name="id" value="%d"><button type="submit">Execute (PAUSED only)</button></form>'
            % (ctx["csrf_field"], r["id"]) if r["status"] == "APPROVED" else "")
         for r in all_items)
+    mode_setting = str(settings.get("AUTOMATION_MODE") or "PROPOSE").upper()
+    if mode_setting == "OFF":
+        banner_text = ("Automation Off: the system only reports — no changes go live "
+                       "without your approval.")
+    elif mode_setting == "AUTO_WITHIN_RULES":
+        banner_text = ("Auto Within Rules: only the capped actions in your signed rules "
+                       "run automatically — everything else needs your approval.")
+    else:
+        banner_text = "Propose Mode: No changes go live without your approval."
+    kill_on = queue.kill_switch_active()
+    last_collect_row = conn.execute(
+        "SELECT MAX(created_at) AS t FROM role_runs WHERE role = '16_data_collector'"
+    ).fetchone()
+    last_collect = (last_collect_row["t"] or "")[:16].replace("T", " ") \
+        if last_collect_row else ""
+    meta_mode = os.environ.get("META_MODE", "MOCK").upper()
+    mode_text = ("Mock mode — not connected to Meta Ads" if meta_mode != "LIVE"
+                 else "Live mode (path UNTESTED)")
+    status_pill = ('<span class="pill bad">Paused</span>' if kill_on
+                   else '<span class="pill ok">System Operational</span>')
     body = """
-<h1>Approval Queue</h1>
-<p class="mut">Har draft aur har change yahan rukta hai. Bina Approve hue kuch execute
-nahi hota — Meta me PAUSED draft banana bhi ek write hai, isliye uske liye bhi
-isi queue ki approval lagti hai (brief rule 3).</p>
+<style>
+.appr-grid{display:grid;grid-template-columns:1fr 330px;gap:14px;align-items:start}
+@media(max-width:960px){.appr-grid{grid-template-columns:1fr}}
+.mode-banner{background:var(--violetbg);border:1px solid #ddd6fe;border-radius:12px;
+padding:11px 15px;font-weight:600;color:var(--brand2);margin-bottom:14px}
+.type-chip{padding:4px 11px;border-radius:999px;font-size:12px;font-weight:700}
+.prop-top{display:flex;justify-content:space-between;align-items:center}
+.prop-actions{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-top:10px}
+.approve-btn{background:var(--ok);border-color:var(--ok);color:#fff}
+.reject-btn{background:#fff;color:var(--bad);border:1px solid var(--bad)}
+.prop-meta{margin-left:auto;font-size:12.5px;color:var(--mut)}
+.ks-head{background:#dc2626;color:#fff;border-radius:12px 12px 0 0;
+padding:11px 15px;font-weight:700;margin:-17px -19px 13px}
+.ks-toggle{width:58px;height:32px;border-radius:999px;background:#d8d8e4;
+position:relative;border:none;padding:0;cursor:pointer;flex:none}
+.ks-toggle:before{content:"";position:absolute;width:26px;height:26px;border-radius:50%%;
+background:#fff;top:3px;left:3px;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.25)}
+.ks-toggle.on{background:#dc2626}
+.ks-toggle.on:before{transform:translateX(26px)}
+.ks-enable{background:#fff;color:var(--bad);border:1px solid var(--bad);width:100%%}
+.status-bar{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+</style>
+<h1 style="margin-bottom:2px">Approval Queue — %d Pending</h1>
+<p class="mut" style="margin-top:0">Review and approve pending proposals before they go live</p>
+<div class="mode-banner">%s</div>
+<div class="appr-grid">
+<div>
 %s
 <div class="card"><h2>History</h2>
-<table><tr><th>#</th><th>Kind</th><th>Status</th><th>Created</th><th>Action</th></tr>%s</table>
-<p class="small mut">Execute dabane se: kill switch OFF + status APPROVED ho to hi aage
-badhega; CAMPAIGN_DRAFT ke liye saare gates (eligibility, claims, destination) phir se
-check honge — fail ho to blocked. Result meta_writes + audit log me jayega.</p></div>
-""" % ("".join(cards) or '<div class="card">Koi pending item nahi hai.</div>', history)
+<div class="twrap"><table><tr><th>#</th><th>Kind</th><th>Status</th><th>Created</th><th>Action</th></tr>%s</table></div>
+<p class="small mut">Execute proceeds only when the kill switch is OFF and the status is
+APPROVED; for a CAMPAIGN_DRAFT all gates (eligibility, claims, destination) are checked
+again — a failure blocks it. The result lands in meta_writes + the audit log.</p></div>
+</div>
+<div class="card" style="overflow:hidden">
+<div class="ks-head">⏻ Kill Switch</div>
+<form method="post" action="/killswitch">%s
+<input type="hidden" name="action" value="%s">
+<div style="display:flex;gap:12px;align-items:center;margin-bottom:10px">
+<button type="submit" class="ks-toggle %s" aria-label="Toggle kill switch"></button>
+<strong>%s</strong></div>
+<p class="small">%s</p>
+<p class="small mut">🛡 When enabled, it will instantly pause all live changes and block new approvals for safety.</p>
+<button type="submit" class="%s">%s</button></form>
+</div>
+</div>
+<div class="card status-bar"><strong>SH Ads Desk</strong>
+<span class="mut">%s</span>
+<span class="mut">Last collect: %s</span>
+<span style="margin-left:auto">%s</span></div>
+""" % (len(pending), esc(banner_text),
+       "".join(cards) or '<div class="card">No pending items.</div>', history,
+       ctx["csrf_field"], "off" if kill_on else "on", "on" if kill_on else "",
+       "Kill switch is ON" if kill_on else "Kill switch is OFF",
+       "The emergency stop is engaged — approvals and execution are blocked. Release it here when it is safe to continue."
+       if kill_on else
+       "Emergency stop is disabled — all proposals remain actionable.",
+       "danger" if kill_on else "ks-enable",
+       "Release Kill Switch" if kill_on else "Enable Kill Switch",
+       esc(mode_text), esc(last_collect or "not collected yet"), status_pill)
     return page("Approvals", "/approvals", body, ctx["flash"], conn, ctx)
 
 
@@ -1070,38 +1798,38 @@ def pg_budget(ctx):
 %s
 <div class="grid">
 <div class="card"><div class="mut small">TOTAL_DAILY_BUDGET_CAP (setting)</div>
-<div class="kpi">%s</div><div class="small mut">0/khaali = cap unset</div></div>
+<div class="kpi">%s</div><div class="small mut">0/empty = cap unset</div></div>
 <div class="card"><div class="mut small">Reported spend (MOCK dataset)</div>
 <div class="kpi">%s</div><div class="small mut">%s</div></div>
 <div class="card"><div class="mut small">PER_CAMPAIGN_CAP / LIFETIME_CAP</div>
-<div class="kpi">%s / %s</div><div class="small mut">Settings se badalte hain</div></div>
+<div class="kpi">%s / %s</div><div class="small mut">Changed from Settings</div></div>
 </div>
-<div class="banner warn"><strong>Reporting delay note:</strong> Meta ka reported spend
-lag karta hai — caps best-effort hain, overspend ho sakta hai. Isiliye Meta ke apne
-native limits (account spend limit, campaign/ad-set caps) bhi lagane hain (Step 2/4
-checklist me hai). Breach par system safety-stop propose karta hai aur kabhi
-auto-resume nahi karta.</div>
-<div class="card"><h2>Budget kis object par hai</h2>
-<p class="small mut">Budget hamesha campaign ya ad-set level par hota hai — per-ad
-budget kabhi nahi. Optimiser proposal banate waqt asal owner detect karta hai.</p>
+<div class="banner warn"><strong>Reporting delay note:</strong> Meta's reported spend
+lags — caps are best-effort and overspend can happen. That is why Meta's own
+native limits (account spend limit, campaign/ad-set caps) must also be set (it is
+in the Step 2/4 checklist). On a breach the system proposes a safety stop and
+never auto-resumes.</div>
+<div class="card"><h2>Which object holds the budget</h2>
+<p class="small mut">Budgets always sit at campaign or ad-set level — never per-ad.
+When the optimiser creates a proposal, it detects the real owner.</p>
 <table><tr><th>Budget object</th><th>Owner level</th><th>Current budget</th><th>Spend</th><th>Ad</th></tr>%s</table></div>
-<div class="card"><h2>Demo dataset badlo (MOCK)</h2>
+<div class="card"><h2>Change the demo dataset (MOCK)</h2>
 <form method="post" action="/budget/dataset">%s
 <label>Scenario</label><select name="dataset">
 <option>thin_data</option><option>one_big_winner</option><option>all_losers</option>
 <option>cheap_junk_leads</option><option>lagged_conversions</option>
 <option>spend_breach</option><option>fatigue</option></select>
-<p class="small">Dataset badalne se Budget/Reports/Optimiser ke demo numbers badal
-jayenge. Ye sirf MOCK data hai — asli data Step 3 ke baad aayega.</p>
-<button class="secondary" type="submit">Dataset badlo</button></form>
+<p class="small">Changing the dataset changes the demo numbers on Budget/Reports/Optimiser.
+This is MOCK data only — real data arrives after Step 3.</p>
+<button class="secondary" type="submit">Change dataset</button></form>
 <form method="post" action="/budget/optimise" style="margin-top:10px">%s
-<p class="small">Optimiser chalane se Role 19 abhi ke rows par proposals banakar
-approval queue me dalega (PROPOSE — kuch apply nahi hoga). Spend breach mile to
-safety stop + kill switch engage ho jayega.</p>
-<button type="submit">Optimiser chalao — proposals banao</button></form></div>
+<p class="small">Running the optimiser makes Role 19 create proposals from the current
+rows and put them in the approval queue (PROPOSE — nothing is applied). If a spend
+breach is found, a safety stop + the kill switch engage.</p>
+<button type="submit">Run optimiser — create proposals</button></form></div>
 """ % (mode_banner(settings), esc(cap if cap else "unset"), esc(total),
        ('<span class="pill bad">CAP BREACH (MOCK)</span>' if cap and total > cap
-        else '<span class="pill ok">Cap ke andar / cap unset</span>'),
+        else '<span class="pill ok">Within cap / cap unset</span>'),
        esc(settings.get("PER_CAMPAIGN_CAP") or "unset"),
        esc(settings.get("LIFETIME_CAP") or "unset"), per_rows,
        ctx["csrf_field"], ctx["csrf_field"])
@@ -1117,55 +1845,206 @@ def pg_leads(ctx):
                    for r in rows)
     body = """
 <h1>Lead Quality Log</h1>
-<p class="mut">Yahan sirf <strong>counts aur status</strong> store hote hain — koi naam,
-phone, email ya chat kabhi nahi. Main metric cost per QUALIFIED lead hai; cost per
-enquiry hamesha provisional kahlayega.</p>
+<p class="mut">Only <strong>counts and statuses</strong> are stored here — never a name,
+phone, email or chat. The main metric is cost per QUALIFIED lead; cost per
+enquiry is always called provisional.</p>
 <div class="grid">%s</div>
-<div class="card"><h2>Entry add karo</h2>
+<div class="card"><h2>Add an entry</h2>
 <form method="post" action="/leads/add">%s
-<label>Ad reference (ad id / naam)</label><input name="ad_ref" required>
+<label>Ad reference (ad id / name)</label><input name="ad_ref" required>
 <label>Status</label><select name="status">
 <option>enquiry</option><option>real_conversation</option>
 <option>reseller_application</option><option>order</option><option>junk</option></select>
 <label>Count</label><input name="count" type="number" value="1" min="1">
-<p class="small">Add dabane se sirf ye count lead_log me judega (audit entry ke saath).
-Koi personal data mat likho — ad_ref me sirf ad ki pehchan rakho.</p>
-<button type="submit">Lead count add karo</button></form></div>
+<p class="small">Adding only adds this count to the lead log (with an audit entry).
+Never write personal data — keep ad_ref to the ad's identity only.</p>
+<button type="submit">Add lead count</button></form></div>
 <div class="card"><h2>Recent entries</h2>
 <table><tr><th>Ad ref</th><th>Status</th><th>Count</th><th>When</th></tr>%s</table></div>
 """ % ("".join('<div class="card"><div class="mut small">%s</div><div class="kpi">%d</div></div>'
                % (esc(k), v) for k, v in summary.items()),
-       ctx["csrf_field"], hist or '<tr><td colspan="4" class="mut">Abhi koi entry nahi</td></tr>')
+       ctx["csrf_field"], hist or '<tr><td colspan="4" class="mut">No entries yet</td></tr>')
     return page("Leads", "/leads", body, ctx["flash"], conn, ctx)
 
 
 def pg_reports(ctx):
     conn = ctx["conn"]
+    settings = ctx["settings"]
+    profile = ctx["profile"]
+    pid = profile["id"] if profile else 0
+    kind = (ctx.get("query") or {}).get("kind", ["daily"])[0]
+    if kind not in ("daily", "weekly"):
+        kind = "daily"
     saved = store.list_reports(conn)
+    saved_kind = [r for r in saved if r["kind"] == kind]
+    latest = saved_kind[0] if saved_kind else (saved[0] if saved else None)
     hist = "".join("<tr><td>%d</td><td>%s</td><td>%s</td><td>%s</td></tr>"
                    % (r["id"], esc(r["kind"]), esc(r["language"]), esc(r["created_at"]))
                    for r in saved)
-    latest = saved[0]["body"] if saved else ""
+    # --- Presentation data: the same real rows the reports are built from ---
+    store.seed_insights(conn=conn, profile_id=pid)
+    rows = store.load_insight_rows(conn, profile_id=pid)
+    queue = ctx["queue"]
+    pending = queue.list_pending(profile_id=pid)
+    cur = settings.get("ACCOUNT_CURRENCY") or "INR"
+    sym = "₹" if cur == "INR" else (cur + " ")
+    t_spend = sum(float(r.get("spend") or 0) for r in rows)
+    t_enq = sum(int(r.get("enquiries") or 0) for r in rows)
+    t_qual = sum(int(r.get("qualified_leads") or 0) for r in rows)
+    t_cpq = (t_spend / t_qual) if t_qual else None
+    camps = {}
+    for r in rows:
+        c = camps.setdefault(r.get("campaign_id") or "—",
+                             {"leads": 0, "cost": 0.0})
+        c["leads"] += int(r.get("qualified_leads") or 0)
+        c["cost"] += float(r.get("spend") or 0)
+    for c in camps.values():
+        c["cpq"] = (c["cost"] / c["leads"]) if c["leads"] else None
+    with_leads = {k: v for k, v in camps.items() if v["leads"]}
+    ranked = sorted(with_leads.items(), key=lambda kv: kv[1]["cpq"])
+    top3 = ranked[:3]
+    bottom3 = list(reversed(ranked[-3:])) if ranked else []
+    no_lead = sorted(((k, v) for k, v in camps.items() if not v["leads"]),
+                     key=lambda kv: kv[1]["cost"], reverse=True)
+    bottom3 = (bottom3 + no_lead)[:3]
+    bottom_ids = {k for k, _v in bottom3}
+    # Insights bullets — only from real data that exists.
+    bullets = []
+    if top3:
+        k0, v0 = top3[0]
+        bullets.append(("#10b981", "Top performing campaign: <strong>%s</strong> — "
+                        "%d qualified leads at %s%s / CPL"
+                        % (esc(k0), v0["leads"], sym, esc(round(v0["cpq"], 2)))))
+    fatigue = next((p for p in pending if p["kind"] == "PROPOSE_CREATIVE_REFRESH"), None)
+    first_prop = pending[0] if pending else None
+    if first_prop is not None and first_prop is not fatigue:
+        bullets.append(("#f59e0b", "Key issue: %s"
+                        % esc((first_prop["payload"] or {}).get("what")
+                              or first_prop["kind"])))
+    if fatigue is not None:
+        bullets.append(("#3b82f6", "Creative fatigue: %s"
+                        % esc((fatigue["payload"] or {}).get("what")
+                              or "A creative refresh is proposed")))
+    bullets_html = "".join(
+        '<div class="ins-row"><span class="mc-dot" style="background:%s"></span>'
+        '<span>%s</span></div>' % (color, text) for color, text in bullets)
+
+    def camp_list(items, color):
+        out = []
+        for i, (cid, cdata) in enumerate(items, 1):
+            detail = ("%d leads · %s%s / CPL" % (cdata["leads"], sym,
+                        esc(round(cdata["cpq"], 2)))) if cdata["leads"] else \
+                     ("0 leads · %s%s spent" % (sym, esc(cdata["cost"])))
+            out.append('<div class="tc-row"><span class="tc-num" '
+                       'style="background:%s">%d</span><div><strong>%s</strong>'
+                       '<div class="small mut">%s</div></div></div>'
+                       % (color, i, esc(cid), detail))
+        return "".join(out) or '<p class="mut small">No campaign data yet</p>'
+
+    max_cost = max([c["cost"] for c in camps.values()] + [1])
+    perf_rows = ""
+    for cid, cdata in sorted(camps.items(), key=lambda kv: kv[1]["cost"],
+                             reverse=True):
+        pct = max(4, int(100 * cdata["cost"] / max_cost))
+        bar = ("linear-gradient(90deg,#fca5a5,#fecaca)" if cid in bottom_ids
+               else "linear-gradient(90deg,#7c3aed,#a78bfa)")
+        perf_rows += ('<div class="perf-row"><div class="perf-name">%s</div>'
+                      '<div class="perf-bar" style="width:%d%%;background:%s">'
+                      '<span>%s%s</span></div>'
+                      '<span class="pill info">%d Leads</span></div>'
+                      % (esc(cid), pct, bar, sym, esc(cdata["cost"]),
+                         cdata["leads"]))
+    rec = None
+    if pending:
+        p0 = pending[0]
+        rec = (p0["payload"] or {}).get("what") or p0["kind"]
+        rec_why = (p0["payload"] or {}).get("why") or ""
+    date_label = ("Latest %s report: %s" % (kind, latest["created_at"])) if latest \
+        else "No report generated yet"
+    export_link = ('<a class="btn" href="/reports?kind=%s">Export (view latest)</a>'
+                   % kind) if latest else ""
     body = """
-<h1>Reports</h1>
-<p class="mut">Daily report: spend, enquiries, cost per enquiry (provisional) aur per
-qualified lead, data-quality notes, top/bottom 3, pending proposals. Weekly: winning
-angle/format, next test, quality results, budget sifarish, trend notes. Bhasha
-settings ke LANGUAGES se aati hai (Hinglish default).</p>
-<div class="row">
-<form method="post" action="/reports/generate" class="inline">%s
-<input type="hidden" name="kind" value="daily"><button type="submit">Daily report banao</button></form>
-<form method="post" action="/reports/generate" class="inline">%s
-<input type="hidden" name="kind" value="weekly"><button class="secondary" type="submit">Weekly report banao</button></form>
+<style>
+.rep-head{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap}
+.toggle-pills{display:flex;gap:8px}
+.toggle-pills a{padding:7px 16px;border-radius:999px;border:1px solid var(--line);
+background:#fff;color:var(--mut);font-weight:600;font-size:13.5px}
+.toggle-pills a.on{background:var(--brand);color:#fff;border-color:var(--brand)}
+.toggle-pills a:hover{text-decoration:none}
+.rep-grid{display:grid;grid-template-columns:1.6fr 1fr;gap:14px;align-items:start}
+@media(max-width:960px){.rep-grid{grid-template-columns:1fr}}
+.ins-row{display:flex;gap:10px;align-items:flex-start;padding:7px 0;font-size:14px}
+.ins-row .mc-dot{margin-top:6px}
+.tc-row{display:flex;gap:11px;align-items:center;padding:7px 0}
+.tc-num{width:26px;height:26px;border-radius:50%%;color:#fff;font-weight:700;
+display:flex;align-items:center;justify-content:center;flex:none;font-size:13px}
+.tc-cols{display:grid;grid-template-columns:1fr 1fr;gap:8px 22px}
+@media(max-width:640px){.tc-cols{grid-template-columns:1fr}}
+.perf-row{display:flex;align-items:center;gap:10px;padding:7px 0}
+.perf-name{width:130px;flex:none;font-size:13px;font-weight:600;
+overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.perf-bar{height:26px;border-radius:8px;color:#fff;font-size:12.5px;font-weight:700;
+display:flex;align-items:center;padding:0 10px;min-width:64px}
+.rec-box{background:var(--violetbg);border-radius:12px;padding:13px 15px;font-size:14px}
+</style>
+<div class="rep-head"><div>
+<h1 style="margin-bottom:2px">Reports</h1>
+<p class="mut" style="margin:0">Performance summary and key insights</p>
+<p class="small mut">Report language follows the LANGUAGES setting (English by default).
+Numbers below come from the current data (MOCK dataset until Step 3).</p>
 </div>
-<p class="small mut">Report banao dabane se report generate hokar neeche save ho jayegi.
-Numbers abhi MOCK dataset ke hain.</p>
+<div style="text-align:right">
+<div class="toggle-pills">
+<a href="/reports?kind=daily" class="%s">Daily Report</a>
+<a href="/reports?kind=weekly" class="%s">Weekly Report</a>
+</div>
+<p class="small mut" style="margin:8px 0 6px">%s</p>%s
+</div></div>
+<div class="row" style="margin-bottom:6px">
+<form method="post" action="/reports/generate" class="inline">%s
+<input type="hidden" name="kind" value="daily"><button type="submit">Generate daily report</button></form>
+<form method="post" action="/reports/generate" class="inline">%s
+<input type="hidden" name="kind" value="weekly"><button class="secondary" type="submit">Generate weekly report</button></form>
+</div>
+<div class="grid">
+ <div class="card"><div class="mut small">Total Spend</div><div class="kpi">%s%s</div></div>
+ <div class="card"><div class="mut small">Enquiries</div><div class="kpi">%d</div></div>
+ <div class="card"><div class="mut small">Qualified Leads</div><div class="kpi">%d</div></div>
+ <div class="card"><div class="mut small">Cost per Qualified Lead</div><div class="kpi">%s</div></div>
+</div>
+<div class="rep-grid">
+<div class="card"><h2>%s Insights</h2>
 %s
+<div class="tc-cols" style="margin-top:12px">
+<div><h3 style="margin-top:0">Top 3 Campaigns</h3>%s</div>
+<div><h3 style="margin-top:0">Bottom 3 Campaigns</h3>%s</div>
+</div>
+<details style="margin-top:12px"><summary>Full report text</summary>
+%s</details>
+</div>
+<div>
+<div class="card"><h2>Campaign Performance</h2>
+<p class="small mut" style="margin-top:-6px">Spend vs Leads — latest report data</p>
+%s</div>
+<div class="rec-box"><strong>💡 Recommendation</strong><br>%s</div>
+</div>
+</div>
 <div class="card"><h2>Saved reports</h2>
 <table><tr><th>#</th><th>Kind</th><th>Language</th><th>When</th></tr>%s</table></div>
-""" % (ctx["csrf_field"], ctx["csrf_field"],
-       ('<div class="card"><h2>Latest report</h2><pre>%s</pre></div>' % esc(latest)) if latest else "",
-       hist or '<tr><td colspan="4" class="mut">Abhi koi report save nahi hai</td></tr>')
+""" % ("on" if kind == "daily" else "", "on" if kind == "weekly" else "",
+       esc(date_label), export_link,
+       ctx["csrf_field"], ctx["csrf_field"],
+       sym, esc(t_spend), t_enq, t_qual,
+       ("%s%s" % (sym, esc(round(t_cpq, 2)))) if t_cpq is not None else "n/a",
+       "Daily" if kind == "daily" else "Weekly",
+       bullets_html or '<p class="mut small">No insights yet — run the optimiser or generate a report.</p>',
+       camp_list(top3, "#10b981"), camp_list(bottom3, "#dc2626"),
+       ('<pre>%s</pre>' % esc(latest["body"])) if latest else
+       '<p class="mut small">No report saved yet</p>',
+       perf_rows or '<p class="mut small">No campaign data yet</p>',
+       (esc(rec) + (('<br><span class="small mut">%s</span>' % esc(rec_why)) if rec_why else ""))
+       if rec else "No pending recommendations right now — proposals appear here after an optimisation run.",
+       hist or '<tr><td colspan="4" class="mut">No reports saved yet</td></tr>')
     return page("Reports", "/reports", body, ctx["flash"], conn, ctx)
 
 
@@ -1202,28 +2081,27 @@ def pg_trends(ctx):
     pol_status = policies_register.register_status()
     body = """
 <h1>Knowledge — Meta register, Policies register, Trend watch</h1>
-<p class="mut">Har entry ke saath source URL aur date hai. UNVERIFIED matlab is
-environment me official page khud fetch nahi ho paya (403) — secondary sources
-ne Meta ko verbatim quote kiya hai; normal browser se re-verify kiye bina
-externally quote mat karo. Register kabhi strategy apne aap nahi badalta —
-badlav hamesha proposal + owner ke faisle se.</p>
+<p class="mut">Every entry carries its source URL and date. UNVERIFIED means the
+official page itself could not be fetched in this environment (403) — secondary
+sources quoted Meta verbatim; do not quote externally without re-verifying in a
+normal browser. The register never changes strategy on its own —
+changes always happen via a proposal + the owner's decision.</p>
 <div class="card"><h2>Meta Knowledge register — 2026 features/changes</h2>
 <p class="small mut">%s</p>
 <table><tr><th>ID</th><th>Feature / change</th><th>Source</th><th>Read</th><th>Status</th><th>Note</th></tr>%s</table></div>
 <div class="card"><h2>Policies register — Meta Advertising Policies digest</h2>
-<p class="small mut">%s Personal attributes rule dono official lists ka UNION
-enforce karti hai (Transparency Center + Help Center lists match nahi karte).
-2026 Ad Terms (PR9) DISPUTED hai — ek tracker kehta hai update 5 Nov 2026 ko
-bina nayi date ke pause hua. Ye digest legal advice nahi hai.</p>
+<p class="small mut">%s The personal attributes rule enforces the UNION of both
+official lists (the Transparency Center and Help Center lists do not match).
+The 2026 Ad Terms (PR9) are DISPUTED — one tracker says the update was paused
+on 5 Nov 2026 without a new date. This digest is not legal advice.</p>
 <table><tr><th>ID</th><th>Rule</th><th>Category</th><th>Status</th><th>Source</th></tr>%s</table></div>
 <div class="card"><h2>Trend watch — official sources</h2>
 <table><tr><th>Item</th><th>Date</th><th>Status</th><th>Note</th></tr>%s</table></div>
 <div class="card"><h2>PRACTICES note</h2>
-<p class="small">Objectives, structure, targeting/broad, placements, learning phase,
-budget badlav aur attribution par official guidance PRACTICES.md me hai (repo ke
-saath) — Step 2 me official docs se verify ho chuka hai; API %s par pinned hai.
-Phir bhi koi bhi number default ke roop me use nahi hota — thresholds owner
-settings hain.</p></div>
+<p class="small">Official guidance on objectives, structure, targeting/broad, placements,
+the learning phase, budget changes and attribution is in PRACTICES.md (with the
+repo) — verified against official docs in Step 2; the API is pinned at %s.
+Even so, no number is used as a default — thresholds are owner settings.</p></div>
 """ % (esc(review["note"]), reg, esc(pol_status["note"]), pol, items,
        esc(API_VERSION_LABEL))
     return page("Knowledge", "/trends", body, ctx["flash"], ctx["conn"], ctx)
@@ -1245,19 +2123,20 @@ def pg_audit(ctx):
                      for r in writes)
     body = """
 <h1>Errors &amp; Audit Log</h1>
-<p class="mut">Har proposal, approval aur write yahan record hota hai — secrets aur
-personal data logs me jaane se pehle redact ho jate hain (email/phone/token patterns).</p>
+<p class="mut">Every proposal, approval and write is recorded here — secrets and
+personal data are redacted before they reach the logs (email/phone/token patterns).</p>
 <div class="card"><h2>Meta writes</h2>
 <table><tr><th>#</th><th>Mode</th><th>Status</th><th>When</th></tr>%s</table>
-<p class="small mut">Rollback: kisi bhi write ka rollback fresh state padhkar, diff
-dikha kar aur owner ki alag approval lekar hi hota hai — CLI/library
-(<code>app.rollback</code>) se, kabhi auto nahi. Rollback kharch wapas nahi karta.</p></div>
+<p class="small mut">Rollback: rolling back any write happens only after reading the
+fresh state, showing the diff and taking the owner's separate approval — via the
+CLI/library (<code>app.rollback</code>), never automatically. Rollback does not
+refund spend.</p></div>
 <div class="card"><h2>Errors</h2>
 <table><tr><th>Source</th><th>Message (redacted)</th><th>When</th></tr>%s</table></div>
 <div class="card"><h2>Audit log (latest 60)</h2>
 <table><tr><th>#</th><th>Event</th><th>Detail (redacted)</th><th>When</th></tr>%s</table></div>
-""" % (w_html or '<tr><td colspan="4" class="mut">Abhi koi write nahi hua</td></tr>',
-       e_html or '<tr><td colspan="3" class="mut">Koi error record nahi hai</td></tr>',
+""" % (w_html or '<tr><td colspan="4" class="mut">No writes yet</td></tr>',
+       e_html or '<tr><td colspan="3" class="mut">No errors recorded</td></tr>',
        a_html)
     return page("Errors & Audit", "/audit", body, ctx["flash"], conn, ctx)
 
@@ -1278,20 +2157,20 @@ def post_login(ctx, form):
         ctx["set_cookie"] = token
         return "/"
     log_error(ctx["conn"], "auth", "Login failed — wrong password (value not logged).")
-    return "/login?msg=" + urllib.parse.quote("Galat password — dobara try karo.")
+    return "/login?msg=" + urllib.parse.quote("Wrong password — please try again.")
 
 
 def post_setup(ctx, form):
     conn = ctx["conn"]
     if auth.owner_exists(conn):
-        return "/login?msg=" + urllib.parse.quote("Owner pehle se set hai — setup band hai.")
+        return "/login?msg=" + urllib.parse.quote("The owner is already set — setup is closed.")
     try:
         auth.create_owner(form.get("password", ""), conn)
     except ValueError as e:
         return "/setup?msg=" + urllib.parse.quote(str(e))
     token, _csrf = auth.create_session(conn)
     ctx["set_cookie"] = token
-    return "/?msg=" + urllib.parse.quote("Owner set ho gaya. Dashboard ready hai.")
+    return "/?msg=" + urllib.parse.quote("Owner is set. The dashboard is ready.")
 
 
 def post_settings(ctx, form):
@@ -1317,7 +2196,7 @@ def post_settings(ctx, form):
             settings[key] = (form.get(key) or "").strip()
     save_settings(settings)
     audit(ctx["conn"], "settings_saved", "Settings updated by owner (values not logged).")
-    return "Settings save ho gaye."
+    return "Settings saved."
 
 
 def post_killswitch(ctx, form):
@@ -1325,11 +2204,11 @@ def post_killswitch(ctx, form):
     if form.get("action") == "on":
         from .mock_meta import MockMetaClient
         queue.engage_kill_switch("owner pressed kill switch in UI", mock_client=MockMetaClient())
-        return "Kill switch ON — automation band, execution blocked. Auto-resume kabhi nahi hoga."
+        return "Kill switch ON — automation stopped, execution blocked. It will never auto-resume."
     queue.conn.execute("INSERT OR REPLACE INTO kv (key, value) VALUES ('kill_switch', '0')")
     queue.conn.commit()
     audit(ctx["conn"], "kill_switch_released", "Owner released the kill switch manually.")
-    return "Kill switch OFF — owner ne khud release kiya. AUTOMATION_MODE pehle jaisa hi rahega jo settings me hai."
+    return "Kill switch OFF — released by the owner. AUTOMATION_MODE stays whatever Settings says."
 
 
 def _offering_name(ctx, offering_id):
@@ -1341,12 +2220,12 @@ def _offering_name(ctx, offering_id):
 
 def post_eligibility_confirm(ctx, form):
     if not ctx["profile"]:
-        return "Refused: koi active profile nahi hai."
+        return "Refused: there is no active profile."
     offering_id = int(form.get("offering_id", "0") or 0)
     proof = (form.get("proof_note") or "").strip()
     tdate = (form.get("terms_checked_date") or "").strip()
     if not proof or not tdate:
-        return "Refused: proof note aur terms-checked date dono zaroori hain — bina inke confirm nahi hoga."
+        return "Refused: both a proof note and a terms-checked date are required — without them it cannot be confirmed."
     profiles_mod.update_offering(offering_id, {
         "supplier": (form.get("supplier") or "").strip(),
         "proof_note": proof, "terms_checked_date": tdate,
@@ -1354,7 +2233,7 @@ def post_eligibility_confirm(ctx, form):
     audit(ctx["conn"], "eligibility_confirmed",
           "offering_id=%s profile=%s (proof recorded)"
           % (offering_id, ctx["profile"]["slug"]))
-    return "%s ki permission confirm ho gayi (proof + date ke saath)." % _offering_name(ctx, offering_id)
+    return "Permission confirmed for %s (with proof + date)." % _offering_name(ctx, offering_id)
 
 
 def post_eligibility_unconfirm(ctx, form):
@@ -1362,12 +2241,12 @@ def post_eligibility_unconfirm(ctx, form):
     profiles_mod.update_offering(offering_id, {"permission_confirmed": False},
                                  ctx["conn"])
     audit(ctx["conn"], "eligibility_unconfirmed", "offering_id=%s" % offering_id)
-    return "%s unconfirm ho gaya — uske ads phir se blocked hain." % _offering_name(ctx, offering_id)
+    return "%s is unconfirmed — its ads are blocked again." % _offering_name(ctx, offering_id)
 
 
 def post_eligibility_add(ctx, form):
     if not ctx["profile"]:
-        return "Refused: koi active profile nahi hai."
+        return "Refused: there is no active profile."
     try:
         oid = profiles_mod.add_offering(ctx["profile"]["id"], {
             "name": form.get("name", ""), "type": form.get("type", "product"),
@@ -1379,17 +2258,17 @@ def post_eligibility_add(ctx, form):
         return "Refused: %s" % e
     audit(ctx["conn"], "offering_added", "offering_id=%s profile=%s"
           % (oid, ctx["profile"]["slug"]))
-    return "Offering add ho gaya (UNCONFIRMED — pehle permission confirm karo)."
+    return "Offering added (UNCONFIRMED — confirm its permission first)."
 
 
 def post_eligibility_delete(ctx, form):
     if not form.get("confirm_delete"):
-        return "Refused: delete ke liye confirm checkbox tick karo."
+        return "Refused: tick the confirm checkbox to delete."
     offering_id = int(form.get("offering_id", "0") or 0)
     name = _offering_name(ctx, offering_id)
     profiles_mod.delete_offering(offering_id, ctx["conn"])
     audit(ctx["conn"], "offering_deleted", "offering_id=%s" % offering_id)
-    return "%s catalog se hat gaya." % name
+    return "%s was removed from the catalog." % name
 
 
 def post_creative_generate(ctx, form):
@@ -1406,15 +2285,15 @@ def post_creative_generate(ctx, form):
     log_role_run(conn, "07_copywriter", "done", result["copy"])
     log_role_run(conn, "10_policy_checker", "done", result["policy"])
     if result["policy"]["allowed"]:
-        return "Creative set #%d save ho gaya aur policy PASS hai. Planner se ise approval ke liye bhej sakte ho." % cid
-    return ("Creative set #%d save ho gaya lekin policy BLOCKED hai: %s"
+        return "Creative set #%d saved and policy PASS. You can send it for approval from the Planner." % cid
+    return ("Creative set #%d saved but policy BLOCKED: %s"
             % (cid, "; ".join(result["policy"]["reasons"])))
 
 
 def post_policycheck(ctx, form):
     result = policy_checker.check_claims(form.get("text", ""))
     if result["allowed"]:
-        return "Policy check: koi banned claim nahi mila. (Sirf claims scan hua — eligibility/destination alag gates hain.)"
+        return "Policy check: no banned claim found. (Only claims were scanned — eligibility/destination are separate gates.)"
     return "Policy check BLOCKED: " + "; ".join(result["reasons"])
 
 
@@ -1429,21 +2308,21 @@ def post_upload(ctx, form):
     conn.commit()
     audit(conn, "asset_registered", "file=%s kind=%s (manual upload, visual check PENDING)"
           % (info["filename"], info["kind"]))
-    return "Asset register ho gaya — visual check PENDING hai, tab tak approval queue me nahi ja sakta."
+    return "Asset registered — visual check is PENDING; until then it cannot enter the approval queue."
 
 
 def post_visualcheck(ctx, form):
     conn = ctx["conn"]
     if not all(form.get(k) for k in ("c1", "c2", "c3", "c4")):
-        return "Refused: visual checklist ke saare 4 item tick hone chahiye."
+        return "Refused: all 4 visual checklist items must be ticked."
     cur = conn.execute(
         "UPDATE assets SET visual_check = 'PASS' WHERE filename = ?",
         (form.get("filename", ""),))
     conn.commit()
     if cur.rowcount == 0:
-        return "Is naam ka koi asset register nahi hai — pehle register karo."
+        return "No asset is registered under this name — register it first."
     audit(conn, "asset_visual_check_pass", "file=%s" % form.get("filename", ""))
-    return "Visual check PASS mark ho gaya."
+    return "Visual check marked PASS."
 
 
 PROVIDER_FORM_FIELDS = {
@@ -1479,8 +2358,8 @@ def post_providers_save(ctx, form):
           % (cap, cfg["preset"], cfg.get("provider_name") or "-", cfg.get("base_url"),
              cfg.get("model")))
     status = providers.connection_status(cap)
-    return ("%s connection save ho gaya. Key: %s. Base URL: %s · Model: %s"
-            % (cap, "set hai" if status["key_set"] else "set NAHI hai",
+    return ("%s connection saved. Key: %s. Base URL: %s · Model: %s"
+            % (cap, "is set" if status["key_set"] else "is NOT set",
                cfg.get("base_url") or "—", cfg.get("model") or "—"))
 
 
@@ -1494,8 +2373,8 @@ def post_providers_preset(ctx, form):
         return "Refused: %s" % e
     audit(ctx["conn"], "provider_preset_applied",
           "capability=%s preset=%s" % (cap, cfg["preset"]))
-    return ("%s par preset '%s' lag gaya — base URL %s, model %s pre-filled hai. "
-            "Ab bas API key paste karke save karo."
+    return ("%s: preset '%s' applied — base URL %s, model %s pre-filled. "
+            "Now just paste the API key and save."
             % (cap, cfg["preset"], cfg.get("base_url") or "—", cfg.get("model") or "—"))
 
 
@@ -1519,7 +2398,7 @@ def post_providers_removekey(ctx, form):
         return "Refused: unknown capability."
     providers.remove_api_key(cap)
     audit(ctx["conn"], "provider_key_removed", "capability=%s" % cap)
-    return "%s ki API key secrets file se hat gayi." % cap
+    return "The %s API key was removed from the secrets file." % cap
 
 
 def post_api_copy(ctx, form):
@@ -1543,14 +2422,14 @@ def post_api_copy(ctx, form):
              result.get("model", "-"), result.get("request_id", "-"),
              providers.COST_NOTE))
     if result.get("source") != "api":
-        return ("Creative set #%d TEMPLATE se bana — %s. Policy: %s"
+        return ("Creative set #%d created from TEMPLATES — %s. Policy: %s"
                 % (cid, result["label"],
                    "PASS" if result["policy"]["allowed"]
                    else "BLOCKED — " + "; ".join(result["policy"]["reasons"])))
     if result["policy"]["allowed"]:
-        return ("API copy #%d ban gayi (%s, %s) aur policy PASS hai. Cost: %s"
+        return ("API copy #%d created (%s, %s) and policy PASS. Cost: %s"
                 % (cid, result.get("provider"), result.get("model"), providers.COST_NOTE))
-    return ("API copy #%d ban gayi lekin policy BLOCKED hai: %s"
+    return ("API copy #%d created but policy BLOCKED: %s"
             % (cid, "; ".join(result["policy"]["reasons"])))
 
 
@@ -1563,17 +2442,17 @@ def _register_generated(ctx, meta, kind, prompt, source):
           "file=%s kind=%s provider=%s model=%s request=%s cost=%s (visual check PENDING)"
           % (meta["filename"], kind, meta["provider"], meta["model"],
              meta["request_id"], providers.COST_NOTE))
-    return ("Asset %s ban gaya (%s, %s) — visual check PENDING hai; checklist "
-            "PASS kiye bina approval queue me nahi jayega. Cost: %s"
+    return ("Asset %s created (%s, %s) — visual check is PENDING; it will not enter "
+            "the approval queue until the checklist PASSes. Cost: %s"
             % (meta["filename"], meta["provider"], meta["model"], providers.COST_NOTE))
 
 
 def post_api_image(ctx, form):
     prompt = (form.get("prompt") or "").strip()
     if not prompt:
-        return "Refused: image prompt khaali hai."
+        return "Refused: the image prompt is empty."
     if not providers.is_configured("image"):
-        return "API not connected — pehle API Providers page se Image API connect karo."
+        return "API not connected — connect the Image API from the API Providers page first."
     try:
         meta = creative_mod.generate_poster_image(prompt)
     except providers.ProviderError as e:
@@ -1585,9 +2464,9 @@ def post_api_image(ctx, form):
 def post_api_carousel(ctx, form):
     slides = [s.strip() for s in (form.get("slides") or "").splitlines() if s.strip()]
     if not slides:
-        return "Refused: kam se kam ek slide brief likho."
+        return "Refused: write at least one slide brief."
     if not providers.is_configured("image"):
-        return "API not connected — pehle API Providers page se Image API connect karo."
+        return "API not connected — connect the Image API from the API Providers page first."
     try:
         metas = creative_mod.generate_carousel_images(slides)
     except providers.ProviderError as e:
@@ -1597,15 +2476,15 @@ def post_api_carousel(ctx, form):
     for i, meta in enumerate(metas, 1):
         msgs.append(_register_generated(ctx, meta, "image", slides[i - 1],
                                         "api-carousel slide %d" % i))
-    return "Carousel ke %d slides ban gaye. " % len(metas) + " | ".join(msgs)
+    return "%d carousel slides created. " % len(metas) + " | ".join(msgs)
 
 
 def post_api_video(ctx, form):
     prompt = (form.get("prompt") or "").strip()
     if not prompt:
-        return "Refused: video prompt khaali hai."
+        return "Refused: the video prompt is empty."
     if not providers.is_configured("video"):
-        return "API not connected — pehle API Providers page se Video API connect karo."
+        return "API not connected — connect the Video API from the API Providers page first."
     try:
         out = creative_mod.submit_reel_video(
             prompt, image_url=(form.get("image_url") or "").strip() or None,
@@ -1620,8 +2499,8 @@ def post_api_video(ctx, form):
         "model": out["model"], "prompt": prompt, "status": "submitted",
         "created_at": _now(), "request_id": out["request_id"],
     }, ctx["conn"])
-    return ("Video job submit ho gaya — job id %s (%s, %s). Neeche Video jobs table me "
-            "'Status check karo' se poll karo. Cost: %s"
+    return ("Video job submitted — job id %s (%s, %s). Poll it from the Video jobs "
+            "table below with 'Check status'. Cost: %s"
             % (out["job_id"], out["provider"], out["model"], providers.COST_NOTE))
 
 
@@ -1631,9 +2510,9 @@ def post_api_video_check(ctx, form):
     job = next((j for j in store.list_video_jobs(conn)
                 if str(j.get("job_id")) == str(job_id)), None)
     if job is None:
-        return "Is id ka koi video job record nahi hai."
+        return "There is no video job record with this id."
     if job.get("status") == "done":
-        return "Ye job pehle hi done hai — asset register ho chuka hai."
+        return "This job is already done — the asset is registered."
     try:
         out = creative_mod.poll_reel_video(job_id)
     except providers.ProviderError as e:
@@ -1641,12 +2520,12 @@ def post_api_video_check(ctx, form):
         return "Video API error: %s" % e
     if out["state"] == "pending":
         store.update_video_job(job_id, {"status": "pending: %s" % out["raw_status"]}, conn)
-        return "Job %s abhi processing me hai (status: %s). Thodi der baad phir check karo." \
+        return "Job %s is still processing (status: %s). Check again in a little while." \
             % (job_id, out["raw_status"])
     if out["state"] == "failed":
         store.update_video_job(job_id, {"status": "failed"}, conn)
         audit(conn, "video_job_failed", "job=%s" % job_id)
-        return "Job %s FAILED ho gaya provider par. Prompt badalkar dobara try karo." % job_id
+        return "Job %s FAILED at the provider. Change the prompt and try again." % job_id
     # done
     meta = {"filename": None, "provider": job.get("provider"),
             "model": job.get("model"), "request_id": out["request_id"],
@@ -1690,9 +2569,9 @@ def post_planner_plan(ctx, form):
         "daily_budget": form.get("daily_budget", ""),
         "plan": plan,
         "policy_preview": creative["policy"],
-        "cost_effect": "Create hone par objects PAUSED rahenge — spend tabhi shuru "
-                       "hoga jab activation ki ALAG approval milegi (is build me "
-                       "activation ka koi automatic path nahi hai).",
+        "cost_effect": "When created, the objects stay PAUSED — spend starts only "
+                       "when activation gets a SEPARATE approval (this build has "
+                       "no automatic path to activation).",
     }
     # Guardrail pre-flight: BLOCK = queue me entry NAHI; WARN = warnings
     # draft ke saath attach hokar jaate hain (draft par visible).
@@ -1719,8 +2598,8 @@ def post_planner_plan(ctx, form):
         reasons = "; ".join(b["reason"] for b in preflight["blocks"])
         from .common import log_role_run
         log_role_run(conn, "guardrail_preflight", "blocked", preflight)
-        return ("⛔ Guardrail pre-flight ne draft ROK diya — approval "
-                "queue me NAHI gaya. Karan: %s" % reasons)
+        return ("⛔ Guardrail pre-flight STOPPED the draft — it did NOT go to the "
+                "approval queue. Reason: %s" % reasons)
     if preflight["warnings"]:
         draft["guardrail_warnings"] = [
             {"id": w["id"], "name": w["name"], "reason": w["reason"]}
@@ -1730,9 +2609,9 @@ def post_planner_plan(ctx, form):
     log_role_run(conn, "11_structure_planner", "done", plan)
     warn_note = ""
     if preflight["warnings"]:
-        warn_note = " Guardrail warnings attach hain: %s" % "; ".join(
+        warn_note = " Guardrail warnings attached: %s" % "; ".join(
             w["name"] for w in preflight["warnings"])
-    return ("Plan ban gaya aur CAMPAIGN_DRAFT #%d approval queue me gaya. "
+    return ("Plan created and CAMPAIGN_DRAFT #%d went to the approval queue. "
             "Policy preview: %s.%s" % (item_id, "PASS" if creative["policy"]["allowed"]
                                     else "BLOCKED — " + "; ".join(creative["policy"]["reasons"]),
                                     warn_note))
@@ -1743,9 +2622,9 @@ def post_approval_action(ctx, form, action):
     item_id = int(form.get("id", "0"))
     if action == "approve":
         if queue.kill_switch_active():
-            return "Kill switch ON hai — approvals blocked hain."
+            return "The kill switch is ON — approvals are blocked."
         queue.approve(item_id)
-        return "Item #%d APPROVED. Execute alag step hai (History table se) — activation kabhi auto nahi." % item_id
+        return "Item #%d APPROVED. Execute is a separate step (from the History table) — activation is never automatic." % item_id
     if action == "reject":
         queue.reject(item_id)
         return "Item #%d REJECTED." % item_id
@@ -1753,13 +2632,13 @@ def post_approval_action(ctx, form, action):
         try:
             payload = json.loads(form.get("payload", "{}"))
         except ValueError:
-            return "Edit refused: payload valid JSON nahi hai."
+            return "Edit refused: the payload is not valid JSON."
         queue.edit_item(item_id, payload)
-        return "Item #%d ka draft edit save ho gaya." % item_id
+        return "Item #%d draft edit saved." % item_id
     if action == "execute":
         result = execute_approved_item(item_id, ctx["settings"], conn=ctx["conn"], queue=queue)
         if result.get("ok"):
-            return "Execute ho gaya (%s): %s" % (result.get("mode"), result.get("note"))
+            return "Executed (%s): %s" % (result.get("mode"), result.get("note"))
         return "Execute BLOCKED: %s %s" % (result.get("blocked", ""),
                                            "; ".join(result.get("reasons", [])))
     return "Unknown action."
@@ -1767,13 +2646,13 @@ def post_approval_action(ctx, form, action):
 
 def post_budget_dataset(ctx, form):
     n = store.replace_insights(form.get("dataset", "one_big_winner"), ctx["conn"])
-    return "MOCK dataset badal gaya — ab %d rows active hain." % n
+    return "MOCK dataset changed — %d rows are now active." % n
 
 
 def post_budget_optimise(ctx, form):
     from . import jobs
     rc = jobs.cmd_optimise(None)
-    return "Optimiser chala (rc=%s). Proposals approval queue me dekho." % rc
+    return "Optimiser ran (rc=%s). See the proposals in the approval queue." % rc
 
 
 def post_leads_add(ctx, form):
@@ -1782,14 +2661,14 @@ def post_leads_add(ctx, form):
                        int(form.get("count", "1")), ctx["conn"])
     except ValueError as e:
         return "Refused: %s" % e
-    return "Lead count add ho gaya (sirf count/status — koi personal data store nahi hua)."
+    return "Lead count added (count/status only — no personal data was stored)."
 
 
 def post_reports_generate(ctx, form):
     from . import jobs
     kind = form.get("kind", "daily")
     jobs._report(None, kind)
-    return "%s report generate hokar save ho gayi." % kind.capitalize()
+    return "%s report generated and saved." % kind.capitalize()
 
 
 def post_roles_run(ctx, form):
@@ -1824,11 +2703,11 @@ def post_roles_run(ctx, form):
     run(roles.role_16_data_collector())
     run(roles.role_17_lead_quality_tracker(rows))
     run(roles.role_18_creative_analyst(rows))
-    run(roles.role_20_reporter(rows, [], (settings.get("LANGUAGES") or ["Hinglish"])[0],
+    run(roles.role_20_reporter(rows, [], (settings.get("LANGUAGES") or ["English"])[0],
                                business_name=profile["name"] if profile else None,
                                industry=profile["industry"] if profile else None))
     audit(conn, "roles_manual_run", "roles=%s" % ",".join(ran))
-    return "%d roles MOCK data par chal gaye — outputs role_runs me logged hain." % len(ran)
+    return "%d roles ran on MOCK data — outputs are logged in role_runs." % len(ran)
 
 
 # ------------------------------------------------------- Business Profiles
@@ -1852,7 +2731,7 @@ def pg_profiles(ctx):
                  "<td>%s</td><td>%d</td><td class='small'>"
                  "<form method='post' action='/profiles/switch' class='inline'>%s"
                  "<input type='hidden' name='profile_id' value='%d'>"
-                 "<button class='secondary' type='submit'>Active karo</button></form> "
+                 "<button class='secondary' type='submit'>Make active</button></form> "
                  "<form method='post' action='/profiles/duplicate' class='inline'>%s"
                  "<input type='hidden' name='profile_id' value='%d'>"
                  "<button class='secondary' type='submit'>Duplicate</button></form> "
@@ -1876,8 +2755,8 @@ def pg_profiles(ctx):
     if sh:
         mp = profiles_mod.migration_proof(conn, sh["id"])
         proof = ("<div class='card'><h2>Software Hub migration proof</h2>"
-                 "<p class='small'>PRODUCT_ELIGIBILITY.yaml se DB catalog: "
-                 "source %d · stored %d · names match: %s · saare flags "
+                 "<p class='small'>PRODUCT_ELIGIBILITY.yaml to DB catalog: "
+                 "source %d · stored %d · names match: %s · all flags "
                  "unconfirmed: %s · <strong>lossless: %s</strong>%s</p></div>"
                  % (mp["source_count"], mp["stored_count"], mp["names_match"],
                     mp["all_unconfirmed"], mp["lossless"],
@@ -1888,7 +2767,7 @@ def pg_profiles(ctx):
         ov_inputs = "".join(
             "<label>%s (profile override)</label><input name='ov_%s' value='%s'>"
             % (k, k, esc(ov.get(k, ""))) for k in _OVERRIDE_FIELDS)
-        edit = """<div class="card"><h2>Active profile edit karo — %s</h2>
+        edit = """<div class="card"><h2>Edit the active profile — %s</h2>
 <form method="post" action="/profiles/update">%s
 <input type="hidden" name="profile_id" value="%d">
 <label>Business name</label><input name="name" value="%s">
@@ -1902,13 +2781,13 @@ def pg_profiles(ctx):
 <label>Currency</label><input name="currency" value="%s">
 <label>Sales model</label><select name="sales_model">%s</select>
 %s
-<label><input type="checkbox" name="ov_DESTINATION_READY" value="1" %s> DESTINATION_READY (override) — landing page live aur ready hai</label>
+<label><input type="checkbox" name="ov_DESTINATION_READY" value="1" %s> DESTINATION_READY (override) — the landing page is live and ready</label>
 <label>Automation mode (override)</label><select name="ov_AUTOMATION_MODE">
-<option value="">(global setting use karo)</option>
+<option value="">(use the global setting)</option>
 <option %s>PROPOSE</option><option %s>AUTO_WITHIN_RULES</option></select>
-<p class="small mut">Override khaali chhodo to global setting lagegi. Per-profile
-catalog Eligibility page par, compliance pack wahi dikhta hai.</p>
-<button type="submit">Profile save karo</button></form></div>""" % (
+<p class="small mut">Leave an override empty to use the global setting. The per-profile
+catalog is on the Eligibility page, and the compliance pack shows there too.</p>
+<button type="submit">Save profile</button></form></div>""" % (
             esc(active["name"]), ctx["csrf_field"], active["id"],
             esc(active["name"]), esc(active["industry"]),
             esc(active["description"]), esc(active["website"]),
@@ -1923,18 +2802,18 @@ catalog Eligibility page par, compliance pack wahi dikhta hai.</p>
             "selected" if ov.get("AUTOMATION_MODE") == "PROPOSE" else "",
             "selected" if ov.get("AUTOMATION_MODE") == "AUTO_WITHIN_RULES" else "")
     body = """<h1>Business Profiles</h1>
-<p class="mut">Har business ka apna profile — apna catalog, competitors aur
-settings. Header se bhi switch hota hai. Presets editable starting points
-hain, legal advice nahi.</p>
+<p class="mut">Every business has its own profile — its own catalog, competitors and
+settings. You can also switch from the sidebar. Presets are editable starting
+points, not legal advice.</p>
 <div class="card"><table><tr><th></th><th>Business</th><th>Industry</th><th>Preset</th>
 <th>Sales model</th><th>Offerings</th><th>Actions</th></tr>%s</table></div>
 %s
-<div class="card"><h2>Naya profile banao</h2>
+<div class="card"><h2>Create a new profile</h2>
 <form method="post" action="/profiles/create">%s
 <label>Business name</label><input name="name" required>
-<label>Industry preset (funnel/KPI defaults + compliance pack seed hoga)</label>
+<label>Industry preset (seeds funnel/KPI defaults + the compliance pack)</label>
 <select name="industry_preset">%s</select>
-<label>Industry (free text — preset label se alag chaahe to)</label><input name="industry">
+<label>Industry (free text — if different from the preset label)</label><input name="industry">
 <label>Description</label><textarea name="description" rows="2"></textarea>
 <label>Website / destination URL</label><input name="website" placeholder="https://">
 <label>Target type</label><select name="target_type">%s</select>
@@ -1943,7 +2822,7 @@ hain, legal advice nahi.</p>
 <label>Languages</label><input name="languages">
 <label>Currency</label><input name="currency" placeholder="INR">
 <label>Sales model</label><select name="sales_model">%s</select>
-<button type="submit">Profile banao</button></form></div>
+<button type="submit">Create profile</button></form></div>
 %s""" % (rows, proof, ctx["csrf_field"], preset_options, target_options,
          model_options, edit)
     return page("Profiles", "/profiles", body, ctx["flash"], conn, ctx)
@@ -1952,15 +2831,15 @@ hain, legal advice nahi.</p>
 def post_profiles_switch(ctx, form):
     profile = profiles_mod.set_active_profile(int(form.get("profile_id") or 0),
                                               ctx["conn"])
-    return "Active profile ab: %s (%s)" % (profile["name"], profile["industry"])
+    return "Active profile is now: %s (%s)" % (profile["name"], profile["industry"])
 
 
 def post_profiles_create(ctx, form):
     data = {k: form.get(k, "") for k in _PROFILE_FIELDS}
     data["industry_preset"] = form.get("industry_preset", "generic")
     profile = profiles_mod.create_profile(data, ctx["conn"])
-    return ("Profile '%s' ban gaya (preset: %s). Catalog Eligibility page "
-            "par add karo — naya offering hamesha UNCONFIRMED rehta hai."
+    return ("Profile '%s' created (preset: %s). Add the catalog on the Eligibility "
+            "page — a new offering always stays UNCONFIRMED."
             % (profile["name"], profile["industry_preset"]))
 
 
@@ -1982,20 +2861,20 @@ def post_profiles_update(ctx, form):
         overrides["AUTOMATION_MODE"] = mode
     data["settings_overrides"] = overrides
     profile = profiles_mod.update_profile(pid, data, conn)
-    return "Profile '%s' update ho gaya (overrides sirf is profile par lagte hain)." % profile["name"]
+    return "Profile '%s' updated (overrides apply to this profile only)." % profile["name"]
 
 
 def post_profiles_duplicate(ctx, form):
     clone = profiles_mod.duplicate_profile(int(form.get("profile_id") or 0),
                                            ctx["conn"])
-    return "Duplicate profile ban gaya: %s (catalog + competitors copy hue)." % clone["name"]
+    return "Duplicate profile created: %s (catalog + competitors copied)." % clone["name"]
 
 
 def post_profiles_delete(ctx, form):
     if form.get("confirm_delete") != "yes":
-        return "Delete NAHI hua — confirm checkbox tick karna zaroori hai."
+        return "NOT deleted — ticking the confirm checkbox is required."
     profiles_mod.delete_profile(int(form.get("profile_id") or 0), ctx["conn"])
-    return "Profile delete ho gaya. Uske catalog/competitor rows bhi gaye."
+    return "Profile deleted. Its catalog/competitor rows are gone too."
 
 
 # ------------------------------------------------------------ Growth Loop
@@ -2009,7 +2888,7 @@ def pg_loop(ctx):
         stage_rows += ("<tr><td>%s</td><td>%s</td><td>%s</td>"
                        "<td class='small'>%s</td></tr>"
                        % (esc(s["label"]),
-                          "✅ chala" if s["last_run"] else "⏳ pending",
+                          "✅ done" if s["last_run"] else "⏳ pending",
                           esc(s["last_run"] or "—"), esc(s["detail"] or "")))
     hist = "".join("<tr><td>%s</td><td>%s</td><td class='small'>%s</td></tr>"
                    % (esc(h["at"]), esc(h["stage"]), esc(h["detail"]))
@@ -2026,8 +2905,8 @@ def pg_loop(ctx):
                          esc(brief["source_date"]), esc(brief["score_note"]),
                          esc(brief["rule"])))
     else:
-        brief_html = ("<p class='mut'>Abhi koi inspiration source nahi — neeche "
-                      "top-creative record add karo, ya pehle mock insights aane do.</p>")
+        brief_html = ("<p class='mut'>No inspiration source yet — record a "
+                      "top creative below, or let the mock insights arrive first.</p>")
     comps = profiles_mod.list_competitors(pid, conn) if pid else []
     comp_rows = "".join(
         "<tr><td>%s</td><td>%s</td><td>%s</td><td class='small'>%s</td>"
@@ -2038,8 +2917,8 @@ def pg_loop(ctx):
            ctx["csrf_field"], c["id"]) for c in comps)
     board = loop_mod.competitor_research_board(pid, conn=conn, profile=profile)
     board_comp_rows = "".join(
-        "<tr><td>%s</td><td><a href='%s' target='_blank' rel='noopener'>Saare ads</a>"
-        " · <a href='%s' target='_blank' rel='noopener'>Sirf active ads</a></td></tr>"
+        "<tr><td>%s</td><td><a href='%s' target='_blank' rel='noopener'>All ads</a>"
+        " · <a href='%s' target='_blank' rel='noopener'>Active ads only</a></td></tr>"
         % (esc(c["name"]), esc(c["search_url"]), esc(c["active_url"]))
         for c in board["competitors"])
     board_kw = "".join(
@@ -2053,12 +2932,12 @@ def pg_loop(ctx):
                      % (esc(board["industry_keyword"]["keyword"]),
                         esc(board["industry_keyword"]["search_url"])))
     board_checklist = "".join("<li>%s</li>" % esc(s) for s in board["checklist"])
-    board_html = ("<p class='small'>Har competitor aur har product ke liye "
-                  "ready-made Ad Library search — ek click me sahi search "
-                  "khul jayegi (country: %s).</p>"
+    board_html = ("<p class='small'>A ready-made Ad Library search for every "
+                  "competitor and every product — one click opens the right "
+                  "search (country: %s).</p>"
                   "<table><tr><th>Competitor</th><th>Ad Library</th></tr>%s</table>"
-                  "<h3>Product keywords se search</h3><ul class='small'>%s</ul>"
-                  "<h3>Research checklist (2 minute)</h3><ol class='small'>%s</ol>"
+                  "<h3>Search by product keywords</h3><ul class='small'>%s</ul>"
+                  "<h3>Research checklist (2 minutes)</h3><ol class='small'>%s</ol>"
                   "<div class='banner warn'>%s</div>"
                   "<p class='small mut'>%s</p>"
                   % (esc(board["country"]), board_comp_rows, board_kw,
@@ -2066,34 +2945,34 @@ def pg_loop(ctx):
                      esc(board["honest_note"])))
     tops = loop_mod.list_top_creatives(pid, conn=conn)
     top_rows = "".join(
-        "<tr><td>%s</td><td>%s</td><td>%s</td><td>%s din</td><td class='small'>%s · %s</td></tr>"
+        "<tr><td>%s</td><td>%s</td><td>%s</td><td>%s days</td><td class='small'>%s · %s</td></tr>"
         % (esc(t["theme"]), esc(t["hook"]), esc(t["format"]), t["window_days"],
            esc(t["source"]), esc(t["source_date"])) for t in tops)
     strat = strategy_library
     body = """<h1>Growth Loop — %s</h1>
-<details><summary>Loop kaise chalta hai</summary>
-<p class="small">Competitor discovery → unki best ads ki research → pichhle
-7/10 din ke top creatives se inspiration → naye creatives → optimise →
-approval-gated live → winners scale / losers pause → fatigue par fresh brief.
-Scheduler: <code>python -m app.jobs loop</code>. Research stage public
-Meta Ad Library par based task entries banata hai — live pull abhi wired nahi,
-koi metric invent nahi hota; lekin neeche Research Board par har
-competitor/product ke 1-click Ad Library links ready milte hain.</p></details>
+<details><summary>How the loop runs</summary>
+<p class="small">Competitor discovery → research of their best ads → inspiration
+from the last 7/10 days' top creatives → new creatives → optimise →
+approval-gated live → winners scale / losers pause → a fresh brief on fatigue.
+Scheduler: <code>python -m app.jobs loop</code>. The research stage creates
+task entries based on the public Meta Ad Library — a live pull is not wired
+yet and no metric is invented; but on the Research Board below, 1-click
+Ad Library links for every competitor/product are ready.</p></details>
 <div class="card"><h2>Loop stages — current stage: %s</h2>
 <table><tr><th>Stage</th><th>Status</th><th>Last run</th><th>Detail</th></tr>%s</table>
 <form method="post" action="/loop/run">%s
-<button type="submit">Ek full cycle chalao (mock data)</button></form></div>
-<div class="card"><h2>Inspiration brief (window: %d din)</h2>%s</div>
-<div class="card"><h2>Competitors (%s ke)</h2>
+<button type="submit">Run one full cycle (mock data)</button></form></div>
+<div class="card"><h2>Inspiration brief (window: %d days)</h2>%s</div>
+<div class="card"><h2>Competitors (for %s)</h2>
 <table><tr><th>Name</th><th>Handle</th><th>Niche</th><th>Source</th><th></th></tr>%s</table>
 <form method="post" action="/loop/competitor_add">%s
 <div class="row"><div><label>Name</label><input name="name" required></div>
 <div><label>Handle</label><input name="handle"></div>
 <div><label>URL</label><input name="url"></div>
 <div><label>Niche</label><input name="niche"></div></div>
-<button type="submit">Competitor add karo</button></form></div>
+<button type="submit">Add competitor</button></form></div>
 <div class="card"><h2>Competitor Research Board — Ad Library (1-click)</h2>%s</div>
-<div class="card"><h2>Top creatives (pichhle 7/10 din — research se)</h2>
+<div class="card"><h2>Top creatives (last 7/10 days — from research)</h2>
 <table><tr><th>Theme</th><th>Hook</th><th>Format</th><th>Window</th><th>Source</th></tr>%s</table>
 <form method="post" action="/loop/topcreative_add">%s
 <div class="row"><div><label>Theme</label><input name="theme" required></div>
@@ -2102,15 +2981,15 @@ competitor/product ke 1-click Ad Library links ready milte hain.</p></details>
 <div><label>CTA style</label><input name="cta_style"></div></div>
 <div class="row"><div><label>Source (Ad Library URL/note)</label><input name="source"></div>
 <div><label>Source date</label><input name="source_date" placeholder="YYYY-MM-DD"></div>
-<div><label>Window (din)</label><select name="window_days"><option>7</option><option>10</option></select></div>
+<div><label>Window (days)</label><select name="window_days"><option>7</option><option>10</option></select></div>
 <div><label>Score note</label><input name="score_note"></div></div>
-<button type="submit">Top creative record karo</button></form>
-<p class="small mut">Ye sirf inspiration hai — kisi aur ka ad verbatim copy karna ya
-uske assets reuse karna mana hai.</p></div>
+<button type="submit">Record top creative</button></form>
+<p class="small mut">This is inspiration only — copying someone else's ad verbatim or
+reusing their assets is forbidden.</p></div>
 <div class="card"><h2>Loop history</h2>
-<table><tr><th>Kab</th><th>Stage</th><th>Detail</th></tr>%s</table>
+<table><tr><th>When</th><th>Stage</th><th>Detail</th></tr>%s</table>
 <p class="small mut">Strategy Library: %d active entries · %d DO-NOT-APPLY ·
-format taxonomy %d formats (Damini S22). Knowledge register Trends page par hai.</p></div>
+format taxonomy %d formats (Damini S22). The knowledge register is on the Trends page.</p></div>
 """ % (esc(profile["name"] if profile else "—"),
        esc(status["current_stage"]), stage_rows, ctx["csrf_field"],
        window, brief_html,
@@ -2128,11 +3007,11 @@ def post_loop_run(ctx, form):
     if not summary.get("ok", True):
         return "Loop cycle BLOCKED: %s" % summary.get("blocked", "")
     refresh = (summary.get("stages") or {}).get("refresh") or {}
-    return ("Loop cycle complete (%s) — proposals queue me: %d · "
-            "auto-applied (AUTO_WITHIN_RULES): %d · fresh brief bana: %s"
+    return ("Loop cycle complete (%s) — proposals in queue: %d · "
+            "auto-applied (AUTO_WITHIN_RULES): %d · fresh brief created: %s"
             % (summary.get("profile", ""), summary.get("proposals_added", 0),
                summary.get("auto_applied", 0),
-               "haan" if refresh.get("new_brief") else "nahi"))
+               "yes" if refresh.get("new_brief") else "no"))
 
 
 def post_loop_competitor_add(ctx, form):
@@ -2142,12 +3021,12 @@ def post_loop_competitor_add(ctx, form):
         "url": form.get("url", ""), "niche": form.get("niche", ""),
         "source": "owner-added (UI)",
     }, ctx["conn"])
-    return "Competitor add ho gaya — loop ke discovery stage me shamil hai."
+    return "Competitor added — it is included in the loop's discovery stage."
 
 
 def post_loop_competitor_delete(ctx, form):
     profiles_mod.delete_competitor(int(form.get("competitor_id") or 0), ctx["conn"])
-    return "Competitor delete ho gaya."
+    return "Competitor deleted."
 
 
 def post_loop_topcreative_add(ctx, form):
@@ -2159,7 +3038,7 @@ def post_loop_topcreative_add(ctx, form):
         "window_days": form.get("window_days", "7"),
         "score_note": form.get("score_note", ""),
     }, conn=ctx["conn"])
-    return "Top-creative record ho gaya — inspiration brief ab isse banega."
+    return "Top creative recorded — the inspiration brief will now be built from it."
 
 
 # ------------------------------------------------------------- Guardrails
@@ -2185,32 +3064,31 @@ def pg_guardrails(ctx):
                  "<input type='hidden' name='action' value='%s'>"
                  "<button class='secondary' type='submit'>%s</button></form></td></tr>"
                  % (esc(g["id"]), esc(g["name"]), pill, g["severity"],
-                    esc(g["setting_key"] or "— (hamesha active)"),
+                    esc(g["setting_key"] or "— (always active)"),
                     esc(str(value) if value not in (None, "") else "—"),
                     state, ctx["csrf_field"], esc(g["id"]),
                     "on" if not g["enabled"] else "off",
-                    "ON karo" if not g["enabled"] else "OFF karo"))
+                    "Turn ON" if not g["enabled"] else "Turn OFF"))
     checklist = "".join(
         "<li>%s<div class='small mut'>Guardrails: %s</div></li>" % (esc(item), esc(", ".join(ids)))
         for item, ids in guardrails_mod.PREFLIGHT_CHECKLIST)
     body = """<h1>Guardrails</h1>
-<p class="mut">CPC/CPL badhane wali galtiyaan — system-enforced. BLOCK = draft
-queue me nahi jayega; WARN = warning attach hogi.</p>
-<details><summary>Poori jaankari</summary>
-<p class="small">Har draft/plan approval queue se pehle in checks se guzarta
-hai. Optimiser bhi BLOCK wali action kabhi propose nahi karta. Thresholds
-owner settings hain — khaali/0 = wo guardrail inactive (research ke numbers
-sirf Settings me labelled reference hain, defaults kabhi nahi). Catalogue:
-winner-patterns research §D (D1–D26) + system ke built-in gates. Guardrails
-galtiyaan rok sakte hain — CPC/CPL ki guarantee koi system nahi de sakta,
-auction/market bhi matter karta hai.</p></details>
-<div class="card"><h2>Pre-flight checklist (har draft, queue se pehle)</h2>
+<p class="mut">Mistakes that raise CPC/CPL — system-enforced. BLOCK = the draft
+does not enter the queue; WARN = a warning is attached.</p>
+<details><summary>Full details</summary>
+<p class="small">Every draft/plan passes these checks before the approval queue.
+The optimiser never proposes a BLOCK action either. Thresholds are owner
+settings — empty/0 = that guardrail is inactive (research numbers are only
+labelled references in Settings, never defaults). Catalogue: winner-patterns
+research §D (D1–D26) + the system's built-in gates. Guardrails can stop
+mistakes — no system can guarantee CPC/CPL; the auction/market matters too.</p></details>
+<div class="card"><h2>Pre-flight checklist (every draft, before the queue)</h2>
 <ol>%s</ol></div>
 <div class="card"><table><tr><th>Guardrail</th><th>Severity</th><th>Setting</th>
 <th>Value</th><th>Status</th><th>Toggle</th></tr>%s</table>
-<p class="small mut">Toggle GUARDRAILS_DISABLED (global setting) me save hota hai —
-profile overrides se toggle nahi hota. OFF karna owner ka faisla hai; audit me
-record hota hai.</p></div>
+<p class="small mut">The toggle is saved in GUARDRAILS_DISABLED (a global setting) —
+it cannot be toggled via profile overrides. Turning one OFF is the owner's
+decision; it is recorded in the audit log.</p></div>
 """ % (checklist, rows)
     return page("Guardrails", "/guardrails", body, ctx["flash"], conn, ctx)
 
@@ -2220,7 +3098,7 @@ def post_guardrails_toggle(ctx, form):
     gid = (form.get("guardrail_id") or "").strip()
     action = form.get("action") or ""
     if not gid:
-        return "Guardrail id missing hai."
+        return "Guardrail id is missing."
     global_settings = load_settings()
     disabled = set(guardrails_mod.disabled_ids(global_settings))
     if action == "off":
@@ -2230,7 +3108,7 @@ def post_guardrails_toggle(ctx, form):
     global_settings["GUARDRAILS_DISABLED"] = sorted(disabled)
     save_settings(global_settings)
     audit(conn, "guardrail_toggled", "id=%s action=%s" % (gid, action))
-    return "Guardrail %s ab %s hai." % (gid, "OFF" if action == "off" else "ON")
+    return "Guardrail %s is now %s." % (gid, "OFF" if action == "off" else "ON")
 
 
 POST_ROUTES = {
@@ -2275,7 +3153,8 @@ GET_ROUTES = {
     "/": pg_today, "/mission": pg_mission, "/connect": pg_connect, "/roles": pg_roles,
     "/settings": pg_settings, "/eligibility": pg_eligibility,
     "/creative": pg_creative, "/providers": pg_providers,
-    "/planner": pg_planner, "/profiles": pg_profiles, "/loop": pg_loop,
+    "/planner": pg_planner, "/campaigns": pg_campaigns,
+    "/profiles": pg_profiles, "/loop": pg_loop,
     "/guardrails": pg_guardrails,
     "/approvals": pg_approvals, "/budget": pg_budget, "/leads": pg_leads,
     "/reports": pg_reports, "/trends": pg_trends, "/audit": pg_audit,
@@ -2284,25 +3163,25 @@ GET_ROUTES = {
 
 def login_page(msg=""):
     body = """<div class="card"><h1>SH Ads Desk — Owner Login</h1>
-<p class="mut">Single-owner app. Password wahi jo owner ne setup/env me rakha tha —
-password kabhi chat ya code me nahi hota.</p>
+<p class="mut">Single-owner app. The password is the one the owner set at setup/env —
+a password never appears in chat or code.</p>
 %s<form method="post" action="/login">
 <label>Password</label><input type="password" name="password" required>
 <button type="submit" style="width:100%%">Login</button></form>
-<p class="small mut" style="margin-top:12px">Pehli baar? Agar owner abhi set nahi hai to
-<a href="/setup">first-run setup</a> par jao.</p></div>""" % (
+<p class="small mut" style="margin-top:12px">First time? If the owner is not set yet, go to
+<a href="/setup">first-run setup</a>.</p></div>""" % (
         ('<div class="flash">%s</div>' % esc(msg)) if msg else "")
     return simple_page("Login", body)
 
 
 def setup_page(msg=""):
     body = """<div class="card"><h1>First-run Setup</h1>
-<p class="mut">Owner password set karo (kam se kam 10 characters). Ye sirf ek baar
-hota hai — hash bankar local database me rahega, password khud kabhi store nahi hota.
-Iske baad setup hamesha ke liye band ho jayega.</p>
+<p class="mut">Set the owner password (at least 10 characters). This happens only once —
+it stays in the local database as a hash; the password itself is never stored.
+After this, setup closes permanently.</p>
 %s<form method="post" action="/setup">
-<label>Naya owner password</label><input type="password" name="password" required>
-<button type="submit" style="width:100%%">Owner set karo</button></form></div>""" % (
+<label>New owner password</label><input type="password" name="password" required>
+<button type="submit" style="width:100%%">Set owner</button></form></div>""" % (
         ('<div class="flash">%s</div>' % esc(msg)) if msg else "")
     return simple_page("Setup", body)
 
@@ -2340,7 +3219,7 @@ class Handler(BaseHTTPRequestHandler):
         full = os.path.join(providers.generated_dir(), safe)
         if not safe or not os.path.isfile(full):
             return self._send_html(simple_page("404", "<div class='card'><h1>404</h1>"
-                                               "<p>File nahi mila.</p></div>"), status=404)
+                                               "<p>File not found.</p></div>"), status=404)
         ext = safe.rsplit(".", 1)[-1].lower() if "." in safe else ""
         ctype = {"png": "image/png", "jpg": "image/jpeg", "jpeg": "image/jpeg",
                  "webp": "image/webp", "gif": "image/gif", "mp4": "video/mp4",
@@ -2401,16 +3280,17 @@ class Handler(BaseHTTPRequestHandler):
         handler = GET_ROUTES.get(path)
         if handler is None:
             return self._send_html(simple_page("404", "<div class='card'><h1>404</h1>"
-                                               "<p>Page nahi mila.</p></div>"), status=404)
+                                               "<p>Page not found.</p></div>"), status=404)
         ctx = self._ctx(conn, session, flash=msg)
+        ctx["query"] = query
         ctx["queue"].conn = conn
         try:
             return self._send_html(handler(ctx))
         except Exception as e:  # record redacted, show plain message
             log_error(conn, "web:" + path, str(e))
             return self._send_html(simple_page(
-                "Error", "<div class='card'><h1>Kuch gadbad hui</h1><p>%s</p>"
-                         "<p class='small mut'>Detail Errors &amp; Audit page me logged hai (redacted).</p></div>"
+                "Error", "<div class='card'><h1>Something went wrong</h1><p>%s</p>"
+                         "<p class='small mut'>Details are logged on the Errors &amp; Audit page (redacted).</p></div>"
                 % esc(redact(str(e)))), status=500)
 
     def do_POST(self):
@@ -2444,8 +3324,8 @@ class Handler(BaseHTTPRequestHandler):
             return _redirect(self, "/login")
         if not session["csrf"] or form.get("csrf") != session["csrf"]:
             return self._send_html(simple_page(
-                "Blocked", "<div class='card'><h1>CSRF check fail</h1>"
-                           "<p>Form dobara kholkar try karo.</p></div>"), status=403)
+                "Blocked", "<div class='card'><h1>CSRF check failed</h1>"
+                           "<p>Reopen the form and try again.</p></div>"), status=403)
         ctx = self._ctx(conn, session)
         ctx["queue"].conn = conn
 
@@ -2462,7 +3342,7 @@ class Handler(BaseHTTPRequestHandler):
             msg = fn(ctx, form)
         except Exception as e:
             log_error(conn, "web:" + path, str(e))
-            msg = "Error: %s (detail Errors & Audit me hai)" % redact(str(e))
+            msg = "Error: %s (details are on the Errors & Audit page)" % redact(str(e))
         return _redirect(self, dest, msg)
 
     def _finish_post(self, dest, ctx):
@@ -2495,7 +3375,7 @@ def main():
     server = ThreadingHTTPServer((host, port), Handler)
     print("SH Ads Desk running at http://%s:%d  (META_MODE=%s, DRY_RUN default ON)"
           % (host, port, os.environ.get("META_MODE", "MOCK")))
-    print("First run: kholo /setup par owner password set karo (ya .env me OWNER_PASSWORD_HASH rakho).")
+    print("First run: open /setup to set the owner password (or put OWNER_PASSWORD_HASH in .env).")
     try:
         server.serve_forever()
     except KeyboardInterrupt:

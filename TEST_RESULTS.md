@@ -228,3 +228,26 @@ Command: `python3 -m pytest tests/ -q`
   UNVERIFIED flags waise hi preserve hain; copywriter ke template
   headlines non-software profiles ke liye abhi software-flavoured
   wording rakhte hain (angles presets se aate hain).
+
+## UI Redesign — Owner Reference Designs + English-Only (16 Nov 2026, late)
+- Shared frame rebuilt to the owner's reference: LIGHT sidebar (Software Hub brand,
+  "SH Ads Workspace — Pro Plan" card, vertical nav, profile row), white cards,
+  violet accent; sidebar collapses to a top strip on mobile.
+- Pages rebuilt to the owner's per-page designs: Mission Control (Workflow Status
+  donut + Task Activity line chart from real role_runs; department progress bars),
+  Today (Analytics components: Spend vs Leads, Lead Quality donut, Top Campaigns
+  with Winner/Loser pills), Settings (Budget Caps 2x2, Destination Gate, Automation
+  toggles, Kill Switch danger card — all 50 SETTING_FIELDS verified rendering once),
+  Reports (Daily Insights, Top/Bottom 3, Campaign Performance bars, Recommendation),
+  Approval Queue (type chips, mode banner, Kill Switch card, honest status bar),
+  Creative Studio (Inspiration Brief, creative cards, honest Mock Mode pill),
+  NEW Campaigns page (stat cards, All Campaigns table with verdict pills, draft card).
+- English-only sweep: web.py + guardrails.py + growth_loop.py fully translated;
+  LANGUAGES default is now ["English", "Hinglish"] so reports default to English.
+  Test assertions updated only where they quoted old Hinglish UI strings
+  (test_providers.py x2, test_industries.py x2).
+- Honest omissions (no invented data): Reports "vs yesterday" delta chips (no
+  per-day stats history), Campaigns "Est. Daily Reach" row (no estimate source),
+  Analytics delta pills (no last-week baseline). Carousel creative cards not
+  rendered (saved creatives are poster/reel/copy only).
+- Full suite after redesign: 94/94 pass. Live smoke: all routes 200.

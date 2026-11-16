@@ -132,13 +132,13 @@ def _check_learning_phase(ctx):
     if days is None and conv is None:
         return "inactive", "no live-object age/conversion data in context"
     if min_days > 0 and days is not None and float(days) < min_days:
-        return "block", ("Learning phase: object sirf %s din purana hai "
-                         "(owner threshold %s din) — abhi edit/change karne "
-                         "se learning restart hogi aur CPC/CPL badhega."
+        return "block", ("Learning phase: the object is only %s days old "
+                         "(owner threshold %s days) — editing/changing it "
+                         "now restarts learning and CPC/CPL will rise."
                          % (days, int(min_days)))
     if min_conv > 0 and conv is not None and float(conv) < min_conv:
-        return "block", ("Learning phase: sirf %s conversions hue hain "
-                         "(owner threshold %s) — judge/edit abhi mat karo."
+        return "block", ("Learning phase: only %s conversions so far "
+                         "(owner threshold %s) — do not judge/edit yet."
                          % (conv, int(min_conv)))
     return "pass", ""
 
@@ -153,9 +153,9 @@ def _check_fragmentation_count(ctx):
     if ad_sets is None:
         return "inactive", "no plan in context"
     if len(ad_sets) > cap:
-        return "block", ("Audience fragmentation: plan me %d ad sets hain, "
-                         "owner ki limit %d hai — zyada ad sets = har ad set "
-                         "par data patla, learning slow, CPL high."
+        return "block", ("Audience fragmentation: the plan has %d ad sets, "
+                         "the owner's limit is %d — more ad sets = thinner "
+                         "data per ad set, slower learning, higher CPL."
                          % (len(ad_sets), int(cap)))
     return "pass", ""
 
@@ -178,9 +178,9 @@ def _check_fragmentation_budget(ctx):
         return "inactive", "no per-ad-set budget computable"
     per_set = budget / max(len(ad_sets), 1)
     if per_set < floor:
-        return "warn", ("Per-ad-set budget %s owner ke floor %s se kam hai — "
-                        "itna patla budget learning ko bhooka rakhta hai, "
-                        "CPL spike ka common kaaran." % (round(per_set, 2), floor))
+        return "warn", ("Per-ad-set budget %s is below the owner's floor %s — "
+                        "a budget this thin starves learning and is a common "
+                        "cause of CPL spikes." % (round(per_set, 2), floor))
     return "pass", ""
 
 
@@ -197,9 +197,9 @@ def _check_thin_data(ctx):
     spend = float(row.get("spend") or proposal.get("numbers", {}).get("spend") or 0)
     events = int(row.get("enquiries") or proposal.get("numbers", {}).get("enquiries") or 0)
     if (min_spend > 0 and spend < min_spend) or (min_events > 0 and events < min_events):
-        return "block", ("Thin data par judgement: spend %s / enquiries %s "
-                         "owner ke MIN_SPEND %s / MIN_EVENTS %s se kam — "
-                         "galat pause/scale decision CPC/CPL dono bigaadta hai."
+        return "block", ("Judgement on thin data: spend %s / enquiries %s "
+                         "are below the owner's MIN_SPEND %s / MIN_EVENTS %s — "
+                         "a wrong pause/scale decision damages both CPC and CPL."
                          % (spend, events, min_spend, int(min_events)))
     return "pass", ""
 
@@ -209,17 +209,18 @@ def _check_fatigue_scale(ctx):
     if proposal.get("type") != "PROPOSE_BUDGET_INCREASE":
         return "inactive", "not a budget-increase proposal"
     if _fatigued(ctx.get("ad_row")):
-        return "block", ("Fatigued creative ko scale karna mana hai: "
-                         "frequency up + CTR down hai — pehle creative "
-                         "refresh karo, budget badhana CPC aur badhayega.")
+        return "block", ("Scaling a fatigued creative is not allowed: "
+                         "frequency is up and CTR is down — refresh the "
+                         "creative first; raising the budget will push CPC "
+                         "even higher.")
     return "pass", ""
 
 
 def _check_fatigue_warn(ctx):
     if _fatigued(ctx.get("ad_row")):
-        return "warn", ("Creative fatigue dikh raha hai (frequency up, CTR "
-                        "down) — naya creative ready rakho; thake hue "
-                        "creative par kharch CPC/CPL badhata hai.")
+        return "warn", ("Creative fatigue is showing (frequency up, CTR "
+                        "down) — keep a fresh creative ready; spending on a "
+                        "tired creative raises CPC/CPL.")
     return "pass", ""
 
 
@@ -234,9 +235,9 @@ def _check_single_creative(ctx):
         return "inactive", "no plan ad sets in context"
     counts = [len(a.get("ads") or []) for a in ad_sets]
     if counts and min(counts) < minimum:
-        return "warn", ("Ek ad set me sirf %d creative(s) hain (owner "
-                        "minimum %d) — ek hi creative thakta hai to poora "
-                        "ad set ruk jata hai; distinct creatives rakho."
+        return "warn", ("An ad set has only %d creative(s) (owner "
+                        "minimum %d) — if the single creative fatigues, the "
+                        "whole ad set stalls; keep distinct creatives."
                         % (min(counts), int(minimum)))
     return "pass", ""
 
@@ -261,9 +262,9 @@ def _check_budget_jump(ctx):
         return "inactive", "current budget unknown"
     pct = abs(new - current) / current * 100.0
     if pct > cap:
-        return "block", ("Budget jump %.1f%% owner ki MAX_BUDGET_CHANGE_PCT "
-                         "%s%% se zyada hai — achanak bada jump learning "
-                         "todta hai aur CPL spike karta hai." % (pct, cap))
+        return "block", ("Budget jump %.1f%% exceeds the owner's "
+                         "MAX_BUDGET_CHANGE_PCT %s%% — a sudden large jump "
+                         "breaks learning and spikes CPL." % (pct, cap))
     return "pass", ""
 
 
@@ -271,15 +272,15 @@ def _check_live_ad_edit(ctx):
     action = ctx.get("action") or (ctx.get("proposal") or {}).get("action") \
         or (ctx.get("draft") or {}).get("action")
     if action == "EDIT_LIVE_AD":
-        return "block", ("Live ad ko edit karna mana hai (history corrupt "
-                         "+ learning restart). Hamesha DUPLICATE karke "
-                         "test karo — Strategy P4.")
+        return "block", ("Editing a live ad is not allowed (corrupts "
+                         "history + restarts learning). Always DUPLICATE "
+                         "and test the copy — Strategy P4.")
     return "pass", ""
 
 
 def _check_kill_switch(ctx):
     if ctx.get("kill_switch"):
-        return "block", "Kill switch ON hai — koi item queue me nahi jayega."
+        return "block", "Kill switch is ON — no item will enter the queue."
     return "pass", ""
 
 
@@ -295,23 +296,23 @@ _GOAL_OBJECTIVES = {"checkout": "OUTCOME_SALES", "lead_gen": "OUTCOME_LEADS",
 def _check_objective_mapping(ctx):
     event = str(ctx.get("optimisation_event") or "").lower()
     if event and any(p in event for p in _PAGEVIEW_CLASS):
-        return "block", ("Optimisation event '%s' ek proxy/pageview-class "
-                         "event hai — system click/view waalo ko dhundhega, "
-                         "buyers ko nahi. Asli business event chuno "
+        return "block", ("Optimisation event '%s' is a proxy/pageview-class "
+                         "event — the system will hunt clickers/viewers, not "
+                         "buyers. Choose the real business event "
                          "(Catalogue D3/D22)." % event)
     if ctx.get("source_path") == "boost":
-        return "block", ("Boost-post path se draft bana hai — boost "
-                         "engagement ke liye optimise karta hai, business "
-                         "goal ke liye nahi. Ads Manager structure use karo "
+        return "block", ("This draft was built via the boost-post path — "
+                         "boost optimises for engagement, not for the "
+                         "business goal. Use the Ads Manager structure "
                          "(Catalogue D3).")
     objective = str(ctx.get("objective") or "")
     profile = ctx.get("profile") or {}
     expected = _GOAL_OBJECTIVES.get(profile.get("sales_model") or "")
     if objective and expected and expected not in objective:
-        return "block", ("Objective '%s' profile ke sales model (%s) ke "
-                         "goal '%s' se match nahi karta — galat objective "
-                         "galat audience dhundhta hai, CPL high rehta hai "
-                         "(Catalogue D3)." % (objective, profile.get("sales_model"), expected))
+        return "block", ("Objective '%s' does not match the goal '%s' of "
+                         "the profile's sales model (%s) — the wrong "
+                         "objective hunts the wrong audience and CPL stays "
+                         "high (Catalogue D3)." % (objective, expected, profile.get("sales_model")))
     if not objective and not event:
         return "inactive", "no objective/event in context"
     return "pass", ""
@@ -319,11 +320,11 @@ def _check_objective_mapping(ctx):
 
 def _check_tracking(ctx):
     if ctx.get("tracking_verified") is False:
-        return "block", ("Conversion tracking verify nahi hua — bina "
-                         "verified events ke Meta garbage par optimise "
-                         "karega aur asli CPL dikhega hi nahi (Catalogue D13).")
+        return "block", ("Conversion tracking is not verified — without "
+                         "verified events Meta will optimise on garbage and "
+                         "the real CPL will never even show (Catalogue D13).")
     if ctx.get("tracking_verified") is None:
-        return "inactive", "tracking status context me nahi hai"
+        return "inactive", "tracking status is not in context"
     return "pass", ""
 
 
@@ -331,13 +332,13 @@ def _check_capi_health(ctx):
     settings = ctx.get("settings") or {}
     emq_min = _num(settings, "EMQ_MIN")
     if ctx.get("capi_present") is False:
-        return "warn", ("Conversions API connected nahi hai — browser-only "
-                        "tracking events kho deta hai, signal kamzor, cost "
-                        "zyada (Catalogue D14).")
+        return "warn", ("Conversions API is not connected — browser-only "
+                        "tracking loses events, the signal weakens and cost "
+                        "rises (Catalogue D14).")
     emq = ctx.get("event_match_quality")
     if emq_min > 0 and emq is not None and float(emq) < emq_min:
-        return "warn", ("Event Match Quality %s owner ke EMQ_MIN %s se kam "
-                        "hai — match quality badhao (Catalogue D14)."
+        return "warn", ("Event Match Quality %s is below the owner's "
+                        "EMQ_MIN %s — improve match quality (Catalogue D14)."
                         % (emq, emq_min))
     if ctx.get("capi_present") is None and emq is None:
         return "inactive", "no CAPI/EMQ data in context"
@@ -350,13 +351,13 @@ def _check_projected_events(ctx):
     budget = ctx.get("daily_budget")
     cpa = ctx.get("cost_per_event")
     if threshold <= 0 or not budget or not cpa:
-        return "inactive", "LEARNING_EVENT_THRESHOLD ya budget/cost-per-event unset"
+        return "inactive", "LEARNING_EVENT_THRESHOLD or budget/cost-per-event unset"
     weekly = float(budget) / float(cpa) * 7.0
     if weekly < threshold:
-        return "warn", ("Projected weekly events %.0f owner ke "
-                        "LEARNING_EVENT_THRESHOLD %s se kam — ye ad set "
-                        "learning se bahar hi nahi aayega; budget "
-                        "consolidate karo (Catalogue D4)."
+        return "warn", ("Projected weekly events %.0f are below the "
+                        "owner's LEARNING_EVENT_THRESHOLD %s — this ad set "
+                        "will never exit learning; consolidate the budget "
+                        "(Catalogue D4)."
                         % (weekly, int(threshold)))
     return "pass", ""
 
@@ -366,12 +367,12 @@ def _check_audience_overlap(ctx):
     cap = _num(settings, "AUDIENCE_OVERLAP_MAX_PCT")
     overlap = ctx.get("audience_overlap_pct")
     if cap <= 0 or overlap is None:
-        return "inactive", "AUDIENCE_OVERLAP_MAX_PCT unset ya overlap data nahi"
+        return "inactive", "AUDIENCE_OVERLAP_MAX_PCT unset or no overlap data"
     if float(overlap) > cap:
-        return "warn", ("Audience overlap %s%% owner ki limit %s%% se zyada "
-                        "— ad sets ek dusre ke against bid karke prices "
-                        "badha rahe hain; exclusions ya consolidation "
-                        "karo (Catalogue D5)." % (overlap, cap))
+        return "warn", ("Audience overlap %s%% exceeds the owner's limit "
+                        "%s%% — ad sets are bidding against each other and "
+                        "pushing prices up; add exclusions or consolidate "
+                        "(Catalogue D5)." % (overlap, cap))
     return "pass", ""
 
 
@@ -380,11 +381,11 @@ def _check_audience_size(ctx):
     floor = _num(settings, "AUDIENCE_SIZE_FLOOR")
     size = ctx.get("audience_size")
     if floor <= 0 or size is None:
-        return "inactive", "AUDIENCE_SIZE_FLOOR unset ya audience size nahi"
+        return "inactive", "AUDIENCE_SIZE_FLOOR unset or no audience size"
     if float(size) < floor:
-        return "warn", ("Audience size %s owner ke floor %s se chhota — "
-                        "itni tang audience jaldi thakti hai, CPM/CPA "
-                        "steeply chadhta hai (Catalogue D6)." % (size, int(floor)))
+        return "warn", ("Audience size %s is below the owner's floor %s — "
+                        "an audience this narrow fatigues quickly and "
+                        "CPM/CPA climbs steeply (Catalogue D6)." % (size, int(floor)))
     return "pass", ""
 
 
@@ -392,11 +393,11 @@ def _check_hook(ctx):
     fmt = str(ctx.get("format") or "").upper()
     if fmt in ("REEL", "VIDEO") and ctx.get("is_test") is not True:
         if ctx.get("hook_declared") is False:
-            return "block", ("Video draft ka first-3-seconds hook declare "
-                             "nahi hai — bina hook ke draft incomplete hai "
-                             "(Catalogue D9).")
+            return "block", ("The video draft has no first-3-seconds hook "
+                             "declared — without a hook the draft is "
+                             "incomplete (Catalogue D9).")
         if ctx.get("hook_declared") is None:
-            return "inactive", "hook declaration context me nahi"
+            return "inactive", "hook declaration is not in context"
     settings = ctx.get("settings") or {}
     floor = _num(settings, "HOOK_RATE_FLOOR_PCT")
     row = ctx.get("ad_row") or {}
@@ -404,24 +405,24 @@ def _check_hook(ctx):
     min_impr = _num(settings, "HOOK_MIN_IMPRESSIONS") or _num(settings, "MIN_EVENTS")
     if floor > 0 and hook_rate is not None and int(row.get("impressions") or 0) >= max(min_impr, 1):
         if float(hook_rate) < floor:
-            return "warn", ("Hook rate %s%% owner ke floor %s%% se kam — "
-                            "pehle hook rewrite karo, budget action baad me "
-                            "(Catalogue D9)." % (hook_rate, floor))
+            return "warn", ("Hook rate %s%% is below the owner's floor "
+                            "%s%% — rewrite the hook first, budget action "
+                            "later (Catalogue D9)." % (hook_rate, floor))
     return "pass", ""
 
 
 def _check_attribution_lock(ctx):
     seen = ctx.get("attribution_settings")
     if seen and len({str(s) for s in seen if s}) > 1:
-        return "block", ("Mixed attribution settings mile (%s) — alag "
-                         "windows ke numbers compare/optimise karna "
-                         "mana hai; pehle ek declared setting par lock "
-                         "karo (Catalogue D15)." % ", ".join(sorted({str(s) for s in seen if s})))
+        return "block", ("Mixed attribution settings found (%s) — "
+                         "comparing/optimising numbers from different "
+                         "windows is not allowed; lock one declared setting "
+                         "first (Catalogue D15)." % ", ".join(sorted({str(s) for s in seen if s})))
     declared = (ctx.get("settings") or {}).get("ATTRIBUTION_WINDOW")
     draft_attr = ctx.get("attribution")
     if declared and draft_attr and str(declared) != str(draft_attr):
-        return "block", ("Draft ka attribution '%s' account ke declared "
-                         "'%s' se alag hai (Catalogue D15)."
+        return "block", ("The draft's attribution '%s' differs from the "
+                         "account's declared '%s' (Catalogue D15)."
                          % (draft_attr, declared))
     if not seen and not draft_attr:
         return "inactive", "no attribution data in context"
@@ -433,12 +434,12 @@ def _check_rejection_counter(ctx):
     limit = _num(settings, "REJECTION_COUNT_LIMIT")
     count = ctx.get("rejection_count")
     if limit <= 0 or count is None:
-        return "inactive", "REJECTION_COUNT_LIMIT unset ya rejection data nahi"
+        return "inactive", "REJECTION_COUNT_LIMIT unset or no rejection data"
     if int(count) > limit:
-        return "block", ("Rolling window me %s rejections owner ki limit "
-                         "%s se zyada — launch freeze: pehle root cause "
-                         "fix karo, warna poora account low-quality "
-                         "mana jayega (Catalogue D16)." % (count, int(limit)))
+        return "block", ("%s rejections in the rolling window exceed the "
+                         "owner's limit %s — launch freeze: fix the root "
+                         "cause first, or the whole account will be treated "
+                         "as low-quality (Catalogue D16)." % (count, int(limit)))
     return "pass", ""
 
 
@@ -447,11 +448,11 @@ def _check_quality_ranking(ctx):
     ranking = str(row.get("quality_ranking") or "").lower()
     if ranking in ("bottom_10", "bottom 10%", "bottom_20", "bottom 20%") \
             and int(row.get("impressions") or 0) >= 500:
-        return "warn", ("Quality ranking bottom tier me hai (%s, %s "
-                        "impressions) — is ad ko replace karne ka "
-                        "proposal banao; conversion-ranking kharab ho "
-                        "to pehle landing page/offer dekho (Catalogue "
-                        "D17/D11)." % (ranking, row.get("impressions")))
+        return "warn", ("Quality ranking is in the bottom tier (%s, %s "
+                        "impressions) — propose replacing this ad; if the "
+                        "conversion ranking is also poor, check the landing "
+                        "page/offer first (Catalogue D17/D11)."
+                        % (ranking, row.get("impressions")))
     if not ranking:
         return "inactive", "no quality ranking in context"
     return "pass", ""
@@ -464,19 +465,19 @@ def _check_cold_warm_mixing(ctx):
     cold = any(any(k in s for k in ("broad", "interest", "lookalike")) for s in sources)
     warm = any(any(k in s for k in ("engager", "visitor", "custom", "retarget")) for s in sources)
     if cold and warm:
-        return "warn", ("Ek hi ad set me cold (broad/interest/lookalike) "
-                        "aur warm (engagers/visitors) audience mix hai — "
-                        "temperature ke hisaab se campaigns alag rakho, "
-                        "creative bhi alag (Catalogue D18).")
+        return "warn", ("Cold (broad/interest/lookalike) and warm "
+                        "(engagers/visitors) audiences are mixed in one ad "
+                        "set — keep campaigns separate by temperature, with "
+                        "separate creative too (Catalogue D18).")
     return "pass", ""
 
 
 def _check_manual_placements(ctx):
     if str(ctx.get("placements") or "").lower() == "manual" \
             and not str(ctx.get("placement_evidence") or "").strip():
-        return "warn", ("Manual placements bina evidence note ke — pehle "
-                        "automatic/Advantage+ placements se data aane do, "
-                        "phir evidence par trim karo (Catalogue D19).")
+        return "warn", ("Manual placements without an evidence note — let "
+                        "automatic/Advantage+ placements gather data first, "
+                        "then trim based on evidence (Catalogue D19).")
     if not ctx.get("placements"):
         return "inactive", "no placement mode in context"
     return "pass", ""
@@ -487,13 +488,12 @@ def _check_customer_exclusion(ctx):
         if ctx.get("customer_exclusion"):
             return "pass", ""
         if ctx.get("customer_list_available"):
-            return "block", ("Customer list maujood hai phir bhi "
-                             "prospecting ad set me exclusion nahi laga — "
-                             "purane customers ko dobara kharidne me "
-                             "budget jal raha hai (Catalogue D20).")
-        return "warn", ("Prospecting ad set me customer exclusion nahi "
-                        "dikha — existing customers ko exclude karo "
-                        "(Catalogue D20).")
+            return "block", ("A customer list exists but no exclusion is "
+                             "applied on this prospecting ad set — budget "
+                             "is burning on re-acquiring existing customers "
+                             "(Catalogue D20).")
+        return "warn", ("No customer exclusion on this prospecting ad set "
+                        "— exclude existing customers (Catalogue D20).")
     return "inactive", "not a prospecting context"
 
 
@@ -502,16 +502,16 @@ def _check_bid_goal(ctx):
     if proposal and (ctx.get("settings") or {}).get("TARGET_COST_PER_QUALIFIED_LEAD"):
         numbers = proposal.get("numbers") or {}
         if "cost_per_qualified_lead" not in numbers and "cost_per_enquiry_provisional" in numbers:
-            return "warn", ("Proposal sirf provisional cost-per-enquiry "
-                            "par hai jabki qualified-lead data maujood "
-                            "hai — faisla cost per QUALIFIED lead par "
-                            "ho (Catalogue D21).")
+            return "warn", ("This proposal rests only on provisional "
+                            "cost-per-enquiry while qualified-lead data "
+                            "exists — decide on cost per QUALIFIED lead "
+                            "(Catalogue D21).")
     goal = str(ctx.get("goal") or "")
     bid = str(ctx.get("bid_strategy") or "")
     if goal == "quality" and bid == "volume":
-        return "warn", ("Bid strategy 'volume' hai jabki declared goal "
-                        "lead QUALITY hai — junk leads flood honge, "
-                        "effective CPL badhega (Catalogue D21).")
+        return "warn", ("Bid strategy is 'volume' while the declared goal "
+                        "is lead QUALITY — junk leads will flood in and "
+                        "effective CPL will rise (Catalogue D21).")
     if not goal and not proposal:
         return "inactive", "no bid/goal context"
     return "pass", ""
@@ -522,20 +522,20 @@ def _check_review_cadence(ctx):
     cadence = _num(settings, "REVIEW_CADENCE_DAYS")
     days = ctx.get("days_since_last_review")
     if cadence <= 0 or days is None:
-        return "inactive", "REVIEW_CADENCE_DAYS unset ya review data nahi"
+        return "inactive", "REVIEW_CADENCE_DAYS unset or no review data"
     if float(days) > cadence:
-        return "warn", ("Pichhle review ko %s din ho gaye (owner cadence "
-                        "%s din) — set-and-forget sabse mehngi aadat hai "
-                        "(Catalogue D23)." % (days, int(cadence)))
+        return "warn", ("It has been %s days since the last review (owner "
+                        "cadence %s days) — set-and-forget is the most "
+                        "expensive habit (Catalogue D23)."
+                        % (days, int(cadence)))
     return "pass", ""
 
 
 def _check_season(ctx):
     if ctx.get("cross_season_comparison"):
-        return "warn", ("Cross-season comparison ho raha hai — festive/"
-                        "Q4 ke CPMs aam dinon se zyada hote hain; "
-                        "verdict season-matched baseline par do "
-                        "(Catalogue D24).")
+        return "warn", ("A cross-season comparison is being made — festive/"
+                        "Q4 CPMs are higher than ordinary days; judge "
+                        "against a season-matched baseline (Catalogue D24).")
     return "pass", ""
 
 
@@ -547,13 +547,13 @@ def _check_relaunch(ctx):
     paused = ctx.get("paused_days")
     if action == "RESUME" and paused is not None:
         if days_limit > 0 and float(paused) >= days_limit:
-            return "warn", ("Ye ad set %s din se paused tha — resume par "
-                            "learning restart hogi aur re-learning ki "
-                            "cost lagegi; kabhi auto-resume nahi hota "
-                            "(Catalogue D25)." % paused)
-        return "warn", ("Resume par learning restart ho sakti hai — "
-                        "paused ad set purani performance par wapas "
-                        "nahi aata (Catalogue D25).")
+            return "warn", ("This ad set was paused for %s days — resuming "
+                            "restarts learning and carries a re-learning "
+                            "cost; it is never auto-resumed (Catalogue D25)."
+                            % paused)
+        return "warn", ("Resuming may restart learning — a paused ad set "
+                        "does not return to its old performance "
+                        "(Catalogue D25).")
     return "inactive", "not a resume action"
 
 
@@ -561,28 +561,30 @@ def _check_test_hypothesis(ctx):
     if ctx.get("is_test"):
         if not str(ctx.get("hypothesis") or "").strip() \
                 or not str(ctx.get("variable") or "").strip():
-            return "warn", ("Creative test bina hypothesis/single-variable "
-                            "ke — jeet ka kaaran kabhi pata nahi chalega, "
-                            "wahi tuition baar-baar lagegi (Catalogue D26).")
+            return "warn", ("Creative test without a hypothesis/single "
+                            "variable — the reason for a win will never be "
+                            "known and the same tuition will be paid again "
+                            "and again (Catalogue D26).")
         return "pass", ""
     return "inactive", "not a test context"
 
 
 def _check_landing_quality(ctx):
     if ctx.get("landing_reachable") is False:
-        return "block", ("Destination page reachable nahi hai — toote hue "
-                         "page par ek bhi click ka paisa nahi (Catalogue D11).")
+        return "block", ("The destination page is not reachable — not a "
+                         "single click's money should go to a broken page "
+                         "(Catalogue D11).")
     settings = ctx.get("settings") or {}
     max_sec = _num(settings, "LANDING_PAGE_MAX_LOAD_SEC")
     load = ctx.get("landing_load_sec")
     if max_sec > 0 and load is not None and float(load) > max_sec:
-        return "warn", ("Landing page load %.1fs owner ki limit %ss se "
-                        "zyada (mobile) — slow page = paid bounce "
+        return "warn", ("Landing page load %.1fs exceeds the owner's limit "
+                        "of %ss (mobile) — a slow page = paid bounce "
                         "(Catalogue D11)." % (float(load), max_sec))
     if ctx.get("landing_message_match") is False:
-        return "warn", ("Landing page ka headline/offer ad se match nahi "
-                        "karta — message mismatch conversion aur ad "
-                        "quality dono girata hai (Catalogue D11).")
+        return "warn", ("The landing page headline/offer does not match "
+                        "the ad — message mismatch hurts both conversion "
+                        "and ad quality (Catalogue D11).")
     if ctx.get("landing_reachable") is None and load is None \
             and ctx.get("landing_message_match") is None:
         return "inactive", "no landing-page data in context"
@@ -602,8 +604,8 @@ def _check_frequency_cap(ctx):
     if cap <= 0:
         return "inactive", "%s unset" % key
     if float(freq) > cap:
-        return "warn", ("Frequency %s %s cap %s se upar — rotation/refresh "
-                        "ka time hai (Catalogue D7)." % (freq, stage, cap))
+        return "warn", ("Frequency %s is above the %s cap %s — time to "
+                        "rotate/refresh (Catalogue D7)." % (freq, stage, cap))
     return "pass", ""
 
 
@@ -624,13 +626,14 @@ def _check_creative_range(ctx):
     if not counts:
         return "inactive", "no creative counts in context"
     if minimum > 0 and min(counts) < minimum:
-        return "warn", ("Ad set me sirf %d creative(s) — owner minimum %d. "
-                        "Ek creative = turant fatigue (Catalogue D8)."
+        return "warn", ("The ad set has only %d creative(s) — owner "
+                        "minimum %d. One creative = instant fatigue "
+                        "(Catalogue D8)."
                         % (min(counts), int(minimum)))
     if maximum > 0 and max(counts) > maximum:
-        return "warn", ("Ad set me %d creatives — owner maximum %d. "
-                        "Bheed me kisi creative ko judge karne layak data "
-                        "nahi milta (Catalogue D8)." % (max(counts), int(maximum)))
+        return "warn", ("The ad set has %d creatives — owner maximum %d. "
+                        "In a crowd, no creative gets enough data to be "
+                        "judged (Catalogue D8)." % (max(counts), int(maximum)))
     return "pass", ""
 
 
@@ -642,14 +645,14 @@ def _check_comment_sla(ctx):
     if count is None and oldest is None:
         return "inactive", "no comment-moderation data in context"
     if sla > 0 and oldest is not None and float(oldest) > sla:
-        return "warn", ("%s negative comments %s ghante se unaddressed "
-                        "hain (owner SLA %s ghante) — visible negativity "
-                        "har naye viewer ko daraati hai aur ad quality "
-                        "girti hai (Catalogue D12)."
-                        % (count or "Kuch", oldest, int(sla)))
+        return "warn", ("%s negative comments have been unaddressed for "
+                        "%s hours (owner SLA %s hours) — visible negativity "
+                        "scares every new viewer and ad quality drops "
+                        "(Catalogue D12)."
+                        % (count or "Some", oldest, int(sla)))
     if count:
-        return "warn", ("%s unaddressed negative comments hain — storefront "
-                        "ki tarah comments sambhalo (Catalogue D12)." % count)
+        return "warn", ("%s unaddressed negative comments — manage "
+                        "comments like a storefront (Catalogue D12)." % count)
     return "pass", ""
 
 
@@ -699,58 +702,58 @@ def _g(id_, name, mistake, why, check, severity, setting_key, applies):
 
 
 GUARDRAILS = [
-    _g("eligibility_unconfirmed", "Unconfirmed eligibility par ad",
-       "Jis offering ki selling/resale permission confirm nahi, uska ad banana",
-       "Policy violation, ad rejection, account risk — aur reject hue ads par laga time/budget seedha waste; account health bigadti hai to delivery mehngi hoti hai.",
+    _g("eligibility_unconfirmed", "Ad for unconfirmed eligibility",
+       "Making an ad for an offering whose selling/resale permission is not confirmed",
+       "Policy violation, ad rejection, account risk — and the time/budget spent on rejected ads is straight waste; when account health drops, delivery gets more expensive.",
        "eligibility", BLOCK, None, ["draft", "plan", "creative", "proposal"]),
     _g("policy_claims", "Banned / misleading claims",
-       "Guarantee, fake discount, superlative, earnings ya industry-banned claim wali copy chalana",
-       "Ad reject hota hai, account quality girti hai, aur misleading traffic junk leads laata hai — CPL seedha spike.",
+       "Running copy with a guarantee, fake discount, superlative, earnings or industry-banned claim",
+       "The ad gets rejected, account quality drops, and misleading traffic brings junk leads — CPL spikes directly.",
        "claims", BLOCK, None, ["draft", "plan", "creative", "proposal"]),
-    _g("destination_not_ready", "Destination/landing ready hue bina traffic",
-       "DESTINATION_URL/READY set hue bina ya page ready hue bina ad live karna",
-       "Click ka paisa lagta hai par page convert nahi karta — CPC wahi, conversions zero, CPL infinite. Landing page hi conversion tay karta hai (Strategy S7/B2).",
+    _g("destination_not_ready", "Traffic before the destination/landing is ready",
+       "Taking an ad live without DESTINATION_URL/READY set, or before the page is ready",
+       "Clicks cost money but the page does not convert — CPC stays the same, conversions are zero, CPL is infinite. The landing page decides conversion (Strategy S7/B2).",
        "destination", BLOCK, "DESTINATION_URL / DESTINATION_READY", ["draft", "plan"]),
-    _g("learning_phase_edit", "Learning phase me edit/change",
-       "Naya campaign/ad seekh raha ho tabhi targeting/budget/creative badal dena",
-       "Har significant edit learning restart karta hai — data reset, delivery unstable, CPC/CPL dono spike (Strategy S4/S14).",
+    _g("learning_phase_edit", "Edit/change during the learning phase",
+       "Changing targeting/budget/creative while a new campaign/ad is still learning",
+       "Every significant edit restarts learning — data resets, delivery turns unstable, CPC and CPL both spike (Strategy S4/S14).",
        "learning_phase", BLOCK, "GUARDRAIL_LEARNING_MIN_DAYS / GUARDRAIL_LEARNING_MIN_CONVERSIONS",
        ["draft", "proposal"]),
-    _g("fragmentation_count", "Audience fragmentation — bahut zyada ad sets",
-       "Ek hi budget ko bahut saare ad sets me baant dena",
-       "Har ad set par conversions patle — koi learning se bahar nahi aata, auction me apne hi ad sets takrate hain, CPL high rehta hai.",
+    _g("fragmentation_count", "Audience fragmentation — too many ad sets",
+       "Splitting one budget across too many ad sets",
+       "Conversions get thin on every ad set — nothing exits learning, your own ad sets collide in the auction, and CPL stays high.",
        "fragmentation_count", BLOCK, "GUARDRAIL_MAX_AD_SETS_PER_CAMPAIGN", ["plan"]),
-    _g("fragmentation_budget", "Per-ad-set budget bahut patla",
-       "Ad set ko itna kam budget dena ki wo seekh hi na sake",
-       "Learning limited — delivery ruk-ruk kar, cost per result unstable aur high.",
+    _g("fragmentation_budget", "Per-ad-set budget too thin",
+       "Giving an ad set so little budget that it can never learn",
+       "Learning limited — delivery stutters, cost per result unstable and high.",
        "fragmentation_budget", WARN, "GUARDRAIL_MIN_AD_SET_BUDGET", ["plan"]),
-    _g("thin_data_judgement", "Thin data par pause/scale ka faisla",
-       "MIN_SPEND/MIN_EVENTS se kam data par winner/loser ghoshit karna",
-       "Shor ko signal samajhkar achha ad band ya kharab ad scale ho jata hai — dono taraf CPC/CPL ka nuksan.",
+    _g("thin_data_judgement", "Pause/scale decision on thin data",
+       "Declaring a winner/loser on less data than MIN_SPEND/MIN_EVENTS",
+       "Mistaking noise for signal gets a good ad killed or a bad ad scaled — CPC/CPL damage on both sides.",
        "thin_data", BLOCK, "MIN_SPEND / MIN_EVENTS", ["proposal"]),
-    _g("fatigue_scale", "Fatigued creative ko scale karna",
-       "Frequency badh gaya aur CTR gir gaya, phir bhi budget badhana",
-       "Thaka hua creative zyada paiso me aur kharab hota hai — CPC badhta hai, response girta hai. Pehle refresh (Strategy S1/P3).",
+    _g("fatigue_scale", "Scaling a fatigued creative",
+       "Raising the budget even after frequency has risen and CTR has fallen",
+       "A tired creative only gets worse with more money — CPC rises, response falls. Refresh first (Strategy S1/P3).",
        "fatigue_scale", BLOCK, None, ["proposal"]),
-    _g("creative_fatigue", "Creative fatigue ignore karna",
-       "Frequency up + CTR down wale creative ko bina refresh plan ke chalate rehna",
-       "Dheere-dheere CPC chadhta hai aur CPL follow karta hai — sabse common silent spike.",
+    _g("creative_fatigue", "Ignoring creative fatigue",
+       "Keeping a frequency-up + CTR-down creative running without a refresh plan",
+       "CPC climbs slowly and CPL follows — the most common silent spike.",
        "fatigue_warn", WARN, None, ["proposal", "draft"]),
-    _g("single_creative_adset", "Ad set me ek hi creative",
-       "Poora ad set ek hi creative par chalana",
-       "Ek creative thaka to poora ad set thaka — koi backup nahi, testing bhi zero; performance achanak girti hai.",
+    _g("single_creative_adset", "Only one creative in the ad set",
+       "Running the whole ad set on a single creative",
+       "When the one creative fatigues, the whole ad set fatigues — no backup, zero testing; performance falls suddenly.",
        "single_creative", WARN, "GUARDRAIL_MIN_CREATIVES_PER_ADSET", ["plan", "draft"]),
-    _g("budget_jump", "Ek baar me bada budget jump",
-       "MAX_BUDGET_CHANGE_PCT se zyada ka ek-step budget badlav",
-       "Bada jump delivery ko naye, mehnge auction pockets me dhakelta hai aur learning todta hai — CPL spike ka classic kaaran.",
+    _g("budget_jump", "One-step large budget jump",
+       "A single-step budget change larger than MAX_BUDGET_CHANGE_PCT",
+       "A large jump pushes delivery into new, expensive auction pockets and breaks learning — the classic cause of a CPL spike.",
        "budget_jump", BLOCK, "MAX_BUDGET_CHANGE_PCT", ["draft", "proposal"]),
-    _g("live_ad_edit", "Live ad ko edit karna (duplicate ki jagah)",
-       "Chalte hue ad ka creative/text seedha edit kar dena",
-       "Ad ki history corrupt hoti hai, learning restart — test ka data bhi bekaar (Strategy P4).",
+    _g("live_ad_edit", "Editing a live ad (instead of duplicating)",
+       "Directly editing the creative/text of a running ad",
+       "The ad's history is corrupted, learning restarts — and the test data is wasted too (Strategy P4).",
        "live_ad_edit", BLOCK, None, ["draft", "proposal"]),
-    _g("kill_switch_on", "Kill switch ON hote hue kaam aage badhana",
-       "Safety stop ke baad bhi queue/execution chalana",
-       "Breach ke baad kharch aur badhta hai; kabhi auto-resume nahi hota.",
+    _g("kill_switch_on", "Pushing work forward while the kill switch is ON",
+       "Running the queue/execution even after a safety stop",
+       "Spend keeps growing after a breach; it is never auto-resumed.",
        "kill_switch", BLOCK, None, ["draft", "plan", "proposal"]),
 ]
 
@@ -820,11 +823,11 @@ def load_registry(conn=None):
 # -------------------------------------------------------------- evaluation
 def evaluate(entry, ctx):
     if entry.get("id") in disabled_ids(ctx.get("settings")):
-        return {"id": entry.get("id"), "status": "disabled", "reason": "owner ne OFF kiya hai"}
+        return {"id": entry.get("id"), "status": "disabled", "reason": "turned OFF by the owner"}
     fn = CHECKS.get(entry.get("check"))
     if fn is None:
         return {"id": entry.get("id"), "status": "inactive",
-                "reason": "check '%s' is build me registered nahi hai" % entry.get("check")}
+                "reason": "check '%s' is not registered in this build" % entry.get("check")}
     status, reason = fn(ctx)
     return {"id": entry.get("id"), "name": entry.get("name"),
             "severity": entry.get("severity"), "status": status,
@@ -892,7 +895,7 @@ def registry_status(settings, conn=None):
             if key:
                 status = "ON — threshold setting: %s" % key
             else:
-                status = "ON — hamesha active (koi number nahi chahiye)"
+                status = "ON — always active (no number needed)"
         out.append(dict(entry, live_status=status,
                         enabled=entry.get("id") not in off))
     return out

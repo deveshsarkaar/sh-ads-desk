@@ -451,7 +451,7 @@ class TestProvidersWebSmoke(ProviderEnv):
             self.assertIn("api.openai.com", body)       # pre-filled base URL
             self.assertIn("api.klingai.com", body)      # video preset pre-fill
             self.assertIn("Higgsfield", body)           # higgsfield preset offered
-            self.assertIn("Key set nahi hai", body)
+            self.assertIn("Key is not set", body)
             csrf = re.search(r'name="csrf" value="([^"]+)"', body).group(1)
             status, body = post("/providers/save", {
                 "csrf": csrf, "capability": "text",
@@ -462,7 +462,7 @@ class TestProvidersWebSmoke(ProviderEnv):
                 "payload_format": "openai", "chat_path": "/chat/completions"})
             self.assertEqual(status, 200)
             self.assertNotIn(FAKE_KEY, body)            # key never echoed
-            self.assertIn("Key set hai", body)
+            self.assertIn("Key is set", body)
             status, body = get("/creative")
             self.assertEqual(status, 200)
             self.assertIn("Generate with API", body)

@@ -118,7 +118,7 @@ def role_04_funnel_strategy(profile=None):
             "lead_stages": overrides.get("LEAD_STAGES", []),
             "note": "Funnel/KPI defaults come from the profile's settings "
                     "overrides (seeded by the industry preset, editable) — "
-                    "kabhi code me hardcoded nahi.",
+                    "never hardcoded in code.",
         })
     return _out("04_funnel_strategy", {
         "customers": ["ad", "enquiry (message/lead)", "product page / order", "paid order"],
@@ -264,12 +264,12 @@ def role_14_approval_queue_manager(queue):
 
 
 NO_SPEND_CHECKLIST = [
-    "Account spending limit reached (naye accounts par Meta ka daily threshold chhota hota hai)",
+    "Account spending limit reached (on new accounts Meta's daily threshold is small)",
     "Learning limited — audience too small / budget too low / duplicate ad sets competing",
     "Payment issues — expired card, insufficient balance, billing verification, unpaid balance",
     "Meta-side technical glitch — uneven/zero spend, usually resolves in a day or two",
-    "Too many creatives in one ad set — budget fragments; 3–5 winning creatives per ad set rakho",
-    "Policy violation — ad copy/creative ya LANDING PAGE par bhi (Strategy S19, Damini Tripathi / Marketian)",
+    "Too many creatives in one ad set — budget fragments; keep 3–5 winning creatives per ad set",
+    "Policy violation — in the ad copy/creative or on the LANDING PAGE too (Strategy S19, Damini Tripathi / Marketian)",
 ]
 
 

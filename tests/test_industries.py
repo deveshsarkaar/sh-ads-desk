@@ -228,7 +228,7 @@ class TestReportsAndLoop(TempEnv):
         # invent nahi hota, longevity hi signal hai.
         self.assertEqual(len(board["checklist"]), 5)
         self.assertIn("LONGEVITY", board["winner_signal_rule"])
-        self.assertIn("NAHI deta", board["winner_signal_rule"])
+        self.assertIn("does NOT give out", board["winner_signal_rule"])
         # Loop page par board render hota hai.
         from app import web
         from app.common import load_settings
@@ -283,7 +283,7 @@ class TestReportsAndLoop(TempEnv):
         brief = growth_loop.inspiration_brief(profile["id"], 7, conn=conn)
         self.assertIsNotNone(brief)
         self.assertEqual(brief["theme"], "Toolkit reveal")
-        self.assertIn("verbatim copy nahi hogi", brief["rule"])
+        self.assertIn("never be copied verbatim", brief["rule"])
 
 
 class TestGuardrails(TempEnv):

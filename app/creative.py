@@ -94,14 +94,14 @@ def generate_creative_set(product, segment="students", settings=None,
         }
         brief["brief"] = (
             brief["brief"]
-            + " Inspiration pattern (Ad Library research se): theme "
-              "'%s', format %s, CTA style '%s' — winning creative ke "
-              "PATTERN par apna ORIGINAL creative banao; unka text, "
-              "image ya video copy NAHI karna hai."
+            + " Inspiration pattern (from Ad Library research): theme "
+              "'%s', format %s, CTA style '%s' — build your own ORIGINAL "
+              "creative on the winning creative's PATTERN; do NOT copy "
+              "their text, image or video."
             % (inspiration.get("theme", ""), inspiration.get("format", ""),
                inspiration.get("cta_style", "")))
         script["hook_pattern_note"] = (
-            "Hook pattern (inspiration se, apne shabd me likho): %s"
+            "Hook pattern (from inspiration — write it in your own words): %s"
             % inspiration.get("hook", ""))
         script["inspired_by_format"] = inspiration.get("format", "")
     text = copy["hinglish"]["headline"] + " " + copy["hinglish"]["text"]
@@ -146,8 +146,8 @@ def generate_copy_with_api(product, segment="students", settings=None,
                                        extra_patterns=extra_patterns,
                                        profile=profile)
         result["source"] = "templates"
-        result["label"] = ("API not connected — template drafts use hue "
-                           "(API Providers page se Text API connect karo)")
+        result["label"] = ("API not connected — template drafts used "
+                           "(connect a Text API on the API Providers page)")
         return result
     adapter = providers.text_adapter(http=http, data_dir_override=data_dir_override)
     prompt = COPY_PROMPT.format(
