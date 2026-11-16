@@ -201,6 +201,75 @@ class TestReportsAndLoop(TempEnv):
         self.assertTrue(refresh["new_brief"])
         self.assertEqual(refresh["new_brief"]["theme"], "Subah ki fresh sabzi")
 
+    def test_competitor_research_board_links(self):
+        from app import growth_loop, profiles
+        from app.common import get_db
+        conn = get_db(self.db)
+        profile = profiles.get_active_profile(conn)
+        profiles.add_competitor(profile["id"],
+                                {"name": "Rival Tools Co"}, conn)
+        board = growth_loop.competitor_research_board(
+            profile["id"], conn=conn, profile=profile)
+        comp = [c for c in board["competitors"]
+                if c["name"] == "Rival Tools Co"]
+        self.assertEqual(len(comp), 1)
+        url = comp[0]["search_url"]
+        self.assertTrue(url.startswith(
+            "https://www.facebook.com/ads/library/?"), url)
+        # Software Hub profile global hai — country usi se aata hai.
+        self.assertIn("country=" + board["country"], url)
+        self.assertIn("q=Rival+Tools+Co", url)
+        self.assertIn("active_status=active", comp[0]["active_url"])
+        # Har catalog offering ke liye product keyword link banta hai.
+        self.assertTrue(board["product_keywords"])
+        for k in board["product_keywords"]:
+            self.assertIn("facebook.com/ads/library/", k["search_url"])
+        # Checklist + winner-signal honesty: koi performance number
+        # invent nahi hota, longevity hi signal hai.
+        self.assertEqual(len(board["checklist"]), 5)
+        self.assertIn("LONGEVITY", board["winner_signal_rule"])
+        self.assertIn("NAHI deta", board["winner_signal_rule"])
+        # Loop page par board render hota hai.
+        from app import web
+        from app.common import load_settings
+        from app.approval_queue import ApprovalQueue
+        ctx = {"conn": conn, "settings": load_settings(), "profile": profile,
+               "eligibility": [], "extra_patterns": [],
+               "queue": ApprovalQueue(), "csrf_field": "", "flash": ""}
+        ctx["queue"].conn = conn
+        html = web.pg_loop(ctx)
+        self.assertIn("Competitor Research Board", html)
+        self.assertIn("ads/library/", html)
+
+    def test_loop_creative_banta_hai_inspiration_brief_se(self):
+        # Owner ka flow: product Ad Library me search -> winning
+        # creative record -> usi pattern par creative production.
+        from app import growth_loop
+        conn, profile, queue, summary = self._run_loop("one_big_winner")
+        growth_loop.add_top_creative(profile["id"], {
+            "theme": "Toolkit reveal", "hook": "31 tools ek screen par",
+            "format": "CAROUSEL", "cta_style": "Swipe karo",
+            "source": "Meta Ad Library (product search: Canva)",
+            "source_date": "2026-11-16", "window_days": 7}, conn=conn)
+        conn2, profile2, queue2, summary2 = self._run_loop("one_big_winner")
+        prod = summary2["stages"]["creative_production"]
+        self.assertTrue(prod["inspired_by_brief"], prod)
+        self.assertEqual(prod["brief_theme"], "Toolkit reveal")
+        self.assertEqual(prod["brief_format"], "CAROUSEL")
+        # Saved creative set ke andar bhi inspiration pattern gaya hai.
+        import json as _json
+        from app import store
+        creatives = store.list_creatives(conn2, profile_id=profile2["id"])
+        loop_sets = [c for c in creatives
+                     if c["kind"] == "loop_creative_set"]
+        self.assertTrue(loop_sets)
+        content = _json.loads(loop_sets[0]["content"])
+        self.assertEqual(
+            content["poster_brief"]["inspired_by"]["theme"],
+            "Toolkit reveal")
+        self.assertEqual(content["inspiration_brief"]["format"],
+                         "CAROUSEL")
+
     def test_inspiration_brief_from_seeded_top_creative(self):
         from app import growth_loop, profiles
         from app.common import get_db

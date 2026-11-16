@@ -1930,6 +1930,34 @@ def pg_loop(ctx):
         "<button class='danger' type='submit'>Delete</button></form></td></tr>"
         % (esc(c["name"]), esc(c["handle"]), esc(c["niche"]), esc(c["source"]),
            ctx["csrf_field"], c["id"]) for c in comps)
+    board = loop_mod.competitor_research_board(pid, conn=conn, profile=profile)
+    board_comp_rows = "".join(
+        "<tr><td>%s</td><td><a href='%s' target='_blank' rel='noopener'>Saare ads</a>"
+        " · <a href='%s' target='_blank' rel='noopener'>Sirf active ads</a></td></tr>"
+        % (esc(c["name"]), esc(c["search_url"]), esc(c["active_url"]))
+        for c in board["competitors"])
+    board_kw = "".join(
+        "<li>%s — <a href='%s' target='_blank' rel='noopener'>Ad Library search</a>"
+        " · <a href='%s' target='_blank' rel='noopener'>active only</a></li>"
+        % (esc(k["keyword"]), esc(k["search_url"]), esc(k["active_url"]))
+        for k in board["product_keywords"])
+    if board["industry_keyword"]:
+        board_kw += ("<li>%s (industry) — <a href='%s' target='_blank' "
+                     "rel='noopener'>Ad Library search</a></li>"
+                     % (esc(board["industry_keyword"]["keyword"]),
+                        esc(board["industry_keyword"]["search_url"])))
+    board_checklist = "".join("<li>%s</li>" % esc(s) for s in board["checklist"])
+    board_html = ("<p class='small'>Har competitor aur har product ke liye "
+                  "ready-made Ad Library search — ek click me sahi search "
+                  "khul jayegi (country: %s).</p>"
+                  "<table><tr><th>Competitor</th><th>Ad Library</th></tr>%s</table>"
+                  "<h3>Product keywords se search</h3><ul class='small'>%s</ul>"
+                  "<h3>Research checklist (2 minute)</h3><ol class='small'>%s</ol>"
+                  "<div class='banner warn'>%s</div>"
+                  "<p class='small mut'>%s</p>"
+                  % (esc(board["country"]), board_comp_rows, board_kw,
+                     board_checklist, esc(board["winner_signal_rule"]),
+                     esc(board["honest_note"])))
     tops = loop_mod.list_top_creatives(pid, conn=conn)
     top_rows = "".join(
         "<tr><td>%s</td><td>%s</td><td>%s</td><td>%s din</td><td class='small'>%s · %s</td></tr>"
@@ -1941,9 +1969,10 @@ def pg_loop(ctx):
 <p class="small">Competitor discovery → unki best ads ki research → pichhle
 7/10 din ke top creatives se inspiration → naye creatives → optimise →
 approval-gated live → winners scale / losers pause → fatigue par fresh brief.
-Scheduler: <code>python -m app.jobs loop</code>. Research stage sirf public
+Scheduler: <code>python -m app.jobs loop</code>. Research stage public
 Meta Ad Library par based task entries banata hai — live pull abhi wired nahi,
-koi metric invent nahi hota.</p></details>
+koi metric invent nahi hota; lekin neeche Research Board par har
+competitor/product ke 1-click Ad Library links ready milte hain.</p></details>
 <div class="card"><h2>Loop stages — current stage: %s</h2>
 <table><tr><th>Stage</th><th>Status</th><th>Last run</th><th>Detail</th></tr>%s</table>
 <form method="post" action="/loop/run">%s
@@ -1957,6 +1986,7 @@ koi metric invent nahi hota.</p></details>
 <div><label>URL</label><input name="url"></div>
 <div><label>Niche</label><input name="niche"></div></div>
 <button type="submit">Competitor add karo</button></form></div>
+<div class="card"><h2>Competitor Research Board — Ad Library (1-click)</h2>%s</div>
 <div class="card"><h2>Top creatives (pichhle 7/10 din — research se)</h2>
 <table><tr><th>Theme</th><th>Hook</th><th>Format</th><th>Window</th><th>Source</th></tr>%s</table>
 <form method="post" action="/loop/topcreative_add">%s
@@ -1979,6 +2009,7 @@ format taxonomy %d formats (Damini S22). Knowledge register Trends page par hai.
        esc(status["current_stage"]), stage_rows, ctx["csrf_field"],
        window, brief_html,
        esc(profile["name"] if profile else "—"), comp_rows, ctx["csrf_field"],
+       board_html,
        top_rows, ctx["csrf_field"], hist,
        len(strat.active_entries()), len(strat.do_not_apply_entries()),
        len(strat.FORMAT_TAXONOMY))

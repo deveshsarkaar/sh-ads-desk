@@ -1,6 +1,6 @@
 # TEST_RESULTS.md — SH Ads Desk (Full Build + API Providers + Industry Refactor + YouTube Learnings)
 
-**Result: 79 passed, 0 failed** (pytest 9.2.0, Python 3.12.3, run 2026-11-16)
+**Result: 81 passed, 0 failed** (pytest 9.2.0, Python 3.12.3, run 2026-11-16)
 Command: `python3 -m pytest tests/ -q`
 
 ## Step 1 tests (18) — carried over from the verified Step 1 build
@@ -86,6 +86,30 @@ Command: `python3 -m pytest tests/ -q`
   aur Connected status dikhta hai.
 - **Package hygiene:** package me kahin `secrets.env` file nahi;
   `.gitignore` me `data/secrets.env` aur `data/generated/*` hai.
+
+## Competitor Research Board upgrade (2026-11-16)
+- **Board:** `growth_loop.competitor_research_board()` har profile ke
+  competitors (naam se) + catalog offerings (keyword se) ke liye
+  1-click ready-made Meta Ad Library search links (saare ads + sirf
+  active) banata hai; country profile ki geography se (global
+  profile = ALL, warna IN). Saath me 5-step research checklist aur
+  winner-signal rule (longevity hi signal hai; Ad Library kisi ke
+  performance numbers deta hi nahi — koi number invent nahi hota).
+  Loop cycle ke Stage 2 findings me ab board links bhi record hote
+  hain; Growth Loop page par naya Board card render hota hai.
+  Dedicated test: links ka format, checklist, honesty rule aur
+  page render verify karta hai. **Live Ad Library pull abhi bhi
+  wired NAHI hai** — board research ko 1-click banata hai, scraping
+  nahi karta.
+- **Inspiration → creative wiring (owner ka flow):** Stage 4 ki
+  creative production ab Stage 3 ke inspiration brief ko sach me
+  use karti hai — `generate_creative_set(..., inspiration=brief)`
+  poster brief/reel script ko winning creative ke PATTERN (theme,
+  hook pattern, format, CTA style) se shape karta hai aur brief ko
+  result me attach karta hai (winning ad ka text/asset kabhi copy
+  nahi hota). Dedicated test: top-creative record ke baad loop
+  chalane par production `inspired_by_brief=true` deta hai aur
+  saved creative set ke poster brief me wahi theme/format milta hai.
 
 ## YouTube learnings integration (owner-sent videos, 2026-11-16)
 - **Strategy Library YT entries:** teen YouTube training videos

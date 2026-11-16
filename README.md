@@ -59,7 +59,17 @@ Owner ka operating loop, first-class feature (`app/growth_loop.py`,
 2. **Competitor best-ads research** — sirf public Meta Ad Library,
    har finding par source + date. Live pull abhi wired nahi hai, isliye
    stage honest **research-task entries** banata hai — **koi metric
-   kabhi invent nahi hota**.
+   kabhi invent nahi hota**. Growth Loop page par **Competitor
+   Research Board** hai: har competitor ke naam se aur har
+   product/offering ke keyword se **1-click ready-made Ad Library
+   search links** (saare ads + sirf active), 5-step research
+   checklist, aur winner-signal rule (Ad Library me performance
+   numbers milte hi nahi — winning ka signal sirf **longevity**
+   hai: 3–6 mahine lagatar chal raha ad, Strategy S10). Finding
+   record hote hi Stage 3 ka brief automatic banta hai, aur
+   Stage 4 ka creative usi brief ke pattern (theme/hook/format/
+   CTA) par banta hai — winning ad ka text ya asset kabhi copy
+   nahi hota, sirf pattern use hota hai.
 3. **Top-creative inspiration** — window configurable 7/10 din
    (`TOP_CREATIVE_WINDOW_DAYS`); output = inspiration brief (theme,
    hook, format, CTA style). **Inspiration only** — kisi aur ka ad
@@ -145,7 +155,7 @@ Docker: `docker compose up -d --build` (Dockerfile + compose package me hai).
   smoke tests (saare 14 pages + planner→approve→execute gate flow), aur
   **API Providers module** (preset pre-fill, key-only save → working adapter,
   secret storage rules, text/image/video adapters — sab stubbed HTTP par,
-  koi network nahi). Kul **79 tests passed** — dekho `TEST_RESULTS.md`.
+  koi network nahi). Kul **81 tests passed** — dekho `TEST_RESULTS.md`.
 - **MOCK:** default mode. Mock Meta client, MOCK insights datasets (thin
   data, one big winner, all losers, cheap-junk, lagged, spend breach,
   fatigue), demo numbers har page par labelled.
@@ -326,7 +336,7 @@ Live price verify nahi hue — ye sirf andaz hain, faisla owner ka:
 | `app/auth.py` | Single-owner login (PBKDF2 hash, /setup ya env hash) |
 | `app/common.py`, `app/store.py` | Settings/eligibility IO, SQLite, redaction, lead/creative/report storage |
 | `settings.json`, `PRODUCT_ELIGIBILITY.yaml` | Saari settings (defaults khaali/zero); Software Hub eligibility ka migration source (sab false) |
-| `tests/` | 79 tests (Step 1 ke 18 + full-build ke 13 + API Providers ke 27 + industries/profiles/loop/guardrails/YouTube ke 21) |
+| `tests/` | 81 tests (Step 1 ke 18 + full-build ke 13 + API Providers ke 27 + industries/profiles/loop/guardrails/YouTube/board ke 23) |
 | `Dockerfile`, `docker-compose.yml`, `HOSTING.md`, `.env.example` | Deploy pack |
 | `PRACTICES.md` | Official-guidance notes — Step 2 me official docs se verify ho chuke hain |
 | `META_ACCESS.md` | Meta access/setup ka verified guide (Step 2) |

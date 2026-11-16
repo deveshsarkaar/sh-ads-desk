@@ -63,18 +63,47 @@ class ManualUploadAdapter(CreativeProviderAdapter):
 
 
 def generate_creative_set(product, segment="students", settings=None,
-                          eligibility=None, extra_patterns=None, profile=None):
+                          eligibility=None, extra_patterns=None, profile=None,
+                          inspiration=None):
     """Run Roles 6-9 for one product and gate the copy through Role 10.
     Returns a dict of TEXT artefacts + the policy result. If the eligibility
     gate fails, copy is still shown as a draft preview but is marked BLOCKED
     and can never enter the approval queue. eligibility/extra_patterns let
     a business profile's own catalog + industry compliance pack drive the
-    gate; defaults keep the legacy YAML behaviour."""
+    gate; defaults keep the legacy YAML behaviour.
+
+    inspiration: an inspiration brief (Growth Loop Stage 3 — built from
+    a recorded top/winning creative found via Meta Ad Library research).
+    When given, the poster brief and reel script are shaped by its
+    PATTERN (theme, hook pattern, format, CTA style) — the brief is
+    attached to the result as `inspiration_brief`. The winning ad's own
+    text/assets are NEVER copied; only the pattern is used."""
     angles = roles.role_06_angle_generator(segment, profile=profile)["output"]["angles"]
     angle = angles[0]
     copy = roles.role_07_copywriter(angle, profile=profile)["output"]
     brief = roles.role_08_visual_poster_brief(angle, profile=profile)["output"]
     script = roles.role_09_reel_script(angle)["output"]
+    if inspiration:
+        brief["inspired_by"] = {
+            "theme": inspiration.get("theme", ""),
+            "hook_pattern": inspiration.get("hook", ""),
+            "format": inspiration.get("format", ""),
+            "cta_style": inspiration.get("cta_style", ""),
+            "source": inspiration.get("source", ""),
+            "basis": inspiration.get("basis", ""),
+        }
+        brief["brief"] = (
+            brief["brief"]
+            + " Inspiration pattern (Ad Library research se): theme "
+              "'%s', format %s, CTA style '%s' — winning creative ke "
+              "PATTERN par apna ORIGINAL creative banao; unka text, "
+              "image ya video copy NAHI karna hai."
+            % (inspiration.get("theme", ""), inspiration.get("format", ""),
+               inspiration.get("cta_style", "")))
+        script["hook_pattern_note"] = (
+            "Hook pattern (inspiration se, apne shabd me likho): %s"
+            % inspiration.get("hook", ""))
+        script["inspired_by_format"] = inspiration.get("format", "")
     text = copy["hinglish"]["headline"] + " " + copy["hinglish"]["text"]
     policy = policy_checker.check_creative(product, text, settings=settings,
                                            eligibility=eligibility,
@@ -82,6 +111,7 @@ def generate_creative_set(product, segment="students", settings=None,
     return {
         "product": product, "segment": segment, "angle": angle,
         "copy": copy, "poster_brief": brief, "reel_script": script,
+        "inspiration_brief": inspiration,
         "policy": policy, "source": "templates",
         "business": (profile or {}).get("name"),
         "label": "TEXT drafts (SCRIPT/BRIEF) — not generated image/video assets",

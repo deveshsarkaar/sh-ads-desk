@@ -36,6 +36,7 @@ the page: current stage, last run per stage, loop history).
 """
 import json
 from datetime import date
+from urllib.parse import quote_plus
 
 from . import creative as creative_mod
 from . import optimiser as optimiser_mod
@@ -59,6 +60,96 @@ STAGES = [
 STAGE_KEYS = [k for k, _label in STAGES]
 
 AD_LIBRARY_SOURCE = "Meta Ad Library (public) — https://www.facebook.com/ads/library"
+AD_LIBRARY_BASE = "https://www.facebook.com/ads/library/"
+
+
+def ad_library_search_url(query, country="IN", active_only=False):
+    """Ready-made Meta Ad Library search link for a keyword/Page name.
+
+    One click opens the public Ad Library with the search pre-filled —
+    the human still does the looking (no scraping, no automated pull:
+    the Ad Library has no official API for commercial ads, and its
+    terms do not allow automated collection). The URL carries ONLY
+    the search query — no user data, no tokens."""
+    q = (query or "").strip()
+    if not q:
+        return AD_LIBRARY_BASE
+    return (AD_LIBRARY_BASE
+            + "?active_status=" + ("active" if active_only else "all")
+            + "&ad_type=all&country=" + (country or "IN")
+            + "&q=" + quote_plus(q)
+            + "&search_type=keyword_unordered&media_type=all")
+
+
+def _country_for_profile(profile):
+    """Ad Library country code from the profile's geography text.
+    Default IN; global profiles search ALL countries."""
+    geo = ((profile or {}).get("geography") or "").lower()
+    if any(w in geo for w in ("global", "worldwide", "international", "all countries")):
+        return "ALL"
+    return "IN"
+
+
+RESEARCH_CHECKLIST = [
+    "Link kholo — competitor/product ke ads Ad Library me khul jayenge.",
+    "Pehle 'Active' wale ads dekho: abhi kya chal raha hai.",
+    "Sabse PURANA lagatar chal raha ad dhundho — 3–6 mahine se chal "
+    "raha ad = winning signal (longevity rule, Strategy S10).",
+    "Us ad ka theme, hook (pehle 3 second), format aur CTA style "
+    "note karo — ad copy ya assets copy NAHI karne hain.",
+    "Neeche 'Top creative record karo' form se finding record karo — "
+    "record hote hi inspiration brief automatic ban jayega.",
+]
+
+WINNER_SIGNAL_RULE = (
+    "Winning ka signal Ad Library me sirf LONGEVITY hai: jo ad "
+    "3–6 mahine se lagatar chal raha hai, wo paisa kama raha hoga — "
+    "warna advertiser use band kar deta. Ad Library kisi ke bhi "
+    "performance numbers (spend/CTR/sales) NAHI deta — Meta wo data "
+    "public karta hi nahi, isliye system koi number invent NAHI karta.")
+
+
+def competitor_research_board(profile_id, conn=None, profile=None):
+    """Competitor Research Board: per-profile 1-click Ad Library
+    search links (har competitor ke naam se + har product/offering
+    ke keyword se), research checklist aur winner-signal rule.
+    Data sirf profile ke apne competitors + catalog se banta hai —
+    koi bahari pull nahi hota."""
+    conn = conn or get_db()
+    if profile is None:
+        profile = profiles_mod.get_profile(profile_id, conn)
+    country = _country_for_profile(profile)
+    competitors = []
+    for c in profiles_mod.list_competitors(profile_id, conn):
+        competitors.append({
+            "name": c["name"], "handle": c.get("handle", ""),
+            "niche": c.get("niche", ""),
+            "search_url": ad_library_search_url(c["name"], country),
+            "active_url": ad_library_search_url(c["name"], country,
+                                                active_only=True),
+        })
+    product_keywords = []
+    for o in profiles_mod.list_offerings(profile_id, conn):
+        product_keywords.append({
+            "keyword": o["name"],
+            "search_url": ad_library_search_url(o["name"], country),
+            "active_url": ad_library_search_url(o["name"], country,
+                                                active_only=True),
+        })
+    industry = (profile or {}).get("industry") or ""
+    return {
+        "profile_id": profile_id, "country": country,
+        "competitors": competitors, "product_keywords": product_keywords,
+        "industry_keyword": ({
+            "keyword": industry,
+            "search_url": ad_library_search_url(industry, country),
+        } if industry else None),
+        "checklist": RESEARCH_CHECKLIST,
+        "winner_signal_rule": WINNER_SIGNAL_RULE,
+        "honest_note": "Live pull abhi bhi wired nahi hai — ye board "
+                       "research ko 1-click bana deta hai; findings "
+                       "record hote hi brief/creative automatic hai.",
+    }
 
 
 def record_stage(conn, profile_id, stage, detail):
@@ -215,20 +306,29 @@ def run_cycle(conn=None, settings=None, profile=None, queue=None):
                   "names": [c["name"] for c in competitors]})
     summary["stages"]["competitor_discovery"] = len(competitors)
 
-    # 2 — competitor best-ads research (honest: live pull not wired)
+    # 2 — competitor best-ads research (honest: live pull not wired;
+    # the Research Board gives 1-click pre-filled Ad Library links)
+    board = competitor_research_board(pid, conn=conn, profile=profile)
+    board_links = {c["name"]: c for c in board["competitors"]}
     findings = []
     for c in competitors:
+        links = board_links.get(c["name"], {})
         findings.append({
             "competitor": c["name"],
             "status": "RESEARCH TASK — live Ad Library pull is UNTESTED/not "
-                      "wired in this build. Manual public Ad Library check "
-                      "required: kaunsi ads 3–6 mahine se lagatar chal "
-                      "rahi hain (longevity = proven-winner signal, "
-                      "Strategy S10). Koi metric invent NAHI kiya gaya.",
+                      "wired in this build. Board ke 1-click link se public "
+                      "Ad Library check karo: kaunsi ads 3–6 mahine se "
+                      "lagatar chal rahi hain (longevity = proven-winner "
+                      "signal, Strategy S10). Koi metric invent NAHI "
+                      "kiya gaya.",
+            "ad_library_search_url": links.get("search_url", ""),
+            "ad_library_active_url": links.get("active_url", ""),
             "source": AD_LIBRARY_SOURCE, "date": str(date.today()),
         })
     record_stage(conn, pid, "competitor_ads_research",
-                 {"findings": findings, "label": "UNTESTED live pull"})
+                 {"findings": findings,
+                  "product_keyword_links": board["product_keywords"],
+                  "label": "UNTESTED live pull — board links ready"})
     log_role_run(conn, "02_competitor_watch", "done",
                  {"entries": competitors, "findings": findings})
     summary["stages"]["competitor_ads_research"] = len(findings)
@@ -251,13 +351,17 @@ def run_cycle(conn=None, settings=None, profile=None, queue=None):
             offerings[0]["name"], segment, settings=settings,
             eligibility=profiles_mod.offerings_as_eligibility(pid, conn),
             extra_patterns=profiles_mod.compliance_patterns_for(profile),
-            profile=profile)
+            profile=profile, inspiration=brief)
         cid = store.save_creative(offerings[0]["name"], segment,
                                   "loop_creative_set", result,
                                   result["policy"], conn, profile_id=pid)
         production = {"creative_id": cid, "offering": offerings[0]["name"],
                       "policy_allowed": result["policy"]["allowed"],
-                      "policy_reasons": result["policy"]["reasons"]}
+                      "policy_reasons": result["policy"]["reasons"],
+                      "inspired_by_brief": True,
+                      "brief_theme": brief.get("theme", ""),
+                      "brief_format": brief.get("format", ""),
+                      "brief_basis": brief.get("basis", "")}
     record_stage(conn, pid, "creative_production", production)
     summary["stages"]["creative_production"] = production
 
