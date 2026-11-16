@@ -1,7 +1,13 @@
-# TEST_RESULTS.md — SH Ads Desk (Full Build + API Providers + Industry Refactor + YouTube Learnings + Advanced Autonomy)
+# TEST_RESULTS.md — SH Ads Desk (Full Build + API Providers + Industry Refactor + YouTube Learnings + Advanced Autonomy + Mission Control UI)
 
-**Result: 89 passed, 0 failed** (pytest 9.2.0, Python 3.12.3, run 2026-11-16)
+**Result: 94 passed, 0 failed** (pytest 9.2.0, Python 3.12.3, run 2026-11-16)
 Command: `python3 -m pytest tests/ -q`
+
+## Mission Control UI tests (5) — reel-style agent office, asli data
+- Departments constant: 4 departments, kul 20 agents.
+- Bina run ke agent WAITING; run log hone ke baad (30 min baad dekho to) DONE + last_run time; pichle 5 minute me run = DOING.
+- Approval queue me pending item ho to Role 14 (Approval Queue Manager) NEXT dikhta hai aur KPI count sahi aata hai.
+- Page render: centre "META ADS AGENT" panel, chaaro department ke naam, agent labels (Audience Research, Copywriter, Campaign Builder, Optimiser, Reporter) aur status chips HTML me maujud.
 
 ## Advanced Autonomy tests (8) — 24x7 worker, Redis layer, job queue
 - RESP command encoding ka exact byte shape; RESP reader simple/integer/bulk/null/array replies parse karta hai.

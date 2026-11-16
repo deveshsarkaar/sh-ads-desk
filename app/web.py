@@ -103,7 +103,7 @@ nav.main{top:53px}}
 """
 
 NAV = [
-    ("/", "Today"), ("/profiles", "Profiles"), ("/loop", "Growth Loop"),
+    ("/", "Today"), ("/mission", "Mission Control"), ("/profiles", "Profiles"), ("/loop", "Growth Loop"),
     ("/connect", "Connect"), ("/roles", "Roles"),
     ("/settings", "Settings"), ("/guardrails", "Guardrails"),
     ("/eligibility", "Eligibility"),
@@ -253,6 +253,90 @@ def mode_banner(settings):
 
 
 # ---------------------------------------------------------------- pages (GET)
+def pg_mission(ctx):
+    """Mission Control — reel-style agent office, lekin saara data
+    ASLI system records se (role_runs, approval queue, worker
+    heartbeat). Koi simulation nahi."""
+    from . import mission as mission_mod
+    conn, settings = ctx["conn"], ctx["settings"]
+    profile = ctx["profile"]
+    data = mission_mod.mission_data(conn, settings, profile=profile,
+                                    queue=ctx["queue"])
+    c, k = data["centre"], data["kpis"]
+    chip_colors = {"DOING": "#2563eb", "DONE": "#059669",
+                   "NEXT": "#d97706", "WAITING": "#6b7280"}
+    dept_html = []
+    for dept in data["departments"]:
+        agents = []
+        for a in dept["agents"]:
+            num = a["id"].split("_")[0]
+            last = ("last: %s" % esc(a["last_run"])) if a["last_run"] else "abhi tak nahi chala"
+            pulse = " mc-pulse" if a["status"] == "DOING" else ""
+            agents.append(
+                '<div class="mc-agent"><div class="mc-num" style="background:%s">%s</div>'
+                '<div class="mc-agent-main"><div class="mc-agent-name">%s</div>'
+                '<div class="mc-agent-last">%s</div></div>'
+                '<span class="mc-chip%s" style="background:%s">%s</span></div>'
+                % (dept["color"], num, esc(a["label"]), last, pulse,
+                   chip_colors[a["status"]], a["status"]))
+        dept_html.append(
+            '<div class="card mc-dept"><h2 style="border-left:5px solid %s;'
+            'padding-left:10px">%s</h2>%s</div>'
+            % (dept["color"], esc(dept["name"]), "".join(agents)))
+    worker_pill = ('<span class="pill ok">WORKER LIVE</span>' if c["worker_live"]
+                   else '<span class="pill">WORKER IDLE</span>')
+    kill_pill = ('<span class="pill bad">KILL SWITCH ON</span>' if c["kill_switch"]
+                 else '<span class="pill ok">SYSTEM ACTIVE</span>')
+    cnt = c["counts"]
+    body = """
+<style>
+.mc-centre{background:linear-gradient(135deg,#111827,#1e3a8a);color:#fff;border-radius:18px;padding:26px 22px;text-align:center;margin-bottom:16px}
+.mc-centre h1{color:#fff;margin:0 0 4px;font-size:26px;letter-spacing:.5px}
+.mc-centre .sub{color:#bfdbfe;font-size:14px;margin-bottom:14px}
+.mc-counts{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:14px}
+.mc-count{background:rgba(255,255,255,.1);border-radius:12px;padding:8px 16px;font-size:14px}
+.mc-count b{font-size:19px;display:block}
+.mc-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:16px}
+.mc-kpi{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px;text-align:center}
+.mc-kpi b{font-size:22px;display:block}
+.mc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px}
+.mc-agent{display:flex;align-items:center;gap:11px;padding:9px 4px;border-bottom:1px solid var(--line)}
+.mc-agent:last-child{border-bottom:none}
+.mc-num{color:#fff;font-weight:700;border-radius:10px;width:34px;height:34px;display:flex;align-items:center;justify-content:center;font-size:14px;flex:none}
+.mc-agent-main{flex:1;min-width:0}
+.mc-agent-name{font-weight:600;font-size:14.5px}
+.mc-agent-last{color:var(--mut);font-size:12px}
+.mc-chip{color:#fff;border-radius:20px;padding:3px 11px;font-size:11.5px;font-weight:700;flex:none}
+.mc-pulse{animation:mcpulse 1.2s infinite}
+@keyframes mcpulse{0%%{opacity:1}50%%{opacity:.45}100%%{opacity:1}}
+</style>
+<div class="mc-centre">
+<h1>&#129302; SH ADS DESK — META ADS AGENT</h1>
+<div class="sub">%s &middot; Mode: %s &middot; 20 Agents &middot; 4 Departments</div>
+<div>%s %s</div>
+<div class="mc-counts">
+<div class="mc-count"><b>%d</b>DOING</div>
+<div class="mc-count"><b>%d</b>DONE</div>
+<div class="mc-count"><b>%d</b>NEXT</div>
+<div class="mc-count"><b>%d</b>WAITING</div>
+</div>
+<p style="color:#93c5fd;font-size:12.5px;margin:14px 0 0">Status asli records se hai — role runs, approval queue aur worker heartbeat. Page har 30 second me khud refresh hoti hai.</p>
+</div>
+<div class="mc-kpis">
+<div class="mc-kpi"><b>%d</b>Pending Approvals</div>
+<div class="mc-kpi"><b>%d</b>Queue Jobs</div>
+<div class="mc-kpi"><b>%d</b>Creatives</div>
+<div class="mc-kpi"><b>%d</b>Reports</div>
+</div>
+<div class="mc-grid">%s</div>
+<script>setTimeout(function(){location.reload()},30000)</script>
+""" % (esc(c["profile"]), esc(c["automation_mode"]), worker_pill, kill_pill,
+       cnt["DOING"], cnt["DONE"], cnt["NEXT"], cnt["WAITING"],
+       k["pending_approvals"], k["queue_pending"], k["creatives"],
+       k["reports"], "".join(dept_html))
+    return page("Mission Control", "/mission", body, ctx["flash"], conn, ctx)
+
+
 def pg_today(ctx):
     conn, settings = ctx["conn"], ctx["settings"]
     profile = ctx["profile"]
@@ -2188,7 +2272,7 @@ POST_ROUTES = {
 }
 
 GET_ROUTES = {
-    "/": pg_today, "/connect": pg_connect, "/roles": pg_roles,
+    "/": pg_today, "/mission": pg_mission, "/connect": pg_connect, "/roles": pg_roles,
     "/settings": pg_settings, "/eligibility": pg_eligibility,
     "/creative": pg_creative, "/providers": pg_providers,
     "/planner": pg_planner, "/profiles": pg_profiles, "/loop": pg_loop,
