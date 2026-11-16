@@ -6,6 +6,7 @@ data/provider_config.json
 data/generated/*
 data/uploads/*
 !data/.gitkeep
+redis-data/
 __pycache__/
 *.pyc
 .pytest_cache/

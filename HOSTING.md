@@ -33,6 +33,12 @@ Do raste hain. **Path A (Docker on VPS)** sabse bharosemand hai.
    ```bash
    docker compose up -d --build
    docker compose logs -f        # "SH Ads Desk running" dikhna chahiye
+   # Teen services uthte hain: web (8000), worker (24x7 engine —
+   # collect/optimise/reports/loop apne aap, restart: unless-stopped)
+   # aur redis (queue ki fast lane; band ho jaye to system SQLite
+   # queue par chal padta hai). Worker ki sehat app ke Settings
+   # page par "24x7 Worker — sthiti" card me dikhti hai. Cron ki
+   # zaroorat nahi — schedule worker ke paas hai.
    ```
 6. Browser me `http://<server-ip>:8000/setup` kholo aur owner password set
    karo (kam se kam 10 characters). **Setup ke baad ye page band ho jata hai.**

@@ -1,7 +1,14 @@
-# TEST_RESULTS.md — SH Ads Desk (Full Build + API Providers + Industry Refactor + YouTube Learnings)
+# TEST_RESULTS.md — SH Ads Desk (Full Build + API Providers + Industry Refactor + YouTube Learnings + Advanced Autonomy)
 
-**Result: 81 passed, 0 failed** (pytest 9.2.0, Python 3.12.3, run 2026-11-16)
+**Result: 89 passed, 0 failed** (pytest 9.2.0, Python 3.12.3, run 2026-11-16)
 Command: `python3 -m pytest tests/ -q`
+
+## Advanced Autonomy tests (8) — 24x7 worker, Redis layer, job queue
+- RESP command encoding ka exact byte shape; RESP reader simple/integer/bulk/null/array replies parse karta hai.
+- REDIS_URL na ho to Redis client None aur queue backend sqlite (fallback hamesha uplabdh).
+- SQLite queue FIFO order + ek hi (job, profile) dobara enqueue = dedupe reject.
+- Quiet hours aadhi-raat wrap (23-07) sahi; due-jobs owner toggles aur intervals ka samman karta hai; quiet hours me sirf collect due.
+- Kill switch ON = due list khaali, tick kuch run nahi karta; poora worker tick MOCK par bina failure ke chala, heartbeat likha gaya.
 
 ## Step 1 tests (18) — carried over from the verified Step 1 build
 - Eligibility gate: unknown product fails closed; listed product with

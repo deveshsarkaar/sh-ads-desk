@@ -156,6 +156,13 @@ SETTING_FIELDS = [
     ("AUTOMATION_MODE", "select", "OFF = sirf reports. PROPOSE (default) = har cheez approval ke baad. AUTO_WITHIN_RULES = sirf tab jab owner ne exact rules likh kar approve kiye hon (Step 5)."),
     ("AUTO_RULES_APPROVED", "checkbox", "AUTO_WITHIN_RULES ke liye: owner ne neeche wale written rules padh kar approve kiye hain. Bina iske AUTO mode bhi PROPOSE jaisa hi chalega."),
     ("AUTO_RULES_TEXT", "text", "AUTO_WITHIN_RULES ke written rules (owner ki apni shabdon me — kaunsi actions caps ke andar auto ho sakti hain)."),
+    ("AUTO_COLLECT", "checkbox", "24x7 worker: har 6 ghante insights collect apne aap. OFF = sirf manual/CLI collect."),
+    ("AUTO_RESEARCH", "checkbox", "24x7 worker: hafte me Growth Loop cycle (competitor research + briefs) apne aap."),
+    ("AUTO_CREATIVE_DRAFTS", "checkbox", "24x7 worker: loop ke creative DRAFTS apne aap banein (live kuch nahi hota — draft approval queue tak)."),
+    ("AUTO_REPORTS", "checkbox", "24x7 worker: daily/weekly report apne aap bane."),
+    ("AUTO_OPTIMISE_PROPOSALS", "checkbox", "24x7 worker: roz optimisation PROPOSALS apne aap banein (PROPOSE mode me apply kabhi auto nahi)."),
+    ("WORKER_TICK_SECONDS", "number", "Worker kitne seconds me schedule check kare. Khaali = 60."),
+    ("QUIET_HOURS", "text", "Chup rehne ke ghante, jaise 23-07 — is dauraan sirf collect chalega. Khaali = koi quiet hours nahi."),
     ("TOP_CREATIVE_WINDOW_DAYS", "number", "Growth Loop ka top-creative window: 7 ya 10 din. 0/khaali = 7."),
     ("GUARDRAIL_LEARNING_MIN_DAYS", "number", "Guardrail: itne din se naye live object par edit/change BLOCK. 0 = inactive."),
     ("GUARDRAIL_LEARNING_MIN_CONVERSIONS", "number", "Guardrail: itne conversions se pehle judge/edit BLOCK. 0 = inactive."),
@@ -447,6 +454,19 @@ def pg_settings(ctx):
         '(%d fields)</summary>%s</details>' % (len(advanced_fields),
                                                "".join(advanced_fields))]
     kill_on = ctx["queue"].kill_switch_active()
+    from . import autonomy as autonomy_mod
+    _asum = autonomy_mod.autonomy_summary(conn, settings)
+    _on = [lbl for k, lbl in autonomy_mod.TOGGLES if _asum["toggles"].get(k)]
+    worker_html = (
+        "Worker heartbeat: <strong>%s</strong> · Queue backend: <strong>%s</strong> "
+        "· Pending jobs: <strong>%d</strong> · Quiet hours: <strong>%s</strong><br>"
+        "Auto ON: %s<br><span class='mut'>Worker ek alag 24x7 service hai "
+        "(docker-compose ka 'worker'). Ye sirf housekeeping auto karta hai — "
+        "Meta-writes hamesha AUTOMATION_MODE + signed rules ke andar hi rehte hain.</span>"
+        % (esc(_asum["worker_heartbeat"] or "abhi tak koi heartbeat nahi — worker chalu nahi hai"),
+           esc(_asum["queue_backend"]), _asum["queue_pending"],
+           esc(_asum["quiet_hours"] or "none"),
+           esc(", ".join(_on) if _on else "kuch nahi — sab auto OFF hai")))
     body = """
 <h1>Settings</h1>
 <p class="mut">Global settings — defaults khaali/zero, kuch hardcoded nahi.
@@ -456,6 +476,8 @@ Per-business overrides <a href="/profiles">Profiles</a> par; guardrail toggles
 <p class="small">Save dabane se settings is server ki local settings file me save hongi
 (audit log me entry ke saath). Isse koi Meta write nahi hota.</p>
 <button type="submit">Settings save karo</button></form></div>
+<div class="card"><h2>24x7 Worker — sthiti</h2>
+<p class="small">%s</p></div>
 <div class="card"><h2>Kill Switch</h2>
 <p>Kill switch ON karne se: automation band, saare managed objects (mock/live registry)
 PAUSED, aur approvals/execution blocked. Ye <strong>apne aap kabhi resume nahi hota</strong> —
@@ -464,7 +486,7 @@ band bhi owner khud karega.</p>
 <form method="post" action="/killswitch">%s
 <input type="hidden" name="action" value="%s">
 <button class="danger" type="submit">%s</button></form></div>
-""" % (ctx["csrf_field"], "".join(fields),
+""" % (ctx["csrf_field"], "".join(fields), worker_html,
        '<span class="pill bad">ON — sab ruka hua hai</span>' if kill_on else '<span class="pill ok">OFF</span>',
        ctx["csrf_field"], "off" if kill_on else "on",
        "Kill switch band karo (owner action)" if kill_on else "KILL SWITCH ON karo — sab roko")

@@ -330,6 +330,7 @@ Live price verify nahi hue — ye sirf andaz hain, faisla owner ka:
 | `SETUP_CHECKLIST.md` | 1-page setup checklist — tick karte-karte: software chalana, andar ka setup, Meta connect, pehla ad |
 | `AUTOPILOT_RULES.md` | "Almost automatic" ka naksha — kya hamesha auto hai, ek-baar ka API connect (MCP wala sach), rules sign karne par caps ke andar kya auto hoga, owner ke controls, ready-to-paste AUTO_RULES_TEXT draft (STATUS: UNAPPROVED draft) |
 | `CUSTOMER_EXPLAINER.md` | Customer ko samjhane ki script — connect kaise hoga, roz kaam kaise karega, paisa kaise bachega (bekaar kharch rukna, koi guarantee wala daava nahi), har industry ki ek line, do aam sawalon ke jawab, bolne ka order |
+| `AUTONOMY_24X7.md` | Advanced autonomy — 24x7 worker daemon (auto-restart, heartbeat, self-healing), Redis fast lane (stdlib RESP client, optional — SQLite fallback), job queue (dedupe), owner autonomy toggles + quiet hours, model-agnostic AI layer; Telethon par saaf sach (wo Telegram library hai, is system me uska kaam nahi) |
 | `app/policies_register.py` | Policies register — Meta policies digest (10 sections, flags preserved, PR9 DISPUTED) + personal-attributes union |
 | `app/competitor_seeds.py` | Competitor seed data (Damini Tripathi / Marketian) |
 | `app/providers.py` | API Providers — presets (pre-filled base URL/model), secrets.env handling, generic HTTP client, Text/Image/Video adapters, test-connection — **UNTESTED** on real providers, stub-verified |
