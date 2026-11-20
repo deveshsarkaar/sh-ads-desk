@@ -409,7 +409,10 @@ class TestRegisters(TempEnv):
 
     def test_strategy_library_labels_and_screening(self):
         from app import strategy_library as sl
-        damini = [e for e in sl.all_entries() if e["id"].startswith("S")]
+        # Damini ids are S<digit>... (S1-S35, S20-DNA). The regex keeps
+        # later S-prefixed packs (SUB-*, 2026-11-20) out of her count.
+        import re as _re
+        damini = [e for e in sl.all_entries() if _re.match(r"^S\d", e["id"])]
         self.assertEqual(len(damini), 36)  # S1–S35 + S20-DNA split entry
         self.assertTrue(all("Damini Tripathi" in e["source"] for e in damini))
         dna = sl.get_entry("S20-DNA")

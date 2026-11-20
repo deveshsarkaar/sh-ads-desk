@@ -34,6 +34,16 @@ reports feed it (both read in full on 2026-11-16):
    The creators' own earnings/revenue/ROAS figures are their
    UNVERIFIED marketing claims — NOT seeded anywhere (see YT-DNA).
 
+5. Subscription-vertical research (2026-11-20) — 12 strategies
+   seeded as SUB-* plus two DO-NOT-APPLY entries (SUB-DNA1/2):
+   ~/workspace/research_notes/subscription-meta-ads/report.md
+   (501 Instagram subscription sellers, seller storefronts, Meta
+   policy pages). The Ad Library returned HTTP 403 to that
+   research, so no advertiser carries a verified ad start date —
+   longevity is UNMEASURED for this vertical and no entry calls
+   any ad a proven winner. Full notes: SUBSCRIPTION_TRAINING.md;
+   loadable business profile: app/subscription_profile.py.
+
 COMPLIANCE SCREENING: every entry was screened against the system's
 policy/compliance rules (core banned claims, industry packs, and the
 knowledge base's own Section 4) before seeding. Anything conflicting is
@@ -990,9 +1000,184 @@ YOUTUBE_ENTRIES = [
             "income claims were not."),
 ]
 
+# ------------------------------------- Subscription vertical (SUB-*, 2026-11-20)
+# Source: subscription-vertical research, 2026-11-20 —
+# ~/workspace/research_notes/subscription-meta-ads/report.md (501
+# Instagram subscription sellers, seller storefronts, Meta policy
+# pages). Full notes: SUBSCRIPTION_TRAINING.md (repo root); loadable
+# business profile: app/subscription_profile.py.
+# EVIDENCE DISCIPLINE: the Meta Ad Library returned HTTP 403 to the
+# research fetcher, so NO advertiser here has a verified ad start
+# date — longevity is UNMEASURED for this vertical and no entry
+# calls any ad a proven winner. Patterns are seeded because they
+# RECUR across many independent sellers/countries (OBSERVED in the
+# report), never because of a performance number. Seller display
+# prices and marketing claims are market context, not benchmarks.
+SUB_SRC = "Subscription vertical research (seller-market study, 2026-11-20)"
+_SUB_REPORT = ("~/workspace/research_notes/"
+               "subscription-meta-ads/report.md")
+
+
+def _sub(id_, title, stage, summary, status="ACTIVE", note=""):
+    entry = _e(id_, title, SUB_SRC, _SUB_REPORT, stage, summary,
+               status=status, note=note)
+    entry["date_read"] = "2026-11-20"
+    return entry
+
+
+SUBSCRIPTION_ENTRIES = [
+    _sub("SUB-1", "This niche mostly does NOT advertise: track organic sellers too",
+         "competitor_research",
+         "Of 19 named subscription sellers checked (founder samples, "
+         "supplier layer, website-backed stores, the biggest IG "
+         "sellers), the search index held NO Ad Library record for "
+         "any of them; their funnels run on organic posters + "
+         "WhatsApp + own storefronts. For this vertical, competitor "
+         "discovery must watch organic poster/storefront movement "
+         "as a first-class signal, not only Ad Library Pages.",
+         note="Absence of evidence via the search index, not proof "
+              "of non-advertising — short-lived/geo-restricted "
+              "campaigns index poorly. A live Library pass by Page "
+              "name + country is the verification step."),
+    _sub("SUB-2", "Price-grid poster is the vertical's base creative (pattern T1)",
+         "creative",
+         "One table-poster: product x duration (1/3/6/12 months) x "
+         "tier x warranty x price. It recurs across IN/PK/BD/ID/NG/"
+         "NP sellers and storefronts. Brief every subscription "
+         "creative batch with a price-grid variant built from this "
+         "business's REAL prices."),
+    _sub("SUB-3", "Official-vs-ours strike-through — only with proof (pattern T2)",
+         "creative",
+         "Struck-through official price -> our price + % OFF is "
+         "the niche's most repeated headline structure. For this "
+         "business it is allowed ONLY when the official price is "
+         "the real one, the discount matches the checkout price "
+         "exactly, and proof is on file (the software_digital "
+         "preset already requires price proof).",
+         note="Screened: a creative/checkout price mismatch is a "
+              "named Meta Prohibited Commercial Practices trigger. "
+              "Grey-layer % figures (90-98% OFF headlines) are "
+              "seller marketing claims — see SUB-DNA2."),
+    _sub("SUB-4", "Bundle hero: combo price beats single-product price (pattern T4)",
+         "creative",
+         "Combos recur everywhere: 3-in-1 OTT bundles in India, "
+         "annual tool packs, Canva+CapCut bundles in Indonesia/"
+         "Brazil. Software Hub's annual packs map directly onto "
+         "this pattern — one combo price, contents listed, "
+         "duration stated."),
+    _sub("SUB-5", "Duration-anchor offer: sell the long plan (pattern T5)",
+         "creative",
+         "One long duration as the hook — the 18-month Gemini "
+         "framing (IN/BD/NG), 3-year Canva, annual packs — "
+         "contrasted with the monthly official price. Fits this "
+         "business's 12-month coupon codes; the comparison must "
+         "use real prices on both sides."),
+    _sub("SUB-6", "Own-email activation is the quality claim (pattern T6)",
+         "creative",
+         "'Activated on YOUR email/account — no shared password' "
+         "is the line that separates official-code supply from "
+         "shared-login offers across IN/PK/ID/NG. It is also "
+         "literally true for this business (coupon code/claim "
+         "fulfilment), so it belongs in the hook set."),
+    _sub("SUB-7", "Warranty shield on the creative (pattern T7)",
+         "creative",
+         "Replacement-warranty days and refund terms printed on "
+         "the creative itself are the niche's trust layer. Use "
+         "only the warranty this business actually honours, "
+         "stated in days, on the creative and at checkout "
+         "identically."),
+    _sub("SUB-8", "WhatsApp-first funnel for subscription offers",
+         "funnel",
+         "Every observed market converts on WhatsApp first, "
+         "website checkout second, DM third; no observed seller "
+         "uses Meta Shop checkout. Practitioner consensus for "
+         "messaging funnels: Leads objective to a WhatsApp "
+         "destination; Sales objective only once Pixel + "
+         "Conversions API events exist (matches YT2-2/YT3-6).",
+         note="Practitioner-labelled (DigitalWithAnkur/Haptik/"
+              "SendPulse summaries of Ads Manager behaviour), not "
+              "a Meta rule."),
+    _sub("SUB-9", "Tier ladder as creative structure: shared vs private is NOT ours",
+         "structure",
+         "The niche's standard grid tiers by access type "
+         "(shared / semi-private / private). This business "
+         "cannot use that ladder — it sells official codes, one "
+         "activation type. Its ladder is by DURATION and by "
+         "PACK (single tool vs annual pack), which is how its "
+         "price-grid and ad sets should be structured instead.",
+         note="Screened adaptation: shared-login tiers are "
+              "DO-NOT-APPLY here (see SUB-DNA1 and the "
+              "software_digital compliance pack)."),
+    _sub("SUB-10", "Country x product demand map for this vertical",
+         "competitor_research",
+         "Observed seller activity (NOT ad results): Canva Pro "
+         "is the richest family (IN/PK/BD/ID/BR/NG/NP); ChatGPT "
+         "Plus everywhere with local-payment hooks; Gemini rides "
+         "the 18-month frame; CapCut is PK-densest and absent "
+         "for BD/NG/NP/UAE; OTT bundles are the most mature "
+         "family and the only one with paid-ad traces; Spotify "
+         "rides bundles, almost never solo; Telegram Premium "
+         "has NO Facebook storefront evidence in any country "
+         "checked (Fragment/crypto gifting instead). India "
+         "first: WhatsApp CTA, UPI, English/Hinglish.",
+         note="In any live Ad Library pass, filter OUT official "
+              "brand Pages (Canva, Spotify, Google, Jio x Canva "
+              "partnership) by Page identity before reading "
+              "reseller activity."),
+    _sub("SUB-11", "Facebook Marketplace is a banned channel for subscriptions",
+         "go_live",
+         "Meta Commerce Policies prohibit digital products/"
+         "subscriptions and digital accounts on Marketplace; "
+         "listings are auto-rejected and commercial sellers in "
+         "India face Marketplace access restrictions. Never "
+         "propose a Marketplace listing for this vertical — "
+         "Pages/Groups posts are the surface, the transaction "
+         "happens on WhatsApp/website.",
+         note="Source: Meta Trust & Safety / Commerce Policies "
+              "summaries checked 2026-11-20 (report section 4)."),
+    _sub("SUB-12", "No winner language until longevity is actually measured",
+         "monitoring",
+         "Longevity (oldest still-active ad) is the only winner "
+         "signal the Ad Library supports, and for this niche it "
+         "is currently UNMEASURED — the Library returned 403 to "
+         "research and no start date was recovered for any "
+         "seller. The first live pass must record real start "
+         "dates per Page/country; until then, judge creatives "
+         "only by this system's own recorded results.",
+         note="Same discipline as the winner-patterns quarantine "
+              "(report section F) and YT-DNA."),
+    _sub("SUB-DNA1", "DO NOT APPLY: grey-layer subscription tactics",
+         "creative",
+         "Shared-login/shared-credential offers, crack/keygen-"
+         "adjacent supply, discounts that differ from checkout, "
+         "fake urgency/scarcity on standing offers, guaranteed-"
+         "income or earnings claims, and brand presentation "
+         "implying official affiliation.",
+         status="DO_NOT_APPLY",
+         note="These are the grey reseller layer's recurring "
+              "tactics (report sections 2/6). Each maps to a Meta "
+              "prohibition (Prohibited Commercial Practices; "
+              "deceptive pricing; unauthorised subscriptions in "
+              "the software_digital compliance pack) and to this "
+              "business's opposite positioning: official codes, "
+              "real discounts, own-account activation."),
+    _sub("SUB-DNA2", "DO NOT APPLY: seller marketing numbers as benchmarks",
+         "monitoring",
+         "Sellers' own displayed figures — 90-98% OFF headlines, "
+         "customer counts ('3,000+ customers', '12,000+ "
+         "customers'), years-in-business claims, delivery-time "
+         "claims — imported as benchmarks, targets or social "
+         "proof for this business.",
+         status="DO_NOT_APPLY",
+         note="Unverified marketing claims by the sellers about "
+              "their own businesses (same quarantine as S26, "
+              "YT-DNA). They are recorded in the research report "
+              "as market context only."),
+]
+
 ENTRIES = (DAMINI_ENTRIES + PRACTITIONER_ENTRIES + BOOK_ENTRIES
            + WINNER_HABIT_ENTRIES + VIRAL_PATTERN_ENTRIES
-           + YOUTUBE_ENTRIES
+           + YOUTUBE_ENTRIES + SUBSCRIPTION_ENTRIES
            + DO_NOT_APPLY_ENTRIES)
 
 # Creative format taxonomy (Damini S22, screened) — used by inspiration
