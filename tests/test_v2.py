@@ -2,7 +2,7 @@
 subscription disclosure. All pure functions; no Meta writes anywhere."""
 import unittest
 
-from app import creative_matrix, fatigue, subscription_disclosure, test_lane, v2_readiness
+from app import creative_matrix, fatigue, feed_catalog, subscription_disclosure, test_lane, v2_readiness
 
 
 class ReadinessTests(unittest.TestCase):
@@ -86,6 +86,46 @@ class FatigueTests(unittest.TestCase):
     def test_insufficient_data(self):
         out = fatigue.fatigue_score([{"ctr": 1.0}])
         self.assertEqual(out["band"], "insufficient_data")
+
+
+class FeedCatalogTests(unittest.TestCase):
+    CSV = (
+        "sku,product_name,mrp,offer_price,currency_code,stock_status,"
+        "image_link,product_url,brand,category,permission_confirmed,"
+        "proof_note,terms_checked_date\n"
+        "SKU-1,Desk Lamp,1200,999,INR,in stock,"
+        "https://example.com/lamp.jpg,https://example.com/lamp,"
+        "Acme,Lighting,true,Supplier agreement on file,2026-11-25\n"
+        "SKU-2,Blocked Item,500,,INR,in stock,"
+        "https://example.com/blocked.jpg,https://example.com/blocked,"
+        "Acme,Lighting,false,,\n")
+
+    def test_csv_mapping_and_ad_ready_gate(self):
+        out = feed_catalog.analyze_catalog(csv_text=self.CSV)
+        self.assertEqual(out["total_items"], 2)
+        self.assertEqual(out["feed_ready_count"], 2)
+        self.assertEqual(out["ad_ready_count"], 1)
+        ready = out["items"][0]
+        self.assertTrue(ready["ad_ready"])
+        self.assertEqual(ready["price_layers"][0]["text"], "INR 999")
+        self.assertNotIn("% off", ready["price_layers"][0]["text"])
+        self.assertEqual(len(out["video_briefs"]), 1)
+        blocked = out["items"][1]
+        self.assertFalse(blocked["ad_ready"])
+        self.assertEqual(blocked["price_layers"], [])
+        self.assertTrue(any("eligibility permission" in issue
+                            for issue in blocked["issues"]))
+
+    def test_profile_offerings_fail_closed_without_feed_fields(self):
+        out = feed_catalog.analyze_inputs({}, offerings=[{
+            "id": 7, "name": "Toolkit", "price": "999",
+            "permission_confirmed": False,
+        }], profile={"currency": "INR",
+                      "website": "https://example.com"})
+        self.assertEqual(out["source"], "profile_catalog")
+        self.assertEqual(out["ad_ready_count"], 0)
+        self.assertTrue(any("image URL" in issue
+                            for issue in out["items"][0]["issues"]))
 
 
 class SubscriptionDisclosureTests(unittest.TestCase):

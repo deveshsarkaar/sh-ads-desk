@@ -3826,6 +3826,7 @@ _V2_BAND_LABELS = {
 }
 _V2_MODULE_LABELS = {
     "readiness": "Advantage+ Readiness",
+    "expert": "Expert Review",
     "creative_matrix": "Creative Matrix",
     "feed_catalog": "Feed & Catalog",
     "test_lane": "Testing Lane",
@@ -3904,6 +3905,30 @@ def pg_v2(ctx):
             f'<p>{esc(r["recommendation"])}</p>'
             f'<table><tr><th>Check</th><th>Status</th><th>Detail</th></tr>{rows}</table>'
             f'<p class="small mut">{esc(r["guarantee"])}</p></div>')
+    if results and "expert" in modules and results.get("expert"):
+        e = results["expert"]
+        a = e["audit"]
+        dims = "".join(
+            "<tr><td>%s</td><td>%s/100</td></tr>" % (
+                esc(k.replace("_", " ").title()), esc(v))
+            for k, v in a["dimensions"].items())
+        actions = "".join("<li>%s</li>" % esc(x) for x in a["top_actions"])
+        vrows = "".join(
+            "<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>" % (
+                esc(v["ad_id"]), esc(v["verdict"].replace("_", " ")),
+                esc(v["confidence"]), esc(v["action"]))
+            for v in e["verdicts"][:8])
+        steps = "".join("<li>%s</li>" % esc(s)
+                        for s in e["protocol"]["steps"])
+        cards.append(
+            f'<div class="card"><h2>Expert Review — grade {esc(a["grade"])} '
+            f'({esc(a["overall_score"])}/100)</h2>'
+            f'<table><tr><th>Discipline</th><th>Score</th></tr>{dims}</table>'
+            f'<ul>{actions}</ul>'
+            f'<table><tr><th>Ad</th><th>Verdict</th><th>Confidence</th>'
+            f'<th>Proposed action</th></tr>{vrows}</table>'
+            f'<p class="small mut">Testing protocol:</p><ul>{steps}</ul>'
+            f'<p class="small mut">{esc(e["note"])}</p></div>')
     if results and "creative_matrix" in modules:
         m = results["creative_matrix"]
         rows = "".join(

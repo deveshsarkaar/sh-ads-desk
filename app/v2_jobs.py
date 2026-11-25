@@ -8,14 +8,14 @@ no Meta write, no budget change, no ad is touched.
 """
 import json
 
-from . import creative_matrix, fatigue, store, subscription_disclosure
-from . import test_lane, v2_readiness
+from . import creative_matrix, expert_engine, fatigue, feed_catalog, store
+from . import subscription_disclosure, test_lane, v2_readiness
 from .common import _now, audit, get_db
 
-MODULES = ("readiness", "creative_matrix", "test_lane", "fatigue",
-           "disclosure")
+MODULES = ("readiness", "expert", "creative_matrix", "feed_catalog",
+           "test_lane", "fatigue", "disclosure")
 MODE_DEFAULTS = {
-    "customer": ("readiness", "fatigue", "disclosure"),
+    "customer": ("readiness", "expert", "fatigue", "disclosure"),
     "agency": MODULES,
     "enterprise": MODULES,
 }
@@ -94,13 +94,19 @@ def run_v2(conn=None, profile_id=0):
     matrix = creative_matrix.build_matrix(
         preset_key, inputs.get("offering_name") or "Offering",
         facts=inputs.get("facts") or [])
+    offerings = (profiles_mod.list_offerings(profile_id, conn)
+                 if profile_id else [])
+    catalog = feed_catalog.analyze_inputs(inputs, offerings, profile)
     plan = test_lane.plan_cells(
         inputs.get("target_cpa"), inputs.get("daily_budget"),
         inputs.get("distinct_creatives") or 0)
     results = {
         "ran_at": _now(),
         "readiness": readiness,
+        "expert": expert_engine.expert_review(
+            inputs, store.load_insight_rows(conn, profile_id=profile_id)),
         "creative_matrix": matrix,
+        "feed_catalog": catalog,
         "test_lane": {"plan": plan,
                       "scale_steps": test_lane.scale_steps(
                           inputs.get("daily_budget") or 0)},
@@ -115,6 +121,7 @@ def run_v2(conn=None, profile_id=0):
     }
     _kv_set(conn, "v2_results:%s" % profile_id, results)
     audit(conn, "v2_analysis_done",
-          "profile=%s readiness=%s fatigue=%s"
-          % (profile_id, readiness["band"], results["fatigue"]["band"]))
+          "profile=%s readiness=%s fatigue=%s catalog_ad_ready=%s/%s"
+          % (profile_id, readiness["band"], results["fatigue"]["band"],
+             catalog["ad_ready_count"], catalog["total_items"]))
     return results

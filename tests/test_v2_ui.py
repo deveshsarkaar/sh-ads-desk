@@ -136,6 +136,34 @@ class V2UITests(unittest.TestCase):
         self.assertIn("id,event,detail,created_at", text)
         self.assertIn("enterprise_check", text)
 
+    def test_expert_verdicts_use_evidence_thresholds(self):
+        from app import expert_engine
+        rows = [
+            {"ad_id": "win", "spend": 5000, "qualified_leads": 80},
+            {"ad_id": "dead", "spend": 2000, "qualified_leads": 0},
+            {"ad_id": "lag", "spend": 2000, "qualified_leads": 0,
+             "conversions_lagged_pending": True},
+            {"ad_id": "new", "spend": 100, "qualified_leads": 1},
+        ]
+        verdicts = {v["ad_id"]: v["verdict"]
+                    for v in expert_engine.campaign_verdicts(rows, 500)}
+        self.assertEqual(verdicts["win"], "scale_candidate")
+        self.assertEqual(verdicts["dead"], "stop_candidate")
+        self.assertEqual(verdicts["lag"], "hold")
+        self.assertEqual(verdicts["new"], "insufficient_data")
+
+    def test_expert_audit_and_review_in_v2_results(self):
+        from app import expert_engine, v2_jobs
+        audit = expert_engine.expert_audit({
+            "pixel_ok": True, "capi_ok": True, "distinct_creatives": 6,
+            "daily_budget": 5000, "target_cpa": 500,
+            "conversions_per_week": 60})
+        self.assertEqual(audit["grade"], "A")
+        results = v2_jobs.run_v2(self.conn, self.profile["id"])
+        self.assertIn("expert", results)
+        self.assertIn("guarantee", results["expert"]["note"].lower()
+                      .replace("does not guarantee", "guarantee"))
+
     def test_customize_persists_per_profile(self):
         from app import profiles as profiles_mod
         from app.web import post_v2_customize
