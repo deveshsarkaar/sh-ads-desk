@@ -49,12 +49,19 @@ class V2UITests(unittest.TestCase):
             "daily_budget": 3000, "target_cpa": 500,
             "pixel_ok": True, "capi_ok": True,
             "offering_name": "AI Toolkit", "facts": ["Price proof recorded"],
+            "catalog_csv_text": (
+                "id,title,price,currency,availability,image_url,link,"
+                "permission_confirmed,proof_note,terms_checked_date\n"
+                "SKU-1,Desk Lamp,999,INR,in stock,"
+                "https://example.com/lamp.jpg,https://example.com/lamp,"
+                "true,Supplier agreement on file,2026-11-25\n"),
             "price_text": "Rs 999 per month", "cancellation_text": "Cancel anytime",
             "collects_pii": True, "opt_in_unchecked": True})
         results = v2_jobs.run_v2(self.conn, pid)
         self.assertEqual(results["readiness"]["band"],
                          "advantage_plus_ready")
         self.assertTrue(results["disclosure"]["ok"])
+        self.assertEqual(results["feed_catalog"]["ad_ready_count"], 1)
         stored = v2_jobs.load_results(self.conn, pid)
         self.assertEqual(stored["ran_at"], results["ran_at"])
 
@@ -74,6 +81,24 @@ class V2UITests(unittest.TestCase):
         self.assertIn("Advantage+ Readiness", html)
         for hinglish in ("Pehle", "karo", "chahiye", "mat jodo", "banao"):
             self.assertNotIn(hinglish, html)
+
+    def test_agency_page_shows_feed_catalog(self):
+        from app import v2_jobs
+        from app.web import pg_v2
+        pid = self.profile["id"]
+        v2_jobs.save_inputs(self.conn, pid, {
+            "catalog_csv_text": (
+                "id,title,price,currency,availability,image_url,link,"
+                "permission_confirmed,proof_note,terms_checked_date\n"
+                "SKU-1,Desk Lamp,999,INR,in stock,"
+                "https://example.com/lamp.jpg,https://example.com/lamp,"
+                "true,Supplier agreement on file,2026-11-25\n")})
+        v2_jobs.run_v2(self.conn, pid)
+        agency = dict(self.settings, V2_MODE="agency")
+        html = pg_v2(self._ctx(settings=agency))
+        self.assertIn("Feed & Catalog", html)
+        self.assertIn("Catalog CSV", html)
+        self.assertIn("1/1 ad-ready", html)
 
     def test_v2_run_queues_background_job(self):
         from app import v2_jobs
@@ -102,6 +127,14 @@ class V2UITests(unittest.TestCase):
                           conn=self.conn)
         html = pg_v2(self._ctx())
         self.assertIn("Background:", html)
+
+    def test_audit_csv_export(self):
+        from app.common import audit
+        from app.web import audit_csv_text
+        audit(self.conn, "enterprise_check", "audit export test row")
+        text = audit_csv_text(self.conn)
+        self.assertIn("id,event,detail,created_at", text)
+        self.assertIn("enterprise_check", text)
 
     def test_customize_persists_per_profile(self):
         from app import profiles as profiles_mod

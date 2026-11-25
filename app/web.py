@@ -2652,6 +2652,21 @@ Even so, no number is used as a default — thresholds are owner settings.</p></
     return page("Knowledge", "/trends", body, ctx["flash"], ctx["conn"], ctx)
 
 
+def audit_csv_text(conn):
+    """Full audit log as CSV for enterprise procurement/security reviews.
+    Rows are already redacted before storage; export adds no new data."""
+    import csv
+    import io
+    buf = io.StringIO()
+    w = csv.writer(buf)
+    w.writerow(["id", "event", "detail", "created_at"])
+    for r in conn.execute(
+            "SELECT id, event, detail, created_at FROM audit_log "
+            "ORDER BY id").fetchall():
+        w.writerow([r["id"], r["event"], r["detail"], r["created_at"]])
+    return buf.getvalue()
+
+
 def pg_audit(ctx):
     conn = ctx["conn"]
     audits = conn.execute("SELECT * FROM audit_log ORDER BY id DESC LIMIT 60").fetchall()
@@ -2679,6 +2694,7 @@ refund spend.</p></div>
 <div class="card"><h2>Errors</h2>
 <table><tr><th>Source</th><th>Message (redacted)</th><th>When</th></tr>%s</table></div>
 <div class="card"><h2>Audit log (latest 60)</h2>
+<p><a href="/audit/export">Download full audit log (CSV)</a></p>
 <table><tr><th>#</th><th>Event</th><th>Detail (redacted)</th><th>When</th></tr>%s</table></div>
 """ % (w_html or '<tr><td colspan="4" class="mut">No writes yet</td></tr>',
        e_html or '<tr><td colspan="3" class="mut">No errors recorded</td></tr>',
@@ -3811,6 +3827,7 @@ _V2_BAND_LABELS = {
 _V2_MODULE_LABELS = {
     "readiness": "Advantage+ Readiness",
     "creative_matrix": "Creative Matrix",
+    "feed_catalog": "Feed & Catalog",
     "test_lane": "Testing Lane",
     "fatigue": "Fatigue Watch",
     "disclosure": "Subscription Disclosure",
@@ -3900,6 +3917,31 @@ def pg_v2(ctx):
             f'{warns}<table><tr><th>Angle</th><th>Persona</th><th>Format</th>'
             f'<th>Hook</th></tr>{rows}</table>'
             f'<p class="small mut">{esc(m["note"])}</p></div>')
+    if results and "feed_catalog" in modules and results.get("feed_catalog"):
+        c = results["feed_catalog"]
+        rows = ""
+        for item in c["items"][:6]:
+            status = "Ad-ready" if item["ad_ready"] else (
+                "Feed-ready" if item["feed_ready"] else "Fix needed")
+            layers = "; ".join(
+                layer["text"] for layer in item.get("price_layers") or [])
+            issues = "; ".join(item.get("issues") or [])
+            rows += ("<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>" % (
+                esc(item["title"] or item["id"] or "Untitled"), esc(status),
+                esc(layers or "—"), esc(issues or "—")))
+        warns = "".join('<p class="small">%s</p>' % esc(w)
+                        for w in c["warnings"])
+        briefs = "".join(
+            "<li>%s — %s</li>" % (esc(b["title"]), esc(b["overlay_text"]))
+            for b in c["video_briefs"][:3])
+        cards.append(
+            f'<div class="card"><h2>Feed & Catalog — {esc(c["ad_ready_count"])}/'
+            f'{esc(c["total_items"])} ad-ready</h2>{warns}'
+            f'<p>Feed-ready items: <strong>{esc(c["feed_ready_count"])}</strong>. '
+            f'Image-to-video briefs prepared: <strong>{esc(len(c["video_briefs"]))}</strong>.</p>'
+            f'<table><tr><th>Item</th><th>Status</th><th>Price layers</th>'
+            f'<th>Checks</th></tr>{rows}</table>'
+            f'<ul>{briefs}</ul><p class="small mut">{esc(c["note"])}</p></div>')
     if results and "test_lane" in modules:
         t = results["test_lane"]
         steps = "".join("<li>%s</li>" % esc(s["proposed_budget"])
@@ -3931,6 +3973,14 @@ def pg_v2(ctx):
     pending_html = ('<div class="banner warn"><strong>Analysis running.</strong> '
                     'It runs in the background worker — refresh this page in a '
                     'moment to see results.</div>') if pending else ""
+    catalog_field = ""
+    if "feed_catalog" in modules:
+        catalog_field = (
+            '<label>Catalog CSV (optional — leave blank to use this '
+            'profile\'s catalog)</label>'
+            '<textarea name="catalog_csv_text" rows="4" '
+            'placeholder="id,title,price,currency,availability,image_url,link">'
+            '%s</textarea>' % esc(inputs.get("catalog_csv_text") or ""))
     body = f"""
 <h1>V2 Desk</h1>
 {mode_banner(settings)}
@@ -3955,6 +4005,7 @@ client workspace can look different.</p></div>
 <label>Offering name</label><input type="text" name="offering_name" value="{val("offering_name")}">
 <label>Verified facts (one per line — briefs may use only these)</label>
 <textarea name="facts" rows="3">{esc(chr(10).join(inputs.get("facts") or []))}</textarea>
+{catalog_field}
 <label>Subscription price text (amount + interval)</label><input type="text" name="price_text" value="{val("price_text")}">
 <label>Cancellation text</label><input type="text" name="cancellation_text" value="{val("cancellation_text")}">
 <label style="display:block"><input type="checkbox" name="collects_pii" {chk("collects_pii")}> Offer collects personal information</label>
@@ -3981,6 +4032,7 @@ def _v2_num(form, key):
 def post_v2_run(ctx, form):
     conn = ctx["conn"]
     pid = ctx["profile"]["id"] if ctx["profile"] else 0
+    existing_inputs = v2_jobs.load_inputs(conn, pid)
     inputs = {
         "conversions_per_week": _v2_num(form, "conversions_per_week"),
         "distinct_creatives": _v2_num(form, "distinct_creatives"),
@@ -3991,6 +4043,10 @@ def post_v2_run(ctx, form):
         "offering_name": (form.get("offering_name") or "").strip(),
         "facts": [ln.strip() for ln in (form.get("facts") or "").splitlines()
                   if ln.strip()],
+        "catalog_csv_text": (
+            (form.get("catalog_csv_text") or "").strip()
+            if "catalog_csv_text" in form
+            else existing_inputs.get("catalog_csv_text") or ""),
         "price_text": (form.get("price_text") or "").strip(),
         "cancellation_text": (form.get("cancellation_text") or "").strip(),
         "collects_pii": bool(form.get("collects_pii")),
@@ -4144,6 +4200,17 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(data)
 
+    def _send_csv(self, filename, text):
+        data = text.encode("utf-8")
+        self.send_response(200)
+        self.send_header("Content-Type", "text/csv; charset=utf-8")
+        self.send_header("Content-Disposition",
+                         'attachment; filename="%s"' % filename)
+        self.send_header("Content-Length", str(len(data)))
+        self.send_header("X-Content-Type-Options", "nosniff")
+        self.end_headers()
+        self.wfile.write(data)
+
     def _session(self, conn):
         raw = self.headers.get("Cookie", "")
         c = http_cookies.SimpleCookie(raw)
@@ -4187,6 +4254,8 @@ class Handler(BaseHTTPRequestHandler):
             return _redirect(self, "/login")
         if path.startswith("/generated/"):
             return self._send_generated(path[len("/generated/"):])
+        if path == "/audit/export":
+            return self._send_csv("audit-log.csv", audit_csv_text(conn))
         handler = GET_ROUTES.get(path)
         if handler is None:
             return self._send_html(simple_page("404", "<div class='card'><h1>404</h1>"
