@@ -85,6 +85,24 @@ class V2UITests(unittest.TestCase):
         self.assertIn("background", msg)
         self.assertTrue(v2_jobs.v2_pending(self.conn, self.profile["id"]))
 
+    def test_nav_simplifies_by_mode(self):
+        from app.web import pg_v2
+        customer = dict(self.settings, V2_MODE="customer")
+        html = pg_v2(self._ctx(settings=customer))
+        self.assertNotIn('href="/guardrails"', html)
+        self.assertIn('href="/v2"', html)
+        enterprise = dict(self.settings, V2_MODE="enterprise")
+        html = pg_v2(self._ctx(settings=enterprise))
+        self.assertIn('href="/guardrails"', html)
+
+    def test_background_chip_shows_when_job_pending(self):
+        from app import job_queue
+        from app.web import pg_v2
+        job_queue.enqueue("v2", profile_id=self.profile["id"],
+                          conn=self.conn)
+        html = pg_v2(self._ctx())
+        self.assertIn("Background:", html)
+
     def test_customize_persists_per_profile(self):
         from app import profiles as profiles_mod
         from app.web import post_v2_customize

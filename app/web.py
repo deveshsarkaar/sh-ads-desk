@@ -262,8 +262,33 @@ def esc(x):
 
 
 def page(title, active, body, flash=None, conn=None, ctx=None):
+    # Simple-by-mode navigation: Customer sees a short menu, Agency a
+    # working set, Enterprise everything. The active page always shows.
+    mode = "enterprise"
+    if ctx is not None:
+        mode, _mods = _v2_mode_modules(ctx.get("settings") or {})
+    _customer = {"/", "/v2", "/creative", "/approvals", "/reports",
+                 "/settings"}
+    nav_sets = {
+        "customer": _customer,
+        "agency": _customer | {"/mission", "/campaigns", "/profiles",
+                               "/loop", "/budget", "/leads", "/trends"},
+        "enterprise": None,
+    }
+    allowed = nav_sets.get(mode)
+    items = [(h, l) for h, l in NAV
+             if allowed is None or h in allowed or h == active]
     nav = "".join('<a href="%s" class="%s">%s</a>' % (href, "on" if href == active else "", label)
-                  for href, label in NAV)
+                  for href, label in items)
+    bg_chip = ""
+    if conn is not None:
+        try:
+            pending = job_queue.pending_count(conn)
+        except Exception:
+            pending = 0
+        if pending:
+            bg_chip = ('<span class="tag">Background: %d job(s) running'
+                       '</span>' % pending)
     kill = ""
     if conn is not None:
         q = ApprovalQueue()
@@ -316,12 +341,12 @@ def page(title, active, body, flash=None, conn=None, ctx=None):
 <form method="post" action="/logout" class="inline"><button class="secondary" type="submit" style="width:100%%">Logout</button></form></div>
 </aside>
 <div class="shell">
-<div class="topbar"><span class="ctx">%s</span><span class="tag">%s</span><span class="tag">DRY_RUN + PROPOSE default</span></div>
+<div class="topbar"><span class="ctx">%s</span><span class="tag">%s</span><span class="tag">DRY_RUN + PROPOSE default</span>%s</div>
 <main>%s%s%s</main>
 <div class="footer">SH Ads Desk · Built for any industry · Step 1 logic VERIFIED (local tests) · Live Meta path UNTESTED · API %s · Provider API keys live only in the server's data/secrets.env file — the app never displays or logs them</div>
 </div></div>
 </body></html>""" % (esc(title), CSS, nav, profile_block, esc(title), esc(biz_tag),
-                     kill, flash_html, body, esc(API_VERSION_LABEL))
+                     bg_chip, kill, flash_html, body, esc(API_VERSION_LABEL))
 
 
 def simple_page(title, body):
