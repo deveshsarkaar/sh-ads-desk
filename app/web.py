@@ -24,7 +24,7 @@ from . import guardrails as guardrails_mod
 from . import growth_loop as loop_mod
 from . import industries as industries_mod
 from . import planner as planner_mod, policy_checker, providers
-from . import profiles as profiles_mod
+from . import job_queue, profiles as profiles_mod, v2_jobs
 from . import reports as reports_mod
 from . import roles, store, strategy_library, trends as trends_mod
 from .approval_queue import ApprovalQueue
@@ -136,7 +136,7 @@ nav.side a{white-space:nowrap}.sb-spacer{display:none}
 """
 
 NAV = [
-    ("/", "Today"), ("/mission", "Mission Control"), ("/campaigns", "Campaigns"), ("/profiles", "Profiles"), ("/loop", "Growth Loop"),
+    ("/", "Today"), ("/mission", "Mission Control"), ("/campaigns", "Campaigns"), ("/profiles", "Profiles"), ("/loop", "Growth Loop"), ("/v2", "V2 Desk"),
     ("/connect", "Connect"), ("/roles", "Roles"),
     ("/settings", "Settings"), ("/guardrails", "Guardrails"),
     ("/eligibility", "Eligibility"),
@@ -3775,6 +3775,225 @@ def post_guardrails_toggle(ctx, form):
     return "Guardrail %s is now %s." % (gid, "OFF" if action == "off" else "ON")
 
 
+# ---------------------------------------------------------------- V2 Desk
+_V2_BAND_LABELS = {
+    "advantage_plus_ready": "Ready for an Advantage+ test",
+    "testing_lane_first": "Testing lane first",
+    "fix_tracking_first": "Fix tracking first",
+    "healthy": "Healthy", "watch": "Watch", "fatigued": "Fatigued",
+    "insufficient_data": "Not enough data",
+}
+_V2_MODULE_LABELS = {
+    "readiness": "Advantage+ Readiness",
+    "creative_matrix": "Creative Matrix",
+    "test_lane": "Testing Lane",
+    "fatigue": "Fatigue Watch",
+    "disclosure": "Subscription Disclosure",
+}
+
+
+def _v2_mode_modules(settings):
+    mode = settings.get("V2_MODE") or "customer"
+    if mode not in v2_jobs.MODE_DEFAULTS:
+        mode = "customer"
+    modules = settings.get("V2_MODULES") or list(v2_jobs.MODE_DEFAULTS[mode])
+    modules = [m for m in modules if m in v2_jobs.MODULES]
+    return mode, modules or list(v2_jobs.MODE_DEFAULTS[mode])
+
+
+def pg_v2(ctx):
+    conn, settings = ctx["conn"], ctx["settings"]
+    profile = ctx["profile"]
+    pid = profile["id"] if profile else 0
+    mode, modules = _v2_mode_modules(settings)
+    results = v2_jobs.load_results(conn, pid)
+    inputs = v2_jobs.load_inputs(conn, pid)
+    pending = v2_jobs.v2_pending(conn, pid)
+
+    def kpi(label, value, sub):
+        return (f'<div class="card"><div class="mut small">{esc(label)}</div>'
+                f'<div class="kpi">{esc(value)}</div>'
+                f'<div class="small mut">{esc(sub)}</div></div>')
+
+    if results:
+        r = results["readiness"]
+        kpis = (kpi("Readiness score", r["score"],
+                    _V2_BAND_LABELS.get(r["band"], r["band"]))
+                + kpi("Creative diversity",
+                      results["creative_matrix"]["diversity_score"],
+                      "distinct angle/persona/format/hook mix")
+                + kpi("Fatigue", _V2_BAND_LABELS.get(
+                      results["fatigue"]["band"], results["fatigue"]["band"]),
+                      "score %s" % results["fatigue"]["score"])
+                + kpi("Disclosure", "OK" if results["disclosure"]["ok"] else "Fix needed",
+                      "subscription price + billing + cancellation"))
+    else:
+        kpis = kpi("V2 analysis", "Not run yet",
+                   "Queue the first run below — it runs in the background")
+
+    mode_opts = "".join(
+        '<option value="%s" %s>%s</option>' % (
+            m, "selected" if m == mode else "", label)
+        for m, label in (("customer", "Customer — simple view"),
+                         ("agency", "Agency — all modules"),
+                         ("enterprise", "Enterprise — all modules + detail")))
+    module_boxes = "".join(
+        '<label style="display:block"><input type="checkbox" name="module_%s" %s> %s</label>'
+        % (m, "checked" if m in modules else "", esc(_V2_MODULE_LABELS[m]))
+        for m in v2_jobs.MODULES)
+
+    def val(key):
+        return esc(inputs.get(key) if inputs.get(key) is not None else "")
+
+    def chk(key):
+        return "checked" if inputs.get(key) else ""
+
+    cards = []
+    if results and "readiness" in modules:
+        r = results["readiness"]
+        rows = "".join(
+            "<tr><td>%s</td><td>%s</td>%s</tr>" % (
+                esc(c["check"]), esc(c["status"]),
+                "<td>%s</td>" % esc(c["detail"])
+                if mode == "enterprise" or c["status"] != "ok" else "<td></td>")
+            for c in r["checks"])
+        cards.append(
+            f'<div class="card"><h2>Advantage+ Readiness — {esc(r["score"])}/100</h2>'
+            f'<p>{esc(r["recommendation"])}</p>'
+            f'<table><tr><th>Check</th><th>Status</th><th>Detail</th></tr>{rows}</table>'
+            f'<p class="small mut">{esc(r["guarantee"])}</p></div>')
+    if results and "creative_matrix" in modules:
+        m = results["creative_matrix"]
+        rows = "".join(
+            "<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>" % (
+                esc(b["angle"]), esc(b["persona"]), esc(b["format"]),
+                esc(b["hook_type"]))
+            for b in m["briefs"][:6])
+        warns = "".join('<p class="small">%s</p>' % esc(w) for w in m["warnings"])
+        cards.append(
+            f'<div class="card"><h2>Creative Matrix — diversity {esc(m["diversity_score"])}</h2>'
+            f'{warns}<table><tr><th>Angle</th><th>Persona</th><th>Format</th>'
+            f'<th>Hook</th></tr>{rows}</table>'
+            f'<p class="small mut">{esc(m["note"])}</p></div>')
+    if results and "test_lane" in modules:
+        t = results["test_lane"]
+        steps = "".join("<li>%s</li>" % esc(s["proposed_budget"])
+                        for s in t["scale_steps"])
+        warns = "".join('<p class="small">%s</p>' % esc(w)
+                        for w in t["plan"]["warnings"])
+        cards.append(
+            f'<div class="card"><h2>Testing Lane</h2>{warns}'
+            f'<p>Funded test cells: <strong>{esc(len(t["plan"]["cells"]))}</strong> '
+            f'(threshold spend {esc(t["plan"].get("threshold_spend", "—"))} each)</p>'
+            f'<p class="small mut">Staged scale proposals (approval required):</p>'
+            f'<ul>{steps}</ul></div>')
+    if results and "fatigue" in modules:
+        f = results["fatigue"]
+        signals = "".join("<li>%s</li>" % esc(s) for s in f["signals"])
+        cards.append(
+            f'<div class="card"><h2>Fatigue Watch — '
+            f'{esc(_V2_BAND_LABELS.get(f["band"], f["band"]))} ({esc(f["score"])}/100)</h2>'
+            f'<ul>{signals}</ul><p>{esc(f["recommendation"])}</p></div>')
+    if results and "disclosure" in modules:
+        d = results["disclosure"]
+        issues = "".join("<li>%s</li>" % esc(i) for i in d["issues"])
+        cards.append(
+            f'<div class="card"><h2>Subscription Disclosure — '
+            f'{"OK" if d["ok"] else "Fix needed"}</h2><ul>{issues}</ul>'
+            f'<p class="small mut">Checked against Meta subscription-services '
+            f'policy requirements.</p></div>')
+
+    pending_html = ('<div class="banner warn"><strong>Analysis running.</strong> '
+                    'It runs in the background worker — refresh this page in a '
+                    'moment to see results.</div>') if pending else ""
+    body = f"""
+<h1>V2 Desk</h1>
+{mode_banner(settings)}
+{pending_html}
+<div class="grid">{kpis}</div>
+<div class="card"><h2>Your workspace</h2>
+<form method="post" action="/v2/customize">{ctx["csrf_field"]}
+<label>Workspace mode</label><select name="mode">{mode_opts}</select>
+<p class="small mut">Choose who is using this workspace. Modules shown:</p>
+{module_boxes}
+<button class="secondary" type="submit">Save layout</button></form>
+<p class="small mut">The layout is saved for this business profile, so every
+client workspace can look different.</p></div>
+<div class="card"><h2>Run V2 analysis</h2>
+<form method="post" action="/v2/run">{ctx["csrf_field"]}
+<label>Conversions per week</label><input type="number" name="conversions_per_week" value="{val("conversions_per_week")}">
+<label>Distinct creatives</label><input type="number" name="distinct_creatives" value="{val("distinct_creatives")}">
+<label>Daily budget</label><input type="number" name="daily_budget" value="{val("daily_budget")}">
+<label>Target CPA</label><input type="number" name="target_cpa" value="{val("target_cpa")}">
+<label style="display:block"><input type="checkbox" name="pixel_ok" {chk("pixel_ok")}> Pixel healthy</label>
+<label style="display:block"><input type="checkbox" name="capi_ok" {chk("capi_ok")}> Conversions API healthy</label>
+<label>Offering name</label><input type="text" name="offering_name" value="{val("offering_name")}">
+<label>Verified facts (one per line — briefs may use only these)</label>
+<textarea name="facts" rows="3">{esc(chr(10).join(inputs.get("facts") or []))}</textarea>
+<label>Subscription price text (amount + interval)</label><input type="text" name="price_text" value="{val("price_text")}">
+<label>Cancellation text</label><input type="text" name="cancellation_text" value="{val("cancellation_text")}">
+<label style="display:block"><input type="checkbox" name="collects_pii" {chk("collects_pii")}> Offer collects personal information</label>
+<label style="display:block"><input type="checkbox" name="opt_in_unchecked" {chk("opt_in_unchecked")}> Unchecked opt-in checkbox present</label>
+<button type="submit">Run in background</button></form>
+<p class="small mut">The analysis runs in the background worker, so this page
+stays fast. Nothing here changes a Meta account — every output is a
+recommendation for owner approval.</p></div>
+{''.join(cards)}
+"""
+    return page("V2 Desk", "/v2", body, ctx["flash"], conn, ctx)
+
+
+def _v2_num(form, key):
+    raw = (form.get(key) or "").strip()
+    if not raw:
+        return None
+    try:
+        return float(raw)
+    except ValueError:
+        return None
+
+
+def post_v2_run(ctx, form):
+    conn = ctx["conn"]
+    pid = ctx["profile"]["id"] if ctx["profile"] else 0
+    inputs = {
+        "conversions_per_week": _v2_num(form, "conversions_per_week"),
+        "distinct_creatives": _v2_num(form, "distinct_creatives"),
+        "daily_budget": _v2_num(form, "daily_budget"),
+        "target_cpa": _v2_num(form, "target_cpa"),
+        "pixel_ok": bool(form.get("pixel_ok")),
+        "capi_ok": bool(form.get("capi_ok")),
+        "offering_name": (form.get("offering_name") or "").strip(),
+        "facts": [ln.strip() for ln in (form.get("facts") or "").splitlines()
+                  if ln.strip()],
+        "price_text": (form.get("price_text") or "").strip(),
+        "cancellation_text": (form.get("cancellation_text") or "").strip(),
+        "collects_pii": bool(form.get("collects_pii")),
+        "opt_in_unchecked": bool(form.get("opt_in_unchecked")),
+    }
+    v2_jobs.save_inputs(conn, pid, inputs)
+    queued = job_queue.enqueue("v2", profile_id=pid, conn=conn)
+    audit(conn, "v2_run_queued", "profile=%s queued=%s" % (pid, queued))
+    return ("V2 analysis queued — it runs in the background and results "
+            "will appear on this page.")
+
+
+def post_v2_customize(ctx, form):
+    conn = ctx["conn"]
+    profile = ctx["profile"]
+    if not profile:
+        return "Create a business profile first to save a workspace layout."
+    mode = form.get("mode") or "customer"
+    if mode not in v2_jobs.MODE_DEFAULTS:
+        mode = "customer"
+    modules = [m for m in v2_jobs.MODULES if form.get("module_" + m)]
+    profiles_mod.update_profile(
+        profile["id"],
+        {"settings_overrides": {"V2_MODE": mode, "V2_MODULES": modules}},
+        conn)
+    return "Workspace layout saved for this business profile."
+
+
 POST_ROUTES = {
     "/settings": (post_settings, "/settings"),
     "/killswitch": (post_killswitch, "/settings"),
@@ -3811,6 +4030,8 @@ POST_ROUTES = {
     "/roles/run": (post_roles_run, "/roles"),
     "/budget/dataset": (post_budget_dataset, "/budget"),
     "/budget/optimise": (post_budget_optimise, "/approvals"),
+    "/v2/run": (post_v2_run, "/v2"),
+    "/v2/customize": (post_v2_customize, "/v2"),
 }
 
 GET_ROUTES = {
@@ -3819,7 +4040,7 @@ GET_ROUTES = {
     "/creative": pg_creative, "/providers": pg_providers,
     "/planner": pg_planner, "/campaigns": pg_campaigns,
     "/profiles": pg_profiles, "/loop": pg_loop,
-    "/guardrails": pg_guardrails,
+    "/guardrails": pg_guardrails, "/v2": pg_v2,
     "/approvals": pg_approvals, "/budget": pg_budget, "/leads": pg_leads,
     "/reports": pg_reports, "/trends": pg_trends, "/audit": pg_audit,
 }

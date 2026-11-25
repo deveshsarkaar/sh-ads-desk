@@ -42,7 +42,7 @@ def build_matrix(preset_key, offering_name, facts=None, personas=None,
     preset = get_preset(preset_key) or {}
     angles = list(preset.get("angle_templates") or [])
     if not angles:
-        angles = [f"{offering_name} ka asal fayda saaf shabdon me samjhao"]
+        angles = [f"{offering_name} — explain its real benefit in plain words"]
     personas = list(personas or preset.get("audience_hints") or ["general buyer"])
     facts = list(facts or [])
 
@@ -62,12 +62,12 @@ def build_matrix(preset_key, offering_name, facts=None, personas=None,
 
     warnings = []
     if not facts:
-        warnings.append("Koi verified fact supply nahi hua — briefs me price/proof claim mat jodo.")
+        warnings.append("No verified facts supplied — do not add price or proof claims to these briefs.")
     for i in range(len(briefs)):
         for j in range(i + 1, len(briefs)):
             if similarity(briefs[i]["brief_text"], briefs[j]["brief_text"]) >= 0.8:
                 warnings.append(
-                    f"Brief {i + 1} aur {j + 1} near-duplicate lagte hain — angle ya hook badlo.")
+                    f"Brief {i + 1} aur {j + 1} look near-duplicate — change the angle or hook.")
 
     distinct_angles = len({b["angle"] for b in briefs})
     distinct_personas = len({b["persona"] for b in briefs})
@@ -78,4 +78,4 @@ def build_matrix(preset_key, offering_name, facts=None, personas=None,
                       max(1, 4 * max(1, len(briefs))), 1) if briefs else 0.0
     return {"briefs": briefs, "diversity_score": diversity,
             "warnings": warnings,
-            "note": "Briefs sirf owner-supplied facts use karte hain; claim invent nahi hota."}
+            "note": "Briefs use owner-supplied facts only; no claim is invented."}

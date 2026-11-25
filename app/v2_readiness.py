@@ -89,17 +89,17 @@ def readiness_audit(signals):
     tracking_missing = any(c["check"] == "tracking" and c["status"] == "missing" for c in checks)
     if tracking_missing:
         band = "fix_tracking_first"
-        recommendation = ("Pehle tracking (Pixel + Conversions API) theek karo; "
-                          "signal ke bina Advantage+ ka faisla andhere me hoga.")
+        recommendation = ("Fix tracking first (Pixel + Conversions API); "
+                          "without signal, any Advantage+ decision is blind.")
     elif score >= 70:
         band = "advantage_plus_ready"
-        recommendation = ("Advantage+ setup try karne layak hai — phir bhi har change "
-                          "approval ke baad hi lagega, performance ki koi guarantee nahi.")
+        recommendation = ("An Advantage+ setup is worth testing — every change still needs "
+                          "owner approval first, and performance is never guaranteed.")
     else:
         band = "testing_lane_first"
-        recommendation = ("Pehle controlled testing lane chalao: kam test cells, "
-                          "distinct creatives, threshold-based kill/graduate faisle.")
+        recommendation = ("Run a controlled testing lane first: few test cells, "
+                          "distinct creatives, threshold-based kill/graduate decisions.")
 
     return {"score": score, "band": band, "checks": checks,
             "recommendation": recommendation,
-            "guarantee": "none — readiness score performance ki guarantee nahi hai"}
+            "guarantee": "none — a readiness score never guarantees performance"}

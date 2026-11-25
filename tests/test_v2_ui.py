@@ -1,0 +1,102 @@
+"""V2 Desk UI tests: background job stores results, page renders in
+English only, workspace customization persists per profile."""
+import json
+import os
+import sys
+import tempfile
+import unittest
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, ROOT)
+
+
+class V2UITests(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.mkdtemp()
+        self._old = {k: os.environ.get(k) for k in
+                     ("SH_ADS_DB_PATH", "SH_ADS_SETTINGS_PATH", "META_MODE")}
+        os.environ["SH_ADS_DB_PATH"] = os.path.join(self.tmp, "state.db")
+        os.environ["SH_ADS_SETTINGS_PATH"] = os.path.join(
+            self.tmp, "settings.json")
+        with open(os.environ["SH_ADS_SETTINGS_PATH"], "w",
+                  encoding="utf-8") as f:
+            json.dump({"AUTOMATION_MODE": "PROPOSE", "DRY_RUN": True}, f)
+        from app.common import get_db, load_settings
+        from app import profiles as profiles_mod
+        self.conn = get_db()
+        profiles_mod.ensure_seeded(self.conn)
+        self.profile = profiles_mod.get_active_profile(self.conn)
+        self.settings = profiles_mod.effective_settings(
+            load_settings(), self.profile)
+
+    def tearDown(self):
+        for k, v in self._old.items():
+            if v is None:
+                os.environ.pop(k, None)
+            else:
+                os.environ[k] = v
+
+    def _ctx(self, settings=None):
+        return {"conn": self.conn, "settings": settings or self.settings,
+                "profile": self.profile, "flash": "",
+                "csrf_field": '<input type="hidden" name="csrf" value="t">'}
+
+    def test_v2_job_stores_results(self):
+        from app import v2_jobs
+        pid = self.profile["id"]
+        v2_jobs.save_inputs(self.conn, pid, {
+            "conversions_per_week": 60, "distinct_creatives": 6,
+            "daily_budget": 3000, "target_cpa": 500,
+            "pixel_ok": True, "capi_ok": True,
+            "offering_name": "AI Toolkit", "facts": ["Price proof recorded"],
+            "price_text": "Rs 999 per month", "cancellation_text": "Cancel anytime",
+            "collects_pii": True, "opt_in_unchecked": True})
+        results = v2_jobs.run_v2(self.conn, pid)
+        self.assertEqual(results["readiness"]["band"],
+                         "advantage_plus_ready")
+        self.assertTrue(results["disclosure"]["ok"])
+        stored = v2_jobs.load_results(self.conn, pid)
+        self.assertEqual(stored["ran_at"], results["ran_at"])
+
+    def test_v2_page_renders_english_only(self):
+        from app import v2_jobs
+        from app.web import pg_v2
+        pid = self.profile["id"]
+        v2_jobs.save_inputs(self.conn, pid, {
+            "conversions_per_week": 60, "distinct_creatives": 6,
+            "daily_budget": 3000, "target_cpa": 500,
+            "pixel_ok": True, "capi_ok": True,
+            "offering_name": "AI Toolkit", "facts": []})
+        v2_jobs.run_v2(self.conn, pid)
+        html = pg_v2(self._ctx())
+        self.assertIn("V2 Desk", html)
+        self.assertIn("Run in background", html)
+        self.assertIn("Advantage+ Readiness", html)
+        for hinglish in ("Pehle", "karo", "chahiye", "mat jodo", "banao"):
+            self.assertNotIn(hinglish, html)
+
+    def test_v2_run_queues_background_job(self):
+        from app import v2_jobs
+        from app.web import post_v2_run
+        msg = post_v2_run(self._ctx(), {
+            "conversions_per_week": "60", "distinct_creatives": "6",
+            "daily_budget": "3000", "target_cpa": "500",
+            "pixel_ok": "on", "capi_ok": "on", "offering_name": "Toolkit"})
+        self.assertIn("background", msg)
+        self.assertTrue(v2_jobs.v2_pending(self.conn, self.profile["id"]))
+
+    def test_customize_persists_per_profile(self):
+        from app import profiles as profiles_mod
+        from app.web import post_v2_customize
+        msg = post_v2_customize(self._ctx(), {
+            "mode": "agency", "module_readiness": "on",
+            "module_fatigue": "on"})
+        self.assertIn("saved", msg)
+        fresh = profiles_mod.get_profile(self.profile["id"], self.conn)
+        self.assertEqual(fresh["settings_overrides"]["V2_MODE"], "agency")
+        self.assertEqual(fresh["settings_overrides"]["V2_MODULES"],
+                         ["readiness", "fatigue"])
+
+
+if __name__ == "__main__":
+    unittest.main()

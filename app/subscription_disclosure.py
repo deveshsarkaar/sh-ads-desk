@@ -23,12 +23,12 @@ def check_disclosure(offer):
     issues = []
     price_text = offer.get("price_text") or ""
     if not _AMOUNT.search(price_text):
-        issues.append("Price amount saaf nahi dikh raha — subscription ad me price disclose karna zaroori hai.")
+        issues.append("The price amount is not clearly shown — subscription ads must disclose pricing.")
     if not _INTERVAL.search(price_text):
-        issues.append("Billing interval (monthly/yearly) saaf nahi hai — recurrent billing disclose karo.")
+        issues.append("The billing interval (monthly/yearly) is not clear — disclose the recurrent billing.")
     if not _CANCEL.search(offer.get("cancellation_text") or ""):
-        issues.append("Cancellation ka clear language missing hai — cancel kaise karein, ye likho.")
+        issues.append("Clear cancellation language is missing — state how to cancel.")
     if offer.get("collects_pii") and offer.get("opt_in_unchecked") is not True:
-        issues.append("PII manga ja raha hai lekin unchecked opt-in checkbox confirm nahi hai — fail closed.")
+        issues.append("Personal information is collected but an unchecked opt-in checkbox is not confirmed — fail closed.")
     return {"ok": not issues, "issues": issues,
             "policy": "subscription services (Meta policy tool, retrieved 2026-11-25)"}

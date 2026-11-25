@@ -154,6 +154,19 @@ def _report(args, kind):
     return 0
 
 
+def cmd_v2(args):
+    """Run the V2 background analysis for the active profile."""
+    from . import v2_jobs
+    conn = get_db()
+    profile, _settings = _active(conn)
+    pid = profile["id"] if profile else 0
+    results = v2_jobs.run_v2(conn, pid)
+    print("V2 analysis done: readiness=%s fatigue=%s disclosure_ok=%s"
+          % (results["readiness"]["band"], results["fatigue"]["band"],
+             results["disclosure"]["ok"]))
+    return 0
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(prog="app.jobs",
                                      description="SH Ads Desk scheduled jobs")
@@ -167,6 +180,7 @@ def main(argv=None):
     sub.add_parser("daily")
     sub.add_parser("weekly")
     sub.add_parser("loop")
+    sub.add_parser("v2")
     args = parser.parse_args(argv)
     if args.cmd == "collect":
         return cmd_collect(args)
@@ -174,6 +188,8 @@ def main(argv=None):
         return cmd_optimise(args)
     if args.cmd == "loop":
         return cmd_loop(args)
+    if args.cmd == "v2":
+        return cmd_v2(args)
     return _report(args, args.cmd)
 
 
