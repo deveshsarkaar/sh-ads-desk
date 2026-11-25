@@ -8,7 +8,8 @@ no Meta write, no budget change, no ad is touched.
 """
 import json
 
-from . import creative_matrix, expert_engine, fatigue, feed_catalog, store
+from . import creative_matrix, expert_engine, fatigue, feed_catalog, learning
+from . import store
 from . import subscription_disclosure, test_lane, v2_readiness
 from .common import _now, audit, get_db
 
@@ -103,8 +104,10 @@ def run_v2(conn=None, profile_id=0):
     results = {
         "ran_at": _now(),
         "readiness": readiness,
-        "expert": expert_engine.expert_review(
-            inputs, store.load_insight_rows(conn, profile_id=profile_id)),
+        "expert": dict(
+            expert_engine.expert_review(
+                inputs, store.load_insight_rows(conn, profile_id=profile_id)),
+            learning=learning.calibration(conn, profile_id)),
         "creative_matrix": matrix,
         "feed_catalog": catalog,
         "test_lane": {"plan": plan,

@@ -164,6 +164,17 @@ class V2UITests(unittest.TestCase):
         self.assertIn("guarantee", results["expert"]["note"].lower()
                       .replace("does not guarantee", "guarantee"))
 
+    def test_learning_loop_calibrates_from_outcomes(self):
+        from app import learning
+        pid = self.profile["id"]
+        for i in range(5):
+            learning.record_outcome(self.conn, pid, "ad%d" % i,
+                                    "scale_candidate", 900, 500)
+        cal = learning.calibration(self.conn, pid)
+        self.assertEqual(cal["judged"], 5)
+        self.assertEqual(cal["overall_accuracy_pct"], 0)
+        self.assertTrue(any("20+" in p for p in cal["proposals"]))
+
     def test_customize_persists_per_profile(self):
         from app import profiles as profiles_mod
         from app.web import post_v2_customize

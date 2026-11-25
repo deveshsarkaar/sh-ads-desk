@@ -3928,6 +3928,18 @@ def pg_v2(ctx):
             f'<table><tr><th>Ad</th><th>Verdict</th><th>Confidence</th>'
             f'<th>Proposed action</th></tr>{vrows}</table>'
             f'<p class="small mut">Testing protocol:</p><ul>{steps}</ul>'
+            f'<p>Learning loop: {esc((e.get("learning") or {}).get("judged", 0))} '
+            f'judged outcomes, accuracy '
+            f'{esc((e.get("learning") or {}).get("overall_accuracy_pct") or "not measured yet")}</p>'
+            f'<form method="post" action="/v2/outcome">{ctx["csrf_field"]}'
+            f'<label>Record an outcome — Ad ID <input name="ad_id" required></label>'
+            f'<label>Verdict <select name="verdict">'
+            f'<option value="scale_candidate">scale candidate</option>'
+            f'<option value="hold">hold</option>'
+            f'<option value="iterate">iterate</option>'
+            f'<option value="stop_candidate">stop candidate</option></select></label>'
+            f'<label>Result CPA <input name="result_cpa" type="number" step="any"></label>'
+            f'<button type="submit">Record outcome</button></form>'
             f'<p class="small mut">{esc(e["note"])}</p></div>')
     if results and "creative_matrix" in modules:
         m = results["creative_matrix"]
@@ -4084,6 +4096,17 @@ def post_v2_run(ctx, form):
             "will appear on this page.")
 
 
+def post_v2_outcome(ctx, form):
+    profile = ctx.get("profile")
+    if not profile:
+        return "No active profile; outcome not recorded."
+    from . import learning
+    return learning.record_outcome(
+        ctx["conn"], profile["id"], form.get("ad_id", ""),
+        form.get("verdict", ""),
+        _v2_num(form, "result_cpa"), _v2_num(form, "target_cpa"))
+
+
 def post_v2_customize(ctx, form):
     conn = ctx["conn"]
     profile = ctx["profile"]
@@ -4138,6 +4161,7 @@ POST_ROUTES = {
     "/budget/optimise": (post_budget_optimise, "/approvals"),
     "/v2/run": (post_v2_run, "/v2"),
     "/v2/customize": (post_v2_customize, "/v2"),
+    "/v2/outcome": (post_v2_outcome, "/v2"),
 }
 
 GET_ROUTES = {
